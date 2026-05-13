@@ -18,3 +18,10 @@ resource "aws_instance" "cloud1" {
     Name = "${var.project_name}-${each.value}"
   }
 }
+
+resource "local_file" "dynamic_inventory" {
+  content  = join("\n", [for name, instance in aws_instance.cloud1 : "[${name}]\nansible_host=${instance.public_ip}"])
+  filename = "../ansible/inventory/inventory.ini"
+  directory_permission = "0755"
+  file_permission = "0644"
+}
