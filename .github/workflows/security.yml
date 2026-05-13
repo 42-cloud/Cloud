@@ -1,0 +1,44 @@
+name: Security
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+  checks: write
+
+jobs:
+  checkov:
+    name: Checkov Scan
+    runs-on: ubuntu-latest
+    if: ${{ !contains(github.event.head_commit.message, '[skip checkov]') }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run Checkov
+        uses: bridgecrewio/checkov-action@master
+        with:
+          directory: .
+          soft_fail: true
+          output_format: cli, junitxml
+          output_file_path: console
+
+      - name: Upload checkov result
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: checkov-report
+          path: '**/results_junitxml.xml'
+
+      - name: Publish Checkov report
+        uses: mikepenz/action-junit-report@v4
+        if: always()
+        with:
+          report_paths: '**/results_junitxml.xml'
+          detailed_summary: true
+          check_name: "Checkov Security Report"
