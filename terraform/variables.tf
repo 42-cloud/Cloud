@@ -12,3 +12,18 @@ variable "ip_host" {
   description = "Ip host for ingress security"
   type        = string
 }
+
+variable "project_name" {
+  description = "Name of the project"
+  type        = string
+}
+
+variable "instance_type" {
+  description = "type of instance"
+  type        = string
+}
+
+variable "instance_names" {
+  description = "List all instance name"
+  type        = list(string)
+}

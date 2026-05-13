@@ -1,12 +1,12 @@
 resource "aws_key_pair" "cloudone" {
-  key_name   = "cloudone-key"
+  key_name   = "${var.project_name}-key"
   public_key = file(var.public_key_path)
 }
 
 resource "aws_vpc" "cloudone" {
   cidr_block = "10.0.0.0/16"
   tags = {
-    Name = "cloudone-vpc"
+    Name = "${var.project_name}-vpc"
   }
 }
 
@@ -16,14 +16,14 @@ resource "aws_subnet" "cloudone" {
   availability_zone       = "${var.aws_region}a"
   map_public_ip_on_launch = true
   tags = {
-    Name = "cloudone-subnet"
+    Name = "${var.project_name}-subnet"
   }
 }
 
 resource "aws_internet_gateway" "cloudone" {
   vpc_id = aws_vpc.cloudone.id
   tags = {
-    Name = "cloudone-igw"
+    Name = "${var.project_name}-igw"
   }
 }
 
@@ -42,7 +42,7 @@ resource "aws_route_table_association" "cloudone" {
 }
 
 resource "aws_security_group" "cloudone" {
-  name   = "cloudone-sg"
+  name   = "${var.project_name}-sg"
   vpc_id = aws_vpc.cloudone.id
 
   ingress {

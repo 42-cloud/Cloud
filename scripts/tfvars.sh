@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-# TODO: add error messages + regex on instance' names + add color for UX
+# TODO: add error messages + regex on instance names (meme si le toset de terraform n'accepte pas les double) + add color for UX
 
 GREEN='\033[0;32m'
 NC='\033[0m'
