@@ -3,11 +3,49 @@
 version: '3'
 
 vars:
-  GREETING: Hello, world!
+  RED: '\033[0;31m'
+  GREEN: '\033[0;32m'
+  PPL: '\033[0;35m'
+  NC: '\033[0m'
 
 tasks:
   default:
-    desc: Print a greeting message
+    desc: Terraform apply
     cmds:
-      - echo "{{.GREETING}}"
+      - echo -e "{{ .PPL }}task --list to see all the tasks !{{ .NC }}"
+    silent: true
+  fmt:
+    desc: Terraform fmt
+    cmds:
+      - |
+        echo -e "{{ .PPL }}Process terraform fmt...{{ .NC }}"
+        cd terraform && terraform fmt
+    silent: true
+  init:
+    desc: Terraform init
+    cmds:
+      - |
+        echo -e "{{ .PPL }}Process terraform init...{{ .NC }}"
+        cd terraform && terraform init
+    silent: true
+  plan:
+    desc: Terraform plan
+    cmds:
+      - |
+        echo -e "{{ .PPL }}Process terraform plan...{{ .NC }}"
+        cd terraform && terraform plan
+    silent: true
+  apply:
+    desc: Terraform apply
+    cmds:
+      - |
+        echo -e "{{ .PPL }}Process terraform apply...{{ .NC }}"
+        cd terraform && terraform apply
+    silent: true
+  output:
+    desc: Terraform output
+    cmds:
+      - |
+        echo -e "{{ .PPL }}Process terraform output...{{ .NC }}"
+        cd terraform && terraform output
     silent: true

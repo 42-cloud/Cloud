@@ -1,14 +1,14 @@
 variable "public_key_path" {
   description = "path for SSH key"
-  type = string
+  type        = string
 }
 
 variable "aws_region" {
   description = "region AWS"
-  type = string
+  type        = string
 }
 
 variable "ip_host" {
   description = "Ip host for ingress security"
-  type = string
+  type        = string
 }
