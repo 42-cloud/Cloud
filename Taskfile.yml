@@ -49,3 +49,22 @@ tasks:
         echo -e "{{ .PPL }}Process terraform output...{{ .NC }}"
         cd terraform && terraform output
     silent: true
+  down:
+    desc: Terraform destroy
+    cmds:
+      - |
+        echo -e "{{ .PPL }}Process terraform destroy...{{ .NC }}"
+        cd terraform && terraform destroy
+    silent: true
+  show:
+    desc: Terraform show
+    cmds:
+      - |
+        echo -e "{{ .PPL }}Process terraform show...{{ .NC }}"
+        cd terraform && terraform show
+    silent: true
+  tfvars:
+    desc: Create a terraform.tfvars
+    cmds:
+      - bash scripts/tfvars.sh
+    silent: true
