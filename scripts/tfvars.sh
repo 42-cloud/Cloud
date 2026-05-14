@@ -2,9 +2,10 @@
 
 set -euo pipefail
 
-# TODO: add error messages + regex on instance names (meme si le toset de terraform n'accepte pas les double) + add color for UX
+# TODO: add error messages + add color for UX
 
 GREEN='\033[0;32m'
+RED='\033[0;31m'
 NC='\033[0m'
 
 # source if terraform.tfvars is created
@@ -22,32 +23,46 @@ instance_type=${input:-${instance_type:-t3.small}}
 read -p "SSH public key path [${public_key_path:-~/.ssh/cloudone.pub}]: " input
 public_key_path=${input:-${public_key_path:-~/.ssh/cloudone.pub}}
 
+project_name=""
 # project name for s3
 while [ -z "$project_name" ]; do
   read -p "Project name [NO DEFAULT]: " input
   project_name=${input:-${project_name}}
 done
 
+instance_count=""
 # get names of instances recu
 while [ -z "$instance_count" ] || ! [[ "$instance_count" =~ ^[0-9]+$ ]]; do
   read -p "Number of instances: " instance_count
 done
 
+# validates instance name against regex
 instance_names=""
 for i in $(seq 1 $instance_count); do
-  read -p "Name of instance $i: " name
-  if [ -z "$instance_names" ]; then
-    instance_names="\"$name\""
-  else
-    instance_names="$instance_names,\"$name\""
-  fi
+  while true; do
+    read -p "Name of instance $i: " name
+    len=${#name}
+    if [[ "$name" =~ ^[a-zA-Z0-9-]{3,64}$  ]]; then
+        break
+    else
+        echo -e "${RED}Error:${NC} Invalid name (letters, numbers and hyphen only - 3-64 chars)"
+    fi
+  done
+
+    if [ -z "$instance_names" ]; then
+        instance_names="\"$name\""
+    else
+        instance_names="$instance_names,\"$name\""
+    fi
 done
 
 # get IP host for ingress secu
 IP_HOST=$(curl -s ifconfig.me)
 
+mkdir -p "$(dirname "$0")/../terraform"
+
 # create .tfvars
-cat > ../terraform/terraform.tfvars <<EOF
+cat > $(dirname "$0")/../terraform/terraform.tfvars <<EOF
 aws_region="${aws_region}"
 instance_type="${instance_type}"
 public_key_path="${public_key_path}"
