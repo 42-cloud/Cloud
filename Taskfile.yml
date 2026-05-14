@@ -55,6 +55,9 @@ tasks:
       - |
         echo -e "{{ .PPL }}Process terraform destroy...{{ .NC }}"
         cd terraform && terraform destroy
+      - |
+        echo -e "{{ .PPL }}Rm inventory...{{ .NC }}"
+        rm -f ansible/inventory/inventory.ini
     silent: true
   show:
     desc: Terraform show
