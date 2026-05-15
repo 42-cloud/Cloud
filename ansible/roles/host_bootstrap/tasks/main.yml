@@ -1,0 +1,45 @@
+---
+- name: Update apt cache
+  ansible.builtin.apt:
+    update_cache: yes
+    cache_valid_time: 3600
+
+- name: Install UFW
+  ansible.builtin.apt:
+    name: ufw
+    state: present
+
+- name: Configure UFW defaults
+  ansible.builtin.ufw:
+    policy: deny
+    direction: incoming
+
+- name: Allow SSH traffic
+  ansible.builtin.ufw:
+    rule: allow
+    port: '22'
+    proto: tcp
+
+- name: Allow HTTP and HTTPS traffic
+  ansible.builtin.ufw:
+    rule: allow
+    port: "{{ item }}"
+    proto: tcp
+  loop:
+    - '80'
+    - '443'
+
+- name: Enable UFW
+  ansible.builtin.ufw:
+    state: enabled
+
+- name: Create persistent directories for Apko containers
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ bootstrap_apko_uid | default(65532) }}"
+    group: "{{ bootstrap_apko_gid | default(65532) }}"
+    mode: '0755'
+  loop:
+    - /var/www/wordpress
+    - /var/lib/mysql_data

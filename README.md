@@ -92,6 +92,24 @@ __Best practices__
 
 > An agentless configuration management tool
 
+#### TDD with molecules
+
+- a *test_sequence* can have many steps :
+  - dependency
+  - converge
+  - prepare / cleanup
+  - idempotence
+  - ...
+
+#### Roles
+
+|Role|Responsabilities|
+|:-- |:--|
+|`host_bootstrap`|OS preparation, SSH config, UFW config, create directories for data persistence with appropriate permissions|
+|`docker`|generic role to install daemon and docker compose|
+|`wordpress_app`|centralized role for stack management : would be too difficult to manage 2 different roles for wordpress and db|
+
+
 ## Security
 
 ### Checkov
@@ -120,6 +138,7 @@ __Best practices__
 | [Chainguard doc](https://edu.chainguard.dev/) | 📔 | for Melange and Apko |
 | [Automating IT with Ansible](https://www.educative.io/courses/automating-it-infrastructure-with-ansible) | 📘 | |
 | [Infra as Code using Terraform](https://www.educative.io/courses/infrastructure-as-code-using-terraform) | 📘 | |
+| [Stephane Robert](https://blog.stephane-robert.info/docs/infra-as-code/gestion-de-configuration/ansible/) | 📘 | Excellent tutorials |
 
 Resource type
 

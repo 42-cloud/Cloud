@@ -1,0 +1,4 @@
+bootstrap_apko_uid: "{{ global_apko_uid }}"
+bootstrap_apko_gid: "{{ global_apko_gid }}"
+bootstrap_wp_dir: /var/www/wordpress
+bootstrap_db_dir: /var/lib/mysql_data

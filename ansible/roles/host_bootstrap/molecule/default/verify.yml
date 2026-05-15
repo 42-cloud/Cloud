@@ -1,0 +1,28 @@
+---
+- name: Verify Host Bootstrap
+  hosts: all
+  gather_facts: true
+  tasks:
+    - name: Check UFW service status
+      ansible.builtin.command: ufw status
+      register: ufw_status
+      changed_when: false
+
+    - name: Assert UFW is active
+      ansible.builtin.assert:
+        that:
+          - "'Status: active' in ufw_status.stdout"
+
+    - name: Get WordPress storage directory details
+      ansible.builtin.stat:
+        path: /var/www/wordpress
+      register: wp_dir
+
+    - name: Assert directory exists and has correct permissions for Apko (65532)
+      ansible.builtin.assert:
+        that:
+          - wp_dir.stat.exists
+          - wp_dir.stat.isdir
+          - wp_dir.stat.uid == {{ bootstrap_apko_gid }}
+          - wp_dir.stat.gid == {{ bootstrap_apko_gid }}
+          - wp_dir.stat.mode == '0755'

@@ -1,0 +1,45 @@
+---
+dependency:
+  name: galaxy
+  options:
+    requirements-file: requirements.yml
+
+driver:
+  name: docker
+
+platforms:
+  - name: bootstrap-ubuntu-test
+    image: geerlingguy/docker-ubuntu2204-ansible:latest
+    privileged: true
+    pre_build_image: true
+    user: root
+    volumes:
+      - /lib/modules:/lib/modules:ro
+
+provisioner:
+  name: ansible
+  config_options:
+    defaults:
+      host_key_checking: false
+      remote_tmp: /tmp/.ansible/tmp
+    ssh_connection:
+      pipelining: false
+  env:
+    ANSIBLE_GROUP_VARS_PATH: "../../../../group_vars"
+  playbooks:
+    converge: converge.yml
+    verify: verify.yml
+
+verifier:
+  name: ansible
+
+scenario:
+  name: default
+  test_sequence:
+    - dependency
+    - syntax
+    - destroy
+    - create
+    - converge
+    - verify
+    - destroy

@@ -1,0 +1,7 @@
+---
+- name: Converge Host Bootstrap
+  hosts: all
+  gather_facts: true
+  tasks:
+    - name: Run host_bootstrap tasks
+      ansible.builtin.import_tasks: ../../tasks/main.yml
