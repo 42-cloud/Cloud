@@ -38,22 +38,32 @@ done
 
 # validates instance name against regex
 instance_names=""
+declare -A seen_names
+regex='^[a-zA-Z0-9]([a-zA-Z0-9\-]{1,61}[a-zA-Z0-9])?$'
+
 for i in $(seq 1 $instance_count); do
   while true; do
     read -p "Name of instance $i: " name
-    local regex = '^[a-zA-Z0-9]([a-zA-Z0-9\-]{1,61}[a-zA-Z0-9])?$'
-    if [[ "$name" =~ $regex ]]; then
-        break
-    else
-        echo -e "${RED}Error:${NC} Invalid name (letters, numbers and hyphen only - 3-64 chars)"
+    if [[ ! "$name" =~ $regex ]]; then
+      echo -e "${RED}Error:${NC} Invalid name format (3-63 chars, alphanumeric start/end, hyphens allowed)."
+      continue
     fi
-  done
 
-    if [ -z "$instance_names" ]; then
-        instance_names="\"$name\""
-    else
-        instance_names="$instance_names,\"$name\""
+    if [[ -n "${seen_names[$name]:-}" ]]; then
+      echo -e "${RED}Error:${NC} Name '$name' is already taken."
+      continue
     fi
+
+    break
+  done
+  seen_names[$name]=1
+
+
+  if [ -z "$instance_names" ]; then
+    instance_names="\"$name\""
+  else
+    instance_names="$instance_names,\"$name\""
+  fi
 done
 
 # get IP host for ingress secu

@@ -7,7 +7,7 @@ Automated deployment of Wordpress related services using Terraform and Ansible
 ## Prerequisites
 
 ```bash
-sh -c "$(curl -ssL https://taskfile.dev/install.sh)" -- -d -b $HOME/bin
+sh -c "$(curl -sSL https://taskfile.dev/install.sh)" -- -d -b $HOME/bin
 ```
 
 ## Tasks
@@ -19,7 +19,7 @@ task tfvars
 # download providers
 task init
 
-# check terraform project correctneess
+# check terraform project correctness
 task plan
 
 # deploy
@@ -30,7 +30,7 @@ task apply
 
 # Stack
 
-## Automation and Orchastration
+## Automation and Orchestration
 
 ### Go-Task
 
@@ -51,17 +51,17 @@ task apply
 
 > A secure Linux distribution
 
-- used as a based layer for Angie
+- used as a base layer for Angie
 - quickly updated in case of CVE
 - compatible with packages compiled for glibc
 
 ### Melange
 
-> Declarative APK builder : compiles packets from source code
+> Declarative APK builder : compiles packages from source code
 
 ### Apko
 
-> Image assembler : assembles packets into a _distroless_ image
+> Image assembler : assembles packages into a _distroless_ image
 
 - **secure** : images don't have shell, reducing attack surface
 - **idempotent** : images are identical
