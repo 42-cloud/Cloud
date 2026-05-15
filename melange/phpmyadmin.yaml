@@ -1,0 +1,38 @@
+package:
+  name: phpmyadmin
+  version: "5.2.2"
+  epoch: 0
+  description: "phpMyAdmin web interface for MySQL/MariaDB"
+  copyright:
+    - license: GPL-2.0-only
+  dependencies:
+    runtime:
+      - php-8.3
+      - php-8.3-mbstring
+      - php-8.3-pdo_mysql
+      - php-8.3-curl
+      - php-8.3-openssl
+      - php-8.3-gd
+      - php-8.3-intl
+      - php-8.3-fileinfo
+      - wolfi-baselayout
+
+environment:
+  contents:
+    packages:
+      - busybox
+      - ca-certificates-bundle
+      - wolfi-baselayout
+
+pipeline:
+  - uses: fetch
+    with:
+      uri: https://files.phpmyadmin.net/phpMyAdmin/${{package.version}}/phpMyAdmin-${{package.version}}-all-languages.tar.gz
+      expected-sha256: 8551c8bf3b166f232d5cf64bac877472e9d0cb8f2fe1858fab24f975e7d765b6
+  - runs: |
+      tar -xzf phpMyAdmin-${{package.version}}-all-languages.tar.gz
+      mkdir -p "${{targets.destdir}}/var/www/html"
+      cp -r phpMyAdmin-${{package.version}}-all-languages/* \
+        "${{targets.destdir}}/var/www/html/"
+      cp "${{targets.destdir}}/var/www/html/config.sample.inc.php" \
+         "${{targets.destdir}}/var/www/html/config.inc.php"
