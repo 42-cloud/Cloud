@@ -2,9 +2,10 @@
 
 set -euo pipefail
 
-# TODO: add error messages + regex on instance names (meme si le toset de terraform n'accepte pas les double) + add color for UX
+# TODO: add error messages + add color for UX
 
 GREEN='\033[0;32m'
+RED='\033[0;31m'
 NC='\033[0m'
 
 # source if terraform.tfvars is created
@@ -22,20 +23,42 @@ instance_type=${input:-${instance_type:-t3.small}}
 read -p "SSH public key path [${public_key_path:-~/.ssh/cloudone.pub}]: " input
 public_key_path=${input:-${public_key_path:-~/.ssh/cloudone.pub}}
 
+project_name=""
 # project name for s3
 while [ -z "$project_name" ]; do
   read -p "Project name [NO DEFAULT]: " input
   project_name=${input:-${project_name}}
 done
 
+instance_count=""
 # get names of instances recu
 while [ -z "$instance_count" ] || ! [[ "$instance_count" =~ ^[0-9]+$ ]]; do
   read -p "Number of instances: " instance_count
 done
 
+# validates instance name against regex
 instance_names=""
+declare -A seen_names
+regex='^[a-zA-Z0-9]([a-zA-Z0-9\-]{1,61}[a-zA-Z0-9])?$'
+
 for i in $(seq 1 $instance_count); do
-  read -p "Name of instance $i: " name
+  while true; do
+    read -p "Name of instance $i: " name
+    if [[ ! "$name" =~ $regex ]]; then
+      echo -e "${RED}Error:${NC} Invalid name format (3-63 chars, alphanumeric start/end, hyphens allowed)."
+      continue
+    fi
+
+    if [[ -n "${seen_names[$name]:-}" ]]; then
+      echo -e "${RED}Error:${NC} Name '$name' is already taken."
+      continue
+    fi
+
+    break
+  done
+  seen_names[$name]=1
+
+
   if [ -z "$instance_names" ]; then
     instance_names="\"$name\""
   else
@@ -46,8 +69,10 @@ done
 # get IP host for ingress secu
 IP_HOST=$(curl -s ifconfig.me)
 
+mkdir -p "$(dirname "$0")/../terraform"
+
 # create .tfvars
-cat > ../terraform/terraform.tfvars <<EOF
+cat > "$(dirname "$0")/../terraform/terraform.tfvars" <<EOF
 aws_region="${aws_region}"
 instance_type="${instance_type}"
 public_key_path="${public_key_path}"
