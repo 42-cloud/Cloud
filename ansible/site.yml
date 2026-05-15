@@ -1,0 +1,8 @@
+# ansible/site.yml
+- name: Deploy Inception Stack
+  hosts: all
+  become: yes
+  roles:
+    - common
+    - security
+    - wordpress
