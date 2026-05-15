@@ -41,8 +41,8 @@ instance_names=""
 for i in $(seq 1 $instance_count); do
   while true; do
     read -p "Name of instance $i: " name
-    len=${#name}
-    if [[ "$name" =~ ^[a-zA-Z0-9-]{3,64}$  ]]; then
+    local regex = '^[a-zA-Z0-9]([a-zA-Z0-9\-]{1,61}[a-zA-Z0-9])?$'
+    if [[ "$name" =~ $regex ]]; then
         break
     else
         echo -e "${RED}Error:${NC} Invalid name (letters, numbers and hyphen only - 3-64 chars)"
@@ -62,7 +62,7 @@ IP_HOST=$(curl -s ifconfig.me)
 mkdir -p "$(dirname "$0")/../terraform"
 
 # create .tfvars
-cat > $(dirname "$0")/../terraform/terraform.tfvars <<EOF
+cat > "$(dirname "$0")/../terraform/terraform.tfvars" <<EOF
 aws_region="${aws_region}"
 instance_type="${instance_type}"
 public_key_path="${public_key_path}"
