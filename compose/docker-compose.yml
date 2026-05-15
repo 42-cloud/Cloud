@@ -1,0 +1,96 @@
+x-config: &config
+  restart: unless-stopped
+  security_opt:
+    - no-new-privileges:true
+  cap_drop:
+    - NET_RAW
+    - MKNOD
+    - AUDIT_WRITE
+    - SYS_CHROOT
+    - SETPCAP
+    - FSETID
+  stdin_open: true
+  tty: true
+  env_file:
+    - .env
+  networks:
+    - cloudone
+
+services:
+  mariadb:
+    <<: *config
+    image: mariadb:11.8
+    container_name: mariadb
+    environment:
+      MYSQL_RANDOM_ROOT_PASSWORD: '1'
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: "wordpress"
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - db_data:/var/lib/mysql
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+        reservations:
+          memory: 256m
+    healthcheck:
+      test: ["CMD-SHELL", "mariadb-admin ping -u $$MYSQL_USER -p$$MYSQL_PASSWORD"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  wordpress:
+    <<: *config
+    image: wordpress:6.9-php8.3-apache
+    container_name: wordpress
+    environment:
+      WORDPRESS_DB_HOST: mariadb
+      WORDPRESS_DB_USER: "wordpress"
+      WORDPRESS_DB_PASSWORD: ${WORDPRESS_DB_PASSWORD}
+      WORDPRESS_DB_NAME: wordpress
+      WORDPRESS_CONFIG_EXTRA: |
+        define('WP_HOME', '${WORDPRESS_HOME}');
+        define('WP_SITEURL', '${WORDPRESS_SITEURL}');
+    volumes:
+      - wordpress_data:/var/www/html
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+        reservations:
+          memory: 128m
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost/wp-login.php || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  angie:
+    <<: *config
+    image: docker.angie.software/angie:1.11.5-minimal
+    container_name: angie
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./angie.conf:/etc/angie/angie.conf:ro
+    depends_on:
+      wordpress:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 64m
+        reservations:
+          memory: 32m
+
+networks:
+  cloudone:
+    driver: bridge
+
+volumes:
+  db_data:
+  wordpress_data:
