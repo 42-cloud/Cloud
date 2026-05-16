@@ -11,10 +11,6 @@ x-config: &config
     - FSETID
   stdin_open: true
   tty: true
-  env_file:
-    - .env
-  networks:
-    - cloudone
 
 services:
   mariadb:
@@ -39,6 +35,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - cloudone-back
 
   wordpress:
     <<: *config
@@ -68,6 +66,9 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - cloudone-front
+      - cloudone-back
 
   angie:
     <<: *config
@@ -80,15 +81,45 @@ services:
     depends_on:
       wordpress:
         condition: service_healthy
+      phpmyadmin:
+        condition: service_healthy
     deploy:
       resources:
         limits:
           memory: 64m
         reservations:
           memory: 32m
+    networks:
+      - cloudone-front
+
+  phpmyadmin:
+    <<: *config
+    image: phpmyadmin:5.2-apache
+    container_name: phpmyadmin
+    environment:
+      PMA_HOST: mariadb
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 128m
+        reservations:
+          memory: 64m
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - cloudone-front
+      - cloudone-back
 
 networks:
-  cloudone:
+  cloudone-front:
+    driver: bridge
+  cloudone-back:
     driver: bridge
 
 volumes:
