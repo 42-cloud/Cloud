@@ -1,28 +1,73 @@
 ---
 - name: Verify Host Bootstrap
   hosts: all
-  gather_facts: true
+  gather_facts: false
   tasks:
+
+    - name: Load role default vars
+      ansible.builtin.include_vars:
+        file: "../../defaults/main.yml"
+  
     - name: Check UFW service status
-      ansible.builtin.command: ufw status
+      ansible.builtin.command: ufw status verbose
       register: ufw_status
       changed_when: false
+    
+    - name: Print UFW status
+      ansible.builtin.debug:
+        var: ufw_status.stdout
 
-    - name: Assert UFW is active
+    - name: Assert UFW is active and default policy is deny
       ansible.builtin.assert:
         that:
           - "'Status: active' in ufw_status.stdout"
+          - "'Default: deny (incoming)' in ufw_status.stdout"
+
+    - name: Assert ports 22 80 and 442 are allowed
+      ansible.builtin.assert:
+        that:
+          - "'22/tcp' in ufw_status.stdout"
+          - "'80/tcp' in ufw_status.stdout"
+          - "'443/tcp' in ufw_status.stdout"
+
+    # --- VERIFICATION WORDPRESS ---
+    - name: Check WP dir
+      ansible.builtin.command: ls -la "{{ bootstrap_wp_dir }}"
+      register: wpdir
+
+    - name: Print WP dir
+      ansible.builtin.debug:
+        var: wpdir.stdout
 
     - name: Get WordPress storage directory details
       ansible.builtin.stat:
-        path: /var/www/wordpress
+        path: "{{ bootstrap_wp_dir }}"
       register: wp_dir
 
-    - name: Assert directory exists and has correct permissions for Apko (65532)
+    - name: Assert directory exists and has correct permissions for www-data
       ansible.builtin.assert:
         that:
           - wp_dir.stat.exists
           - wp_dir.stat.isdir
-          - wp_dir.stat.uid == {{ bootstrap_apko_gid }}
-          - wp_dir.stat.gid == {{ bootstrap_apko_gid }}
+          - wp_dir.stat.uid == bootstrap_wp_uid | int
+          - wp_dir.stat.gid == bootstrap_wp_gid | int
           - wp_dir.stat.mode == '0755'
+    
+    # --- VERIFICATION MARIADB ---
+    - name: Get db storage directory details
+      ansible.builtin.stat:
+        path: "{{ bootstrap_db_dir }}"
+      register: db_dir
+
+    - name: Debug db directory facts
+      ansible.builtin.debug:
+        var: db_dir.stat
+
+    - name: Assert directory exists and has correct permissions for mysql
+      ansible.builtin.assert:
+        that:
+          - db_dir.stat.exists
+          - db_dir.stat.isdir
+          - db_dir.stat.uid == bootstrap_db_uid | int
+          - db_dir.stat.gid == bootstrap_db_gid | int
+          - db_dir.stat.mode == '0700'

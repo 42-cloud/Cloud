@@ -3,5 +3,6 @@
   hosts: all
   gather_facts: true
   tasks:
-    - name: Run host_bootstrap tasks
-      ansible.builtin.import_tasks: ../../tasks/main.yml
+    - name: "Include host_bootstrap role"
+      ansible.builtin.include_role:
+        name: "host_bootstrap"

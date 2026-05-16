@@ -92,14 +92,20 @@ __Best practices__
 
 > An agentless configuration management tool
 
+#### Variables
+
+- 3 levels of variables
+  - group_vars
+  - vars (within a role)
+  - default (within a role) : allow to reuse group_vars as they have a lower priority than them, contrary to vars
+
 #### TDD with molecules
 
-- a *test_sequence* can have many steps :
-  - dependency
+- a *test_sequence* can have many steps, among which main ones:
+  - create
   - converge
-  - prepare / cleanup
-  - idempotence
-  - ...
+  - verify
+  - destroy
 
 #### Roles
 

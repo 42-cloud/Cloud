@@ -1,45 +1,47 @@
 ---
-- name: Update apt cache
-  ansible.builtin.apt:
-    update_cache: yes
-    cache_valid_time: 3600
-
 - name: Install UFW
   ansible.builtin.apt:
     name: ufw
     state: present
+    update_cache: yes
+
+- name: Allow all traffic on loopback interface
+  community.general.ufw:
+    rule: allow
+    direction: in
+    interface: lo
 
 - name: Configure UFW defaults
-  ansible.builtin.ufw:
+  community.general.ufw:
     policy: deny
     direction: incoming
 
-- name: Allow SSH traffic
-  ansible.builtin.ufw:
-    rule: allow
-    port: '22'
-    proto: tcp
-
-- name: Allow HTTP and HTTPS traffic
-  ansible.builtin.ufw:
+- name: Allow SSH, HTTP and HTTPS traffic
+  community.general.ufw:
     rule: allow
     port: "{{ item }}"
     proto: tcp
   loop:
+    - '22'
     - '80'
     - '443'
 
 - name: Enable UFW
-  ansible.builtin.ufw:
+  community.general.ufw:
     state: enabled
 
-- name: Create persistent directories for Apko containers
+- name: Create persistent directories for db with mysql permission
   ansible.builtin.file:
-    path: "{{ item }}"
+    path: "{{ bootstrap_db_dir }}"
     state: directory
-    owner: "{{ bootstrap_apko_uid | default(65532) }}"
-    group: "{{ bootstrap_apko_gid | default(65532) }}"
+    owner: "{{ bootstrap_db_uid }}"
+    group: "{{ bootstrap_db_gid }}"
+    mode: '0700'
+
+- name: Create persistent directories for wordpress with www-data permission
+  ansible.builtin.file:
+    path: "{{ bootstrap_wp_dir }}"
+    state: directory
+    owner: "{{ bootstrap_wp_uid }}"
+    group: "{{ bootstrap_wp_gid }}"
     mode: '0755'
-  loop:
-    - /var/www/wordpress
-    - /var/lib/mysql_data
