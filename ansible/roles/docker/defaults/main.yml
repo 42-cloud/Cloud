@@ -1,2 +1,2 @@
 ---
-# defaults file for docker
+docker_minimal_version: '24.0'
