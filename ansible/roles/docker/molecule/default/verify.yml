@@ -1,0 +1,12 @@
+---
+- name: Verify Docker
+  hosts: all
+  gather_facts: false
+  tasks:
+
+    - name: Load role default vars
+      ansible.builtin.include_vars:
+        file: "../../defaults/main.yml"
+
+
+  

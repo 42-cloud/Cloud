@@ -5,3 +5,5 @@ terraform.tfstate.backup
 *.rsa
 *.rsa*
 *.ini
+
+**/.env

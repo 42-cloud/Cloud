@@ -1,0 +1,51 @@
+---
+dependency:
+  name: galaxy
+  options:
+    requirements-file: requirements.yml
+
+driver:
+  name: docker
+
+platforms:
+  - name: docker-ubuntu-test
+    image: geerlingguy/docker-ubuntu2204-ansible:latest
+    privileged: true
+    pre_build_image: true
+    user: root
+    volumes:
+      - /lib/modules:/lib/modules:ro
+
+provisioner:
+  name: ansible
+  config_options:
+    defaults:
+      host_key_checking: false
+      remote_tmp: /tmp/.ansible/tmp
+      roles_path: ../../../
+      stdout_callback: yaml
+    ssh_connection:
+      pipelining: false
+  ansible_args:
+    - "--diff"
+    - "-vv"
+  env:
+    ANSIBLE_ROLES_PATH: "../../../"
+  group_vars: ../../../../group_vars
+  playbooks:
+    converge: converge.yml
+    verify: verify.yml
+
+verifier:
+  name: ansible
+
+scenario:
+  name: default
+  test_sequence:
+    - dependency
+    - syntax
+    - destroy
+    - create
+    - converge
+    - verify
+    - destroy
