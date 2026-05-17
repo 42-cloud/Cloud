@@ -10,7 +10,7 @@
 
     # --- VERIFICATION DOCKER DEPENDENCIES  ---
     - name: Gather package stats
-      ansible.bultin.package_facts:
+      ansible.builtin.package_facts:
         strategy: all
     
     - name: Check presence of docker dependencies
@@ -49,7 +49,7 @@
 
     # --- VERIFICATION DOCKER INSTALLATION ---
     - name: Gather package stats
-      ansible.bultin.package_facts:
+      ansible.builtin.package_facts:
         strategy: all
 
     - name: Check presence of docker and docker compose
