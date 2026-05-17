@@ -30,6 +30,14 @@ task apply
 
 # Stack
 
+## Ubuntu as base OS
+
+### package installation method
+
+- DEB822 (from RFC 822) is the new APT norm to declare package repositories on Debian and Ubuntu. Successor to `.list`. 
+  - it relies on key: value pairs for suites, components, architecture
+  - every repo has its gpg key
+
 ## Automation and Orchestration
 
 ### Go-Task
@@ -107,11 +115,17 @@ __Best practices__
   - verify
   - destroy
 
+**adapting tests to dockerized test environment**
+- molecule runs tests in docker container. For `docker` role, we have distinct tasks whether the environment is prod or test:
+  - in test env, we are within a container with no `systemd`. Therefore, we use `ansible.builtin.shell` to look for / launch `dockerd` process
+  - prod relies on `ansible.builtin.service` module
+- similarly, test assertion rely on command `docker info`
+
 #### Roles
 
 |Role|Responsabilities|
 |:-- |:--|
-|`host_bootstrap`|OS preparation, SSH config, UFW config, create directories for data persistence with appropriate permissions|
+|`bootstrap`|OS preparation, SSH config, UFW config, create directories for data persistence with appropriate permissions|
 |`docker`|generic role to install daemon and docker compose|
 |`wordpress_app`|centralized role for stack management : would be too difficult to manage 2 different roles for wordpress and db|
 
@@ -157,4 +171,5 @@ Resource type
 ## AI Usage
 
 - fix and improve script
+- guide setup with a prompt asking to proofcheck our approach and suggest alternatives with pros and cons -> we remain in charge of choosing the next step
 - PR review

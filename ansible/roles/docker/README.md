@@ -1,38 +1,54 @@
-Role Name
+Ansible Role: Docker
 =========
 
-A brief description of the role goes here.
+Install and Configure docker (engine, cli) + docker compose plugin on a Ubuntu Jammy (22.04) host
 
 Requirements
 ------------
 
-Any pre-requisites that may not be covered by Ansible itself or the role should be mentioned here. For instance, if the role uses the EC2 module, it may be a good idea to mention in this section that the boto package is required.
+* **privileges** : `become: true` is required to install packages and configure APT
+* **testing** : role must launched in `--privileged` mode to allow running docker daemon
 
 Role Variables
 --------------
 
-A description of the settable variables for this role should go here, including any variables that are in defaults/main.yml, vars/main.yml, and any variables that can/should be set via parameters to the role. Any variables that are read from other roles and/or the global scope (ie. hostvars, group vars, etc.) should be mentioned here as well.
+Modifiable variables are in `defaults/main.yml` :
+
+| Variable | Default | Description |
+| :--- | :--- | :--- |
+| `docker_repo_url` | `https://download.docker.com/linux/ubuntu` | Root URL for official Docker APT repository. |
+| `docker_repo_gpg_url` | `https://download.docker.com/linux/ubuntu/gpg` | URL for official GPG key to validate Docker APT repository. |
+| `docker_version` | `5:29.5.0-1~ubuntu.22.04~jammy` | `docker-ce` and `docker-ce-cli` version. |
+| `docker_compose_version` | `5.1.3-1~ubuntu.22.04~jammy` | `docker-compose-plugin` version. |
+
+Internal variables are in `vars/main.yml` :
+
+* `__docker_gpg_path`: `/etc/apt/keyrings/docker.asc`
+* `__docker_repo_config_file_path`: `/etc/apt/sources.list.d/docker.sources` (DEB822 format)
+* `__docker_keyrings_path`: `/etc/apt/keyrings`
 
 Dependencies
 ------------
 
-A list of other roles hosted on Galaxy should go here, plus any details in regards to parameters that may need to be set for other roles, or variables that are used from other roles.
+No external Ansible Galaxy dependency
+Required packages are installed through APT:
+- `ca-certificates`
+- `curl`
+- `python3-debian`
+- `containerd.io`
 
 Example Playbook
 ----------------
 
-Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
-
-    - hosts: servers
-      roles:
-         - { role: username.rolename, x: 42 }
+```yaml
+- hosts: all
+  gather_facts: true
+  become: true
+  roles:
+    - name: docker
+```
 
 License
 -------
 
 BSD
-
-Author Information
-------------------
-
-An optional section for the role authors to include contact information, or a website (HTML is not allowed).

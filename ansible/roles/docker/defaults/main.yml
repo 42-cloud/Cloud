@@ -1,2 +1,6 @@
 ---
 docker_minimal_version: '24.0'
+docker_repo_gpg_url: 'https://download.docker.com/linux/ubuntu/gpg'
+docker_repo_url: 'https://download.docker.com/linux/ubuntu'
+docker_version: '5:29.5.0-1~ubuntu.22.04~jammy'
+docker_compose_version: '5.1.3-1~ubuntu.22.04~jammy'
