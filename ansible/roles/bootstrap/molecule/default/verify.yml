@@ -1,0 +1,64 @@
+---
+- name: Verify Host Bootstrap
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Load role default vars
+      ansible.builtin.include_vars:
+        file: "../../defaults/main.yml"
+
+    - name: Check UFW service status
+      ansible.builtin.command: ufw status verbose
+      register: bootstrap_ufw_status
+      changed_when: false
+
+    - name: Print UFW status
+      ansible.builtin.debug:
+        var: bootstrap_ufw_status.stdout
+
+    - name: Assert UFW is active and default policy is deny
+      ansible.builtin.assert:
+        that:
+          - "'Status: active' in bootstrap_ufw_status.stdout"
+          - "'Default: deny (incoming)' in bootstrap_ufw_status.stdout"
+
+    - name: Assert ports 22 80 and 443 are allowed
+      ansible.builtin.assert:
+        that:
+          - "'22/tcp' in bootstrap_ufw_status.stdout"
+          - "'80/tcp' in bootstrap_ufw_status.stdout"
+          - "'443/tcp' in bootstrap_ufw_status.stdout"
+
+    # --- VERIFICATION WORDPRESS ---
+    - name: Get WordPress storage directory details
+      ansible.builtin.stat:
+        path: "{{ bootstrap_wp_dir }}"
+      register: bootstrap_wp_dir_res
+
+    - name: Assert directory exists and has correct permissions for www-data
+      ansible.builtin.assert:
+        that:
+          - bootstrap_wp_dir_res.stat.exists
+          - bootstrap_wp_dir_res.stat.isdir
+          - bootstrap_wp_dir_res.stat.uid == bootstrap_wp_uid | int
+          - bootstrap_wp_dir_res.stat.gid == bootstrap_wp_gid | int
+          - bootstrap_wp_dir_res.stat.mode == '0755'
+
+    # --- VERIFICATION MARIADB ---
+    - name: Get db storage directory details
+      ansible.builtin.stat:
+        path: "{{ bootstrap_db_dir }}"
+      register: bootstrap_db_dir_res
+
+    - name: Debug db directory facts
+      ansible.builtin.debug:
+        var: bootstrap_db_dir_res.stat
+
+    - name: Assert directory exists and has correct permissions for mysql
+      ansible.builtin.assert:
+        that:
+          - bootstrap_db_dir_res.stat.exists
+          - bootstrap_db_dir_res.stat.isdir
+          - bootstrap_db_dir_res.stat.uid == bootstrap_db_uid | int
+          - bootstrap_db_dir_res.stat.gid == bootstrap_db_gid | int
+          - bootstrap_db_dir_res.stat.mode == '0700'

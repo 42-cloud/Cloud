@@ -1,0 +1,64 @@
+---
+- name: Update apt cache
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 3600
+  become: true
+
+# --- INSTALL DOCKER  ---
+- name: Install docker dependencies
+  ansible.builtin.package:
+    name:
+      - ca-certificates
+      - curl
+      - python3-debian    # required by deb822
+    state: present
+  become: true
+
+- name: Add repo
+  ansible.builtin.deb822_repository:
+    name: docker
+    uris: "{{ docker_repo_url }}"
+    suites: "{{ ansible_distribution_release | lower }}"
+    components: stable
+    signed_by: "{{ docker_repo_gpg_url }}"
+    state: present
+  become: true
+
+- name: Update cache
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 3600
+  become: true
+
+- name: Install docker and docker compose
+  ansible.builtin.apt:
+    name:
+      - "docker-ce={{ docker_version }}"
+      - "docker-ce-cli={{ docker_version }}"
+      - "containerd.io"
+      - "docker-compose-plugin={{ docker_compose_version }}"
+    state: present
+    allow_downgrade: true
+    update_cache: true
+  become: true
+
+- name: Launch docker service (if env is production)
+  ansible.builtin.service:
+    name: docker
+    state: started
+    enabled: true
+  become: true
+  when: ansible_virtualization_type != 'docker'
+
+- name: Start Docker daemon manually (if env is test)
+  ansible.builtin.shell: |
+    if ! pgrep dockerd > /dev/null; then
+      dockerd > /var/log/dockerd.log 2>&1 &
+      sleep 2
+      echo "started"
+    fi
+  register: docker_start
+  changed_when: "'started' in docker_start.stdout"
+  become: true
+  when: ansible_virtualization_type == 'docker'

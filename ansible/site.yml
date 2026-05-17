@@ -1,0 +1,7 @@
+# ansible/site.yml
+- name: Deploy Inception Stack
+  hosts: all
+  become: true
+  roles:
+    - bootstrap
+    - docker

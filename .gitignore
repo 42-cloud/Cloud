@@ -4,4 +4,8 @@ terraform.tfstate.backup
 *.tfvars
 *.rsa
 *.rsa*
+
+.ansible
 *.ini
+
+**/.env
