@@ -28,7 +28,7 @@ provisioner:
       pipelining: false
   ansible_args:
     - "--diff"
-    - "-vvv"
+    - "-v"
   env:
     ANSIBLE_ROLES_PATH: "../../../"
   group_vars: ../../../../group_vars

@@ -123,11 +123,11 @@ __Best practices__
 
 #### Roles
 
-|Role|Responsabilities|
+|Role|Responsibilities|
 |:-- |:--|
 |`bootstrap`|OS preparation, SSH config, UFW config, create directories for data persistence with appropriate permissions|
 |`docker`|generic role to install daemon and docker compose|
-|`wordpress_app`|centralized role for stack management : would be too difficult to manage 2 different roles for wordpress and db|
+|`wordpress`|centralized role for stack management : would be too difficult to manage 2 different roles for wordpress and db|
 
 
 ## Security

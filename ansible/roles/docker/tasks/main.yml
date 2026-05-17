@@ -1,8 +1,4 @@
 ---
-- name: Load role default vars
-  ansible.builtin.include_vars:
-    file: "../../defaults/main.yml"
-
 - name: Update apt cache
   ansible.builtin.apt:
     update_cache: true

@@ -22,7 +22,7 @@
           - "'Status: active' in ufw_status.stdout"
           - "'Default: deny (incoming)' in ufw_status.stdout"
 
-    - name: Assert ports 22 80 and 442 are allowed
+    - name: Assert ports 22 80 and 443 are allowed
       ansible.builtin.assert:
         that:
           - "'22/tcp' in ufw_status.stdout"

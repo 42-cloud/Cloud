@@ -48,6 +48,7 @@ Example Playbook
   become: true
   roles:
     - name: bootstrap
+```
 
 License
 -------

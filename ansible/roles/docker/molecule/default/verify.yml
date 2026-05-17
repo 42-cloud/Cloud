@@ -67,12 +67,12 @@
     - name: Check docker version
       ansible.builtin.assert:
         that:
-          - ansible_facts.packages['docker-ce'][0]['version'] is version(docker_version, '=')
+          - ansible_facts.packages['docker-ce'][0]['version'] == docker_version
 
     - name: Check docker compose version
       ansible.builtin.assert:
         that:
-          - ansible_facts.packages['docker-compose-plugin'][0]['version'] is version(docker_compose_version, '=')
+          - ansible_facts.packages['docker-compose-plugin'][0]['version'] == docker_compose_version
 
     - name: Test Docker daemon responsiveness (Universal)
       ansible.builtin.command: docker info

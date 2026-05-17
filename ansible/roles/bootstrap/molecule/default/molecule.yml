@@ -1,8 +1,6 @@
 ---
 dependency:
   name: galaxy
-  options:
-    requirements-file: requirements.yml
 
 driver:
   name: docker
@@ -28,7 +26,7 @@ provisioner:
       pipelining: false
   ansible_args:
     - "--diff"
-    - "-vv"
+    - "-v"
   env:
     ANSIBLE_ROLES_PATH: "../../../"
   group_vars: ../../../../group_vars
