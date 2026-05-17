@@ -72,7 +72,7 @@ services:
 
   angie:
     <<: *config
-    image: docker.angie.software/angie:1.11.5-minimal
+    image: docker.angie.software/angie:1.11.5
     container_name: angie
     ports:
       - "8080:8080"
@@ -83,6 +83,11 @@ services:
         condition: service_healthy
       phpmyadmin:
         condition: service_healthy
+    # healthcheck:
+      # test: ["CMD-SHELL", "curl -q http://localhost/ || exit 1"]
+      # interval: 10s
+      # timeout: 5s
+      # retries: 5
     deploy:
       resources:
         limits:
@@ -91,6 +96,7 @@ services:
           memory: 32m
     networks:
       - cloudone-front
+      - monitoring
 
   phpmyadmin:
     <<: *config
@@ -116,12 +122,69 @@ services:
       - cloudone-front
       - cloudone-back
 
+  grafana:
+    <<: *config
+    image: grafana/grafana:13.0.1
+    container_name: grafana
+    volumes:
+      - grafana_data:/var/lib/grafana
+    ports:
+      - "3000:3000"
+    profiles:
+      - monitoring
+    depends_on:
+      - prometheus
+      # prometheus:
+        # condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+        reservations:
+          memory: 256m
+    networks:
+      - monitoring
+
+  prometheus:
+    <<: *config
+    image: prom/prometheus:v3.11.3
+    container_name: prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    profiles:
+      - monitoring
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:9090/-/healthy || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    depends_on:
+      - angie
+      # angie:
+        # condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+        reservations:
+          memory: 256m
+    networks:
+      - monitoring
+
+
 networks:
   cloudone-front:
     driver: bridge
   cloudone-back:
     driver: bridge
+  monitoring:
+    driver: bridge
 
 volumes:
   db_data:
   wordpress_data:
+  prometheus_data:
+  grafana_data:
