@@ -6,6 +6,7 @@ Install and Configure docker (engine, cli) + docker compose plugin on a Ubuntu J
 Requirements
 ------------
 
+* **ansible version**: `2.15` as this role relies on `ansible.builtin.deb822_repository` which was stabilized in this version
 * **privileges** : `become: true` is required to install packages and configure APT
 * **testing** : role must launched in `--privileged` mode to allow running docker daemon
 
