@@ -40,6 +40,7 @@
       - "docker-compose-plugin={{ docker_compose_version }}"
     state: present
     allow_downgrade: true
+    update_cache: true
   become: true
 
 - name: Launch docker service (if env is production)
@@ -57,7 +58,7 @@
       sleep 2
       echo "started"
     fi
-  register: dockerd_start
-  changed_when: "'started' in dockerd_start.stdout"
+  register: docker_start
+  changed_when: "'started' in docker_start.stdout"
   become: true
   when: ansible_virtualization_type == 'docker'

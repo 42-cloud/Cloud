@@ -31,13 +31,13 @@
     - name: Gather stat for gpg
       ansible.builtin.stat:
         path: "{{ __docker_gpg_path }}"
-      register: gpg
+      register: docker_gpg
 
     - name: Check gpg presence and permissions are 0644
       ansible.builtin.assert:
         that:
-          - gpg.stat.exists
-          - gpg.stat.mode == '0644'
+          - docker_gpg.stat.exists
+          - docker_gpg.stat.mode == '0644'
 
     # --- VERIFICATION DOCKER REPOSITORY ---
     - name: Gather stat for repo

@@ -21,7 +21,8 @@ provisioner:
       host_key_checking: false
       remote_tmp: /tmp/.ansible/tmp
       roles_path: ../../../
-      stdout_callback: yaml
+      stdout_callback: default
+      callbacks_enabled: ansible.builtin.default
     ssh_connection:
       pipelining: false
   ansible_args:
@@ -29,6 +30,8 @@ provisioner:
     - "-v"
   env:
     ANSIBLE_ROLES_PATH: "../../../"
+    ANSIBLE_STDOUT_CALLBACK: default
+    ANSIBLE_CALLBACK_RESULT_FORMAT: yaml
   group_vars: ../../../../group_vars
   playbooks:
     converge: converge.yml
