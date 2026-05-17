@@ -3,6 +3,6 @@
   hosts: all
   become: true
   roles:
-    - common
-    - security
+    - bootstrap
+    - docker
     - wordpress

@@ -3,16 +3,15 @@
   hosts: all
   gather_facts: false
   tasks:
-
     - name: Load role default vars
       ansible.builtin.include_vars:
         file: "../../defaults/main.yml"
-  
+
     - name: Check UFW service status
       ansible.builtin.command: ufw status verbose
       register: ufw_status
       changed_when: false
-    
+
     - name: Print UFW status
       ansible.builtin.debug:
         var: ufw_status.stdout
@@ -31,14 +30,6 @@
           - "'443/tcp' in ufw_status.stdout"
 
     # --- VERIFICATION WORDPRESS ---
-    - name: Check WP dir
-      ansible.builtin.command: ls -la "{{ bootstrap_wp_dir }}"
-      register: wpdir
-
-    - name: Print WP dir
-      ansible.builtin.debug:
-        var: wpdir.stdout
-
     - name: Get WordPress storage directory details
       ansible.builtin.stat:
         path: "{{ bootstrap_wp_dir }}"
@@ -52,7 +43,7 @@
           - wp_dir.stat.uid == bootstrap_wp_uid | int
           - wp_dir.stat.gid == bootstrap_wp_gid | int
           - wp_dir.stat.mode == '0755'
-    
+
     # --- VERIFICATION MARIADB ---
     - name: Get db storage directory details
       ansible.builtin.stat:

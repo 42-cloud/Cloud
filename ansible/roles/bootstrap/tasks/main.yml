@@ -3,7 +3,7 @@
   ansible.builtin.apt:
     name: ufw
     state: present
-    update_cache: yes
+    update_cache: true
 
 - name: Allow all traffic on loopback interface
   community.general.ufw:
@@ -22,9 +22,9 @@
     port: "{{ item }}"
     proto: tcp
   loop:
-    - '22'
-    - '80'
-    - '443'
+    - "22"
+    - "80"
+    - "443"
 
 - name: Enable UFW
   community.general.ufw:
@@ -34,14 +34,14 @@
   ansible.builtin.file:
     path: "{{ bootstrap_db_dir }}"
     state: directory
-    owner: "{{ bootstrap_db_uid }}"
-    group: "{{ bootstrap_db_gid }}"
-    mode: '0700'
+    owner: "{{ bootstrap_db_uid | int }}"
+    group: "{{ bootstrap_db_gid | int }}"
+    mode: "0700"
 
 - name: Create persistent directories for wordpress with www-data permission
   ansible.builtin.file:
     path: "{{ bootstrap_wp_dir }}"
     state: directory
-    owner: "{{ bootstrap_wp_uid }}"
-    group: "{{ bootstrap_wp_gid }}"
-    mode: '0755'
+    owner: "{{ bootstrap_wp_uid | int }}"
+    group: "{{ bootstrap_wp_gid | int }}"
+    mode: "0755"

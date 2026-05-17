@@ -1,9 +1,10 @@
+---
 bootstrap_apko_uid: "{{ global_apko_uid | default(65532) }}"
 bootstrap_apko_gid: "{{ global_apko_gid | default(65532) }}"
 
 bootstrap_wp_uid: "33"
 bootstrap_wp_gid: "33"
-bootstrap_wp_dir: /var/www/wordpress
+bootstrap_wp_dir: /var/www/html
 
 bootstrap_db_uid: "999"
 bootstrap_db_gid: "999"
