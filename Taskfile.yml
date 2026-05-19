@@ -7,13 +7,18 @@ vars:
   GREEN: '\033[0;32m'
   PPL: '\033[0;35m'
   NC: '\033[0m'
+  VOLUME: ""
+  PROFILE: ""
 
 tasks:
   default:
-    desc: Terraform apply
+    desc: List all tasks
     cmds:
-      - echo -e "{{ .PPL }}task --list to see all the tasks !{{ .NC }}"
+      - task --list
     silent: true
+# ──────────────────────────────────────────
+# TERRAFORM
+# ──────────────────────────────────────────
   fmt:
     desc: Terraform fmt
     cmds:
@@ -71,13 +76,28 @@ tasks:
     cmds:
       - bash scripts/tfvars.sh
     silent: true
-  compose up:
-    desc: Up the docker-compose in local
-    cmds:
-      - cd compose && docker compose up -d
+# ──────────────────────────────────────────
+# DOCKER COMPOSE
+# ──────────────────────────────────────────
+  compose:help:
+    desc: Some exemples
+    cmds: 
+      - |
+        echo -e "{{ .PPL }}WORKFLOW EXEMPLE{{ .NC }}"
+        echo -e "{{ .PPL }}Run: task compose:up PROFILE=monitoring for grafana and prometheus{{ .NC }}"
+        echo -e "{{ .PPL }}Run: task compose:down PROFILE=monitoring VOLUME=true to add -v{{ .NC }}"
     silent: true
-  compose down:
-    desc: Up the docker-compose in local
+  compose:up:
+    desc: Up the docker compose in local
+    cmds: 
+      - |
+        echo -e "{{ .PPL }}Process compose up...{{ .NC }}"
+        cd compose && docker compose {{if .PROFILE}}--profile {{.PROFILE}}{{end}} up -d
+    silent: true
+  compose:down:
+    desc: down the docker compose in local
     cmds:
-      - cd compose && docker compose up -d
+      - |
+        echo -e "{{ .PPL }}Process compose down...{{ .NC }}"
+        cd compose && docker compose {{if .PROFILE}}--profile {{.PROFILE}}{{end}} down {{if .VOLUME}}-v{{end}}
     silent: true
