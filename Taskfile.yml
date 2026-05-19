@@ -71,3 +71,13 @@ tasks:
     cmds:
       - bash scripts/tfvars.sh
     silent: true
+  compose up:
+    desc: Up the docker-compose in local
+    cmds:
+      - cd compose && docker compose up -d
+    silent: true
+  compose down:
+    desc: Up the docker-compose in local
+    cmds:
+      - cd compose && docker compose up -d
+    silent: true
