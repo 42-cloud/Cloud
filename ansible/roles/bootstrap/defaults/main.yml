@@ -4,11 +4,11 @@ bootstrap_apko_gid: "{{ global_apko_gid | default(65532) }}"
 
 bootstrap_wp_uid: "33"
 bootstrap_wp_gid: "33"
-bootstrap_wp_dir: /var/www/html
+bootstrap_wp_dir: "{{ global_wp_dir | default('/var/www/html') }}"
 
 bootstrap_db_uid: "999"
 bootstrap_db_gid: "999"
-bootstrap_db_dir: /var/lib/mysql_data
+bootstrap_db_dir: "{{ global_db_dir | default('/var/lib/mysql_data') }}"
 
 bootstrap_admin_users_list:
  - toto

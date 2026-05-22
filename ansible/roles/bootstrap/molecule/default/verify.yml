@@ -2,10 +2,17 @@
 - name: Verify Host Bootstrap
   hosts: all
   gather_facts: true
+  vars:
+      global_project_path: '/opt/cloud-1'
+
   tasks:
     - name: Load role default vars
       ansible.builtin.include_vars:
         file: "../../defaults/main.yml"
+
+    - name: Load role vars
+      ansible.builtin.include_vars:
+        file: "../../vars/main.yml"
 
     - name: Check UFW service status
       ansible.builtin.command: ufw status verbose
@@ -98,3 +105,24 @@
           - bootstrap_db_dir_res.stat.uid == bootstrap_db_uid | int
           - bootstrap_db_dir_res.stat.gid == bootstrap_db_gid | int
           - bootstrap_db_dir_res.stat.mode == '0700'
+
+    # --- VERIFICATION DIRS ---
+    - name: Get conf directory details
+      ansible.builtin.stat:
+        path: "{{ item }}"
+      loop:
+        - "{{ __bootstrap_project_path }}"
+        - "{{ __bootstrap_project_path }}/mariadb"
+        - "{{ __bootstrap_project_path }}/wordpress"
+        - "{{ __bootstrap_project_path }}/angie"
+      register: __bootstrap_directories_stats
+
+    - name: Assert config directorties exists and have correct permissions
+      ansible.builtin.assert:
+        that:
+          - item.stat.exists
+          - item.stat.isdir
+          - item.stat.mode == '0775'
+          - item.stat.gr_name == 'admins'
+        fail_msg: "Missing config directory {{ item.item }}"
+      loop: "{{ __bootstrap_directories_stats.results }}"
