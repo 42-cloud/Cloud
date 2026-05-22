@@ -1,0 +1,8 @@
+---
+# paths on host
+__wordpress_db_conf_path: 'etc/my.cnf.d/50-server.cnf'
+__wordpress_db_sql_template_path: '/etc/mysql/init.sql.template'
+# paths on container
+__wordpress_db_socket: '/run/mysqld/mysqld.sock'
+__wordpress_db_dir_path: '/var/lib/mysql'
+__wordpress_db_error_log_path: '/var/lib/mysql/mariadb.err'

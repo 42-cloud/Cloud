@@ -1,0 +1,28 @@
+[client]
+socket = {{ __wordpress_db_socket }}
+
+[mysqld]
+# storage for db files (mounted as a volume)
+datadir = {{ __wordpress_db_dir_path }}
+socket = {{ __wordpress_db_socket }}
+
+#--- InnoDB storage engine
+innodb_file_per_table = 1
+# memory buffer for caching data and indexes
+innodb_buffer_pool_size = {{ wordpress_db_innodb_buffer_pool_size }}
+
+#--- Networking
+# allow connections from other containers
+bind-address = 0.0.0.0
+port = {{ wordpress_db_port }}
+
+#--- Loggings
+log_error = {{ __wordpress_db_error_log_path }}
+
+#-- Security
+user = {{ wordpress_db_user }}
+
+#-- Chars
+#for emojis
+character-set-server   = utf8mb4
+collation-server       = utf8mb4_unicode_ci

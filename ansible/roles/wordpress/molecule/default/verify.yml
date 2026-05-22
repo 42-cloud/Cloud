@@ -1,0 +1,81 @@
+---
+# Purpose: assert that the instance really ended up in the expected state.
+# Molecule calls this playbook with `molecule verify`.
+- name: Verify
+  hosts: all
+  gather_facts: false # Quicker, if you do not need facts
+  tasks:
+
+    - name: Load role default vars
+      ansible.builtin.include_vars:
+        file: "../../defaults/main.yml"
+
+    - name: Load role variables
+      ansible.builtin.include_vars:
+        file: ../../vars/main.yml
+
+# --- VERIFICATION MARIADB ---
+
+# --- --- host configuration --- ---
+
+    - name: Gather db conf file
+      ansible.builtin.stat:
+        path: "{{ __wordpress_db_conf_path }}"
+      register: wordpress_db_conf
+  
+    - name: Check file exists with permissions
+      ansible.builtin.assert:
+        that:
+          - wordpress_db_conf.stat.exists
+          - wordpress_db_conf.stat.mode == '0644'
+        fail_msg: "db configuration file is missing or has incorrect permissions"
+
+    - name: Check db conf content
+      ansible.builtin.command: "cat {{ __wordpress_db_conf_path }}"
+      register: db_conf_content
+      changed_when: false
+
+    - name: Check that configuration template is filled
+      ansible.builtin.assert:
+        that:
+          - "'bind-address = 0.0.0.0' in db_conf_content.stdout"
+          - "'innodb_buffer_pool_size' in db_conf_content.stdout"
+
+    - name: Gather db init sql file
+      ansible.builtin.stat:
+        path: "{{ __wordpress_db_sql_template_path }}"
+      register: wordpress_db_sql_template
+  
+    - name: Check file exists with permissions
+      ansible.builtin.assert:
+        that:
+          - wordpress_db_sql_template.stat.exists
+          - wordpress_db_sql_template.stat.mode == '0644'
+        fail_msg: "init sql file is missing or has incorrect permissions"
+
+# --- --- container state --- ---
+
+    - name: Get MariaDB container info
+      community.docker.docker_container_info:
+        name: mariadb
+      register: wordpress_mariadb_container_info
+
+    - name: Check container is running
+      ansible.builtin.assert:
+        that:
+          - wordpress_mariadb_container_info.exists
+          - wordpress_mariadb_container_info.container.State.Running == true
+        fail_msg: "container mariadb does not exist or did not start"
+
+    - name: Check DB port is responsive 
+      ansible.builtin.wait_for:
+        host: "127.0.0.1"
+        port: "{{ wordpress_db_port }}"
+        timeout: 30
+        state: started
+        fail_msg: "mariadb service does not respond"
+
+# --- VERIFICATION WORDPRESS ---
+
+
+# --- VERIFICATION ANGIE ---
