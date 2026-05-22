@@ -1,0 +1,51 @@
+name: Ansible Lint
+
+on:
+  push:
+    branches: [ '**' ]
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+  checks: write
+
+jobs:
+  lint:
+    runs-on: ubuntu-22.04
+  
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # python is installed on ubuntu
+      # yet it is safer to not use system version
+      # so that system packages don't mess with project's
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+
+      - name: Run Yaml Lint
+        uses: ibiqlik/action-yamllint@v3
+        with:
+          file_or_dir: .
+      
+      - name: Install Ansible Core and Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install ansible-core>=2.15,<2.16 ansible-navigator
+
+      - name: Install Ansible Galaxy Collections
+        run: |
+          if [ -f requirements.yml ]; then
+            ansible-galaxy collection install -r requirements.yml
+          fi
+
+      - name: Run Ansible Lint
+        uses: ansible/ansible-lint-action@v24.12.0
+        with:
+          targets: "ansible/"
