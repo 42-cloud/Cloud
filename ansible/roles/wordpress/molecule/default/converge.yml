@@ -8,6 +8,9 @@
     global_project_path: '/opt/cloud-1'
     wordpress_project_name: 'cloudone'
     wordpress_db_validate_cmd: ""
+    wordpress_delegate_host: localhost
+    wordpress_become_compose: false
+    wordpress_compose_src: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}"
   tasks:
     - name: "Include wordpress role"
       ansible.builtin.include_role:

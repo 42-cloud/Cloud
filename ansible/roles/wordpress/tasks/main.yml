@@ -22,15 +22,22 @@
     group: admins
     mode: '0644'
 
+- name: Set dynamic target directory
+  ansible.builtin.set_fact:
+    __wordpress_target_dir: "{{ wordpress_compose_src | default(__wordpress_project_path) }}"
+
 - name: Populate docker compose
   ansible.builtin.template:
     src: docker-compose.yml.j2
-    dest: "{{ __wordpress_project_path }}/docker-compose.yml"
+    dest: "{{ __wordpress_target_dir }}/docker-compose.yml"
     mode: '0640'
-  become: true
+  delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
+  become: "{{ wordpress_become_compose | default(true) }}"
 
+# delegated to localhost in test
 - name: launch docker compose
   community.docker.docker_compose_v2:
-    project_src: "{{ __wordpress_project_path }}"
+    project_src: "{{ __wordpress_target_dir }}"
     state: present
-  become: true
+  delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
+  become: "{{ wordpress_become_compose | default(true) }}"
