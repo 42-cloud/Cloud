@@ -2,3 +2,4 @@
 wordpress_db_port: 3306
 wordpress_db_innodb_buffer_pool_size: '128M'
 wordpress_db_user: 'mysql'
+wordpress_wp_port: 9000

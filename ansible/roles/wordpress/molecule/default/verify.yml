@@ -55,12 +55,12 @@
 
 # --- --- container state --- ---
 
-    - name: Get MariaDB container info
+    - name: Get DB container info
       community.docker.docker_container_info:
         name: mariadb
       register: wordpress_mariadb_container_info
 
-    - name: Check container is running
+    - name: Check DB container is running
       ansible.builtin.assert:
         that:
           - wordpress_mariadb_container_info.exists
@@ -75,7 +75,80 @@
         state: started
         fail_msg: "mariadb service does not respond"
 
-# --- VERIFICATION WORDPRESS ---
+    # --- VERIFICATION WORDPRESS ---
 
+    # --- --- container state --- ---
 
-# --- VERIFICATION ANGIE ---
+    - name: Get wordpress container info
+      community.docker.docker_container_info:
+        name: wordpress
+      register: wordpress_wp_container_info
+
+    - name: Check wordpress container is running
+      ansible.builtin.assert:
+        that:
+          - wordpress_wp_container_info.exists
+          - wordpress_wp_container_info.container.State.Running == true
+        fail_msg: "container wordpress does not exist or did not start"
+
+    - name: Check wordpress port is responsive 
+      ansible.builtin.wait_for:
+        host: "127.0.0.1"
+        port: "{{ wordpress_wp_port }}"
+        timeout: 30
+        state: started
+        fail_msg: "wordpress service does not respond"
+
+    # --- --- container state --- ---
+
+    # --- VERIFICATION ANGIE ---
+
+    - name: Verify configuration files requirements
+      ansible.builtin.assert:
+        that:
+          - item.path is file
+          - (item.path | stat).mode == item.mode
+        fail_msg: "{{ item.fail_msg }}"
+      loop:
+        - path: "{{ __wordpress_angie_conf_path }}"
+          mode: "0644"
+          fail_msg: "angie conf file is missing or has incorrect permissions."
+
+    # --- --- container state --- ---
+
+    - name: Get Angie container info
+      community.docker.docker_container_info:
+        name: angie
+      register: wordpress_angie_container_info
+
+    - name: Check Angie container is running
+      ansible.builtin.assert:
+        that:
+          - wordpress_angie_container_info.exists
+          - wordpress_angie_container_info.container.State.Running == true
+        fail_msg: "container angie does not exist or did not start"
+
+    - name: Check Angie SSL port is responsive
+      ansible.builtin.wait_for:
+        host: "127.0.0.1"
+        port: "{{ wordpress_angie_ssl_port }}"
+        timeout: 30
+        state: started
+
+    # --- VERIFICATION INTEGRATION ---
+
+    - name: Access Wordpress installation page via Angie 
+      ansible.builtin.uri:
+        url: "https://127.0.0.1:{{ wordpress_angie_ssl_port }}"
+        method: GET
+        validate_certs: false
+        return_content: true
+        status_code: [200, 302]
+        fail_msg: "wordpress site is unreachable or returned an error status"
+      register: wordpress_homepage_check
+
+    - name: Check DB connection is functional
+      ansible.builtin.assert:
+        that:
+          - "'Error establishing a database connection' not in wordpress_homepage_check.content"
+        fail_msg: "wordpress container cannot communicate with DB"
