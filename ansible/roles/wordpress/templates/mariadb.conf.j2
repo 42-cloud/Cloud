@@ -3,7 +3,7 @@ socket = {{ __wordpress_db_socket }}
 
 [mysqld]
 # storage for db files (mounted as a volume)
-datadir = {{ __wordpress_db_dir_path }}
+datadir = {{ __wordpress_db_dir_path_dest }}
 socket = {{ __wordpress_db_socket }}
 
 #--- InnoDB storage engine

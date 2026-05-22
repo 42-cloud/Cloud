@@ -1,0 +1,22 @@
+---
+- name: Prepare instance with bootstrap requirements
+  hosts: all
+  become: true
+  vars:
+    global_project_path: '/opt/cloud-1'
+    bootstrap_admin_users_list: ["toto", "tata"]
+
+  tasks:
+
+    - name: Ensure APT cache is up to date
+      ansible.builtin.apt:
+        update_cache: true
+
+    - name: Install Docker CLI only (required for Ansible community.docker modules)
+      ansible.builtin.apt:
+        name: docker.io
+        state: present
+
+    - name: Execute bootstrap role to create groups and directories
+      ansible.builtin.include_role:
+        name: "bootstrap"

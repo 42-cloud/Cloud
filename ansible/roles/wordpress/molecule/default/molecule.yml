@@ -15,6 +15,7 @@ platforms:
     user: root
     volumes:
       - /lib/modules:/lib/modules:ro
+      - /var/run/docker.sock:/var/run/docker.sock:rw
 
 provisioner:
   name: ansible
@@ -35,6 +36,7 @@ provisioner:
     ANSIBLE_CALLBACK_RESULT_FORMAT: yaml
   group_vars: ../../../../group_vars
   playbooks:
+    prepare: prepare.yml
     converge: converge.yml
     verify: verify.yml
 
@@ -48,6 +50,7 @@ scenario:
     - syntax
     - destroy
     - create
+    - prepare
     - converge
     - verify
     - destroy

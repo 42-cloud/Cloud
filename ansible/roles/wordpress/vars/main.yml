@@ -1,10 +1,23 @@
 ---
-# paths on host
-__wordpress_db_conf_path: 'etc/my.cnf.d/50-server.cnf'
-__wordpress_db_sql_template_path: '/etc/mysql/init.sql.template'
+__wordpress_project_path: "{{ global_project_path | default('/opt/cloud-1')}}"
+
+# compose
+
+# mariadb
+__wordpress_db_conf_path_host: '{{__wordpress_project_path}}/mariadb/50-server.conf'
+__wordpress_db_conf_path_dest: '/etc/mysql/mariadb.conf.d/50-server.conf'
+__wordpress_db_sql_template_path_host: '{{__wordpress_project_path}}/mariadb/init.sql'
+__wordpress_db_sql_template_path_dest: '/docker-entrypoint-initdb.d/init.sql'
+__wordpress_db_dir_path_dest: "{{ global_db_dir | default('/var/lib/mysql_data') }}"
+__wordpress_db_error_log_path: '{{ __wordpress_db_dir_path_dest }}/mariadb.err'
 __wordpress_db_socket: '/run/mysqld/mysqld.sock'
-__wordpress_db_dir_path: '/var/lib/mysql'
-__wordpress_wp_dir_path: '/var/www/wordpress'
-__wordpress_db_error_log_path: '/var/lib/mysql/mariadb.err'
-__wordpress_angie_conf_path: '/etc/nginx/angie.conf'
+
+# wordpress
+__wordpress_wp_dir_path_dest: "{{ global_wp_dir | default('/var/www/html') }}"
+
+
+# angie
+__wordpress_angie_conf_path_host: '{{__wordpress_project_path}}/angie/angie.conf'
+__wordpress_angie_conf_path_dest: '/etc/nginx/angie.conf'
 __wordpress_angie_ssl_port: 443
+__wordpress_angie_port: 8080

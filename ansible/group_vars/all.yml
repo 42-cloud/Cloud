@@ -1,2 +1,5 @@
 global_apko_uid: 65532
 global_apko_gid: 65532
+global_project_path: '/opt/cloud-1'
+global_db_dir: '/var/lib/mysql_data'
+global_wp_dir: '/var/www/html'

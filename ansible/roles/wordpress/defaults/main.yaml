@@ -1,5 +1,19 @@
 ---
+wordpress_project_name: 'cloudone'
+
 wordpress_db_port: 3306
 wordpress_db_innodb_buffer_pool_size: '128M'
 wordpress_db_user: 'mysql'
+wordpress_db_group: 'mysql'
+wordpress_db_mem_limit: '512m'
+wordpress_db_mem_res_limit: '256m'
+wordpress_db_validate_cmd: 'docker run --rm -v %s:/etc/mysql/mariadb.conf.d/50-server.cnf:ro mariadb:latest mariadbd --verbose --help'
+
 wordpress_wp_port: 9000
+wordpress_wp_mem_limit: '256m'
+wordpress_wp_mem_res_limit: '128m'
+
+wordpress_site_url: 'cloud.one'
+
+wordpress_ng_mem_limit: '64m'
+wordpress_ng_mem_res_limit: '32m'

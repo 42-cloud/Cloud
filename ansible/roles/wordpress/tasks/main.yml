@@ -1,0 +1,36 @@
+---
+
+- name: Populate db conf
+  ansible.builtin.template:
+    src: mariadb.conf.j2
+    dest: "{{ __wordpress_db_conf_path_host }}"
+    group: admins
+    mode: '0644'
+    validate: "{{ wordpress_db_validate_cmd | default(omit) }}"
+
+- name: Populate init sql
+  ansible.builtin.template:
+    src: init.sql.j2
+    dest: "{{ __wordpress_db_sql_template_path_host }}"
+    group: admins
+    mode: '0644'
+
+- name: Populate Angie conf
+  ansible.builtin.template:
+    src: angie.conf.j2
+    dest: "{{ __wordpress_angie_conf_path_host }}"
+    group: admins
+    mode: '0644'
+
+- name: Populate docker compose
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ __wordpress_project_path }}/docker-compose.yml"
+    mode: '0640'
+  become: true
+
+- name: launch docker compose
+  community.docker.docker_compose_v2:
+    project_src: "{{ __wordpress_project_path }}"
+    state: present
+  become: true

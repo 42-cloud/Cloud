@@ -4,6 +4,9 @@
 - name: Verify
   hosts: all
   gather_facts: false # Quicker, if you do not need facts
+  vars:
+    global_project_path: '/opt/cloud-1'
+  
   tasks:
 
     - name: Load role default vars
@@ -14,24 +17,36 @@
       ansible.builtin.include_vars:
         file: ../../vars/main.yml
 
-# --- VERIFICATION MARIADB ---
+    # --- VERIFICATION ON HOST ---
 
-# --- --- host configuration --- ---
-
-    - name: Gather db conf file
+    - name: Stat configuration files
       ansible.builtin.stat:
-        path: "{{ __wordpress_db_conf_path }}"
-      register: wordpress_db_conf
-  
-    - name: Check file exists with permissions
+        path: "{{ item.path }}"
+      loop:
+        - path: "{{ __wordpress_db_conf_path_host }}"
+          mode: "0644"
+          fail_msg: "db conf file is missing or has incorrect permissions."
+        - path: "{{ __wordpress_db_sql_template_path_host }}"
+          mode: "0644"
+          fail_msg: "init sql file is missing or has incorrect permissions."
+        - path: "{{ __wordpress_angie_conf_path_host }}"
+          mode: "0644"
+          fail_msg: "angie conf file is missing or has incorrect permissions."
+      register: __conf_stat_results
+
+    - name: Verify configuration files requirements
       ansible.builtin.assert:
         that:
-          - wordpress_db_conf.stat.exists
-          - wordpress_db_conf.stat.mode == '0644'
-        fail_msg: "db configuration file is missing or has incorrect permissions"
+          - item.stat.exists
+          - item.stat.isreg
+          - item.stat.mode == item.item.mode
+        fail_msg: "{{ item.item.fail_msg }}"
+      loop: "{{  __conf_stat_results.results }}"
+
+    # --- --- DB --- ---
 
     - name: Check db conf content
-      ansible.builtin.command: "cat {{ __wordpress_db_conf_path }}"
+      ansible.builtin.command: "cat {{ __wordpress_db_conf_path_host }}"
       register: db_conf_content
       changed_when: false
 
@@ -41,92 +56,43 @@
           - "'bind-address = 0.0.0.0' in db_conf_content.stdout"
           - "'innodb_buffer_pool_size' in db_conf_content.stdout"
 
-    - name: Gather db init sql file
-      ansible.builtin.stat:
-        path: "{{ __wordpress_db_sql_template_path }}"
-      register: wordpress_db_sql_template
-  
-    - name: Check file exists with permissions
-      ansible.builtin.assert:
-        that:
-          - wordpress_db_sql_template.stat.exists
-          - wordpress_db_sql_template.stat.mode == '0644'
-        fail_msg: "init sql file is missing or has incorrect permissions"
+    # --- VERIFICATION FOR VOLUMES
 
-# --- --- container state --- ---
-
-    - name: Get DB container info
-      community.docker.docker_container_info:
-        name: mariadb
-      register: wordpress_mariadb_container_info
-
-    - name: Check DB container is running
-      ansible.builtin.assert:
-        that:
-          - wordpress_mariadb_container_info.exists
-          - wordpress_mariadb_container_info.container.State.Running == true
-        fail_msg: "container mariadb does not exist or did not start"
-
-    - name: Check DB port is responsive 
-      ansible.builtin.wait_for:
-        host: "127.0.0.1"
-        port: "{{ wordpress_db_port }}"
-        timeout: 30
-        state: started
-        fail_msg: "mariadb service does not respond"
-
-    # --- VERIFICATION WORDPRESS ---
-
-    # --- --- container state --- ---
-
-    - name: Get wordpress container info
-      community.docker.docker_container_info:
-        name: wordpress
-      register: wordpress_wp_container_info
-
-    - name: Check wordpress container is running
-      ansible.builtin.assert:
-        that:
-          - wordpress_wp_container_info.exists
-          - wordpress_wp_container_info.container.State.Running == true
-        fail_msg: "container wordpress does not exist or did not start"
-
-    - name: Check wordpress port is responsive 
-      ansible.builtin.wait_for:
-        host: "127.0.0.1"
-        port: "{{ wordpress_wp_port }}"
-        timeout: 30
-        state: started
-        fail_msg: "wordpress service does not respond"
-
-    # --- --- container state --- ---
-
-    # --- VERIFICATION ANGIE ---
-
-    - name: Verify configuration files requirements
-      ansible.builtin.assert:
-        that:
-          - item.path is file
-          - (item.path | stat).mode == item.mode
-        fail_msg: "{{ item.fail_msg }}"
+    - name: Check Docker volumes existence
+      community.docker.docker_volume_info:
+        name: "{{ item }}"
+      register: __wordpress_volume_info
       loop:
-        - path: "{{ __wordpress_angie_conf_path }}"
-          mode: "0644"
-          fail_msg: "angie conf file is missing or has incorrect permissions."
+        - "{{ wordpress_project_name }}_db_data"
+        - "{{ wordpress_project_name }}_wordpress_data"
 
-    # --- --- container state --- ---
-
-    - name: Get Angie container info
-      community.docker.docker_container_info:
-        name: angie
-      register: wordpress_angie_container_info
-
-    - name: Check Angie container is running
+    - name: Assert volumes are present
       ansible.builtin.assert:
         that:
-          - wordpress_angie_container_info.exists
-          - wordpress_angie_container_info.container.State.Running == true
-        fail_msg: "container angie does not exist or did not start"
+          - item.exists
+        fail_msg: "Volume {{ item.item }} is missing."
+      loop: "{{ __wordpress_volume_info.results }}"
+
+    # --- VERIFICATION ON CONTAINERS ---
+
+    - name: Get info on running containers
+      community.docker.docker_container_info:
+        name: "{{ item }}"
+      register: __wordpress_docker_containers_info
+      loop:
+        - mariadb
+        - wordpress
+        - angie
+        - phpmyadmin
+    
+    - name: Assert all containers are running and healthy
+      ansible.builtin.assert:
+        that:
+          - item.exists
+          - item.container.State.Status == 'running'
+          - item.container.State.Health.Status == 'healthy'
+        fail_msg: "Service {{ item.item }} did not launch or is unhealthy"
+      loop: "{{ __wordpress_docker_containers_info.results }}"
 
     - name: Check Angie SSL port is responsive
       ansible.builtin.wait_for:

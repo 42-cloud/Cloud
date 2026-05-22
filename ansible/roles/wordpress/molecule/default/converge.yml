@@ -4,6 +4,10 @@
 - name: Converge
   hosts: all
   gather_facts: true # Disable if your role does not rely on facts
+  vars:
+    global_project_path: '/opt/cloud-1'
+    wordpress_project_name: 'cloudone'
+    wordpress_db_validate_cmd: ""
   tasks:
     - name: "Include wordpress role"
       ansible.builtin.include_role:
