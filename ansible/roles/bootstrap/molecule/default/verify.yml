@@ -52,6 +52,19 @@
         fail_msg: "User {{ item }} is missing or is not an admin"
       loop: "{{ bootstrap_admin_users_list }}"
 
+    - name: Check sudo privileges for admin users
+      ansible.builtin.command: "sudo -l -U {{ item }}"
+      register: __bootstrap_sudo_privileges
+      changed_when: false
+      loop: "{{ bootstrap_admin_users_list }}"
+
+    - name: Assert users have passwordless root privileges
+      ansible.builtin.assert:
+        that:
+          - "'(ALL) NOPASSWD: ALL' in item.stdout"
+        fail_msg: "L'utilisateur {{ item.item }} n'a pas les privilèges sudo requis (NOPASSWD: ALL)"
+      loop: "{{ __bootstrap_sudo_privileges.results }}"
+
     # --- VERIFICATION WORDPRESS ---
     - name: Get WordPress storage directory details
       ansible.builtin.stat:

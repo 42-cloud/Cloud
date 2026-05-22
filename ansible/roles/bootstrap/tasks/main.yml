@@ -41,6 +41,13 @@
     groups: admins
   loop: "{{ bootstrap_admin_users_list}}"
 
+- name: Configure sudoers for admin group
+  ansible.builtin.copy:
+    content: "%admins ALL=(ALL) NOPASSWD:ALL"
+    dest: /etc/sudoers.d/admins-group
+    mode: '0440'
+    validate: /usr/sbin/visudo -cf %s
+
 - name: Create persistent directories for db with mysql permission
   ansible.builtin.file:
     path: "{{ bootstrap_db_dir }}"
