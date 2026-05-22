@@ -9,3 +9,7 @@ bootstrap_wp_dir: /var/www/html
 bootstrap_db_uid: "999"
 bootstrap_db_gid: "999"
 bootstrap_db_dir: /var/lib/mysql_data
+
+bootstrap_admin_users_list:
+ - toto
+ - tata
