@@ -17,3 +17,6 @@ wordpress_site_url: 'cloud.one'
 
 wordpress_ng_mem_limit: '64m'
 wordpress_ng_mem_res_limit: '32m'
+
+wordpress_db_password: "{{ global_db_password | default('dev_db_pass_fallback') }}"
+wordpress_wp_password: "{{ global_wp_password | default('dev_wp_pass_fallback') }}"

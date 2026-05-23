@@ -6,11 +6,16 @@
   gather_facts: true # Disable if your role does not rely on facts
   vars:
     global_project_path: '/opt/cloud-1'
+    global_db_password: "test_db_password_local"
+    global_wp_password: "test_wp_password_local"
     wordpress_project_name: 'cloudone'
     wordpress_db_validate_cmd: ""
+    wordpress_expose_http: "8080"
+    wordpress_expose_https: "8443"
     wordpress_delegate_host: localhost
     wordpress_become_compose: false
     wordpress_compose_src: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}"
+    WORDPRESS_HOME: "http://localhost:8080"
   tasks:
     - name: "Include wordpress role"
       ansible.builtin.include_role:

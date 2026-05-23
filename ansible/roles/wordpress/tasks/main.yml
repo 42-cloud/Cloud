@@ -1,30 +1,40 @@
 ---
 
+- name: Set dynamic target directory
+  ansible.builtin.set_fact:
+    __wordpress_target_dir: "{{ wordpress_compose_src | default(__wordpress_project_path) }}"
+
+- name: Deploy .env file
+  ansible.builtin.template:
+    src: .env.j2
+    dest: "{{ __wordpress_target_dir }}/.env"
+    mode: '0600'
+  delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
+  become: "{{ wordpress_become_compose | default(true) }}"
+
 - name: Populate db conf
   ansible.builtin.template:
     src: mariadb.conf.j2
-    dest: "{{ __wordpress_db_conf_path_host }}"
-    group: admins
+    dest: "{{ __wordpress_target_dir }}/mariadb.conf" # <-- Dynamique
     mode: '0644'
-    validate: "{{ wordpress_db_validate_cmd | default(omit) }}"
+  delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
+  become: "{{ wordpress_become_compose | default(true) }}"
 
 - name: Populate init sql
   ansible.builtin.template:
     src: init.sql.j2
-    dest: "{{ __wordpress_db_sql_template_path_host }}"
-    group: admins
+    dest: "{{ __wordpress_target_dir }}/init.sql" # <-- Dynamique
     mode: '0644'
+  delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
+  become: "{{ wordpress_become_compose | default(true) }}"
 
-- name: Populate Angie conf
+- name: Deploy Angie configuration file
   ansible.builtin.template:
     src: angie.conf.j2
-    dest: "{{ __wordpress_angie_conf_path_host }}"
-    group: admins
+    dest: "{{ __wordpress_target_dir }}/angie.conf" # Écrit dans le dossier actif (Molecule ou Prod)
     mode: '0644'
-
-- name: Set dynamic target directory
-  ansible.builtin.set_fact:
-    __wordpress_target_dir: "{{ wordpress_compose_src | default(__wordpress_project_path) }}"
+  delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
+  become: "{{ wordpress_become_compose | default(true) }}"
 
 - name: Populate docker compose
   ansible.builtin.template:

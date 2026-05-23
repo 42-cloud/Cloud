@@ -5,7 +5,9 @@ terraform.tfstate.backup
 *.rsa
 *.rsa*
 
+
 .ansible
 *.ini
+**/.vault_pass*
 
 **/.env

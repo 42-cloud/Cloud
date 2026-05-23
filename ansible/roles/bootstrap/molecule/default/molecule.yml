@@ -32,7 +32,7 @@ provisioner:
     ANSIBLE_ROLES_PATH: "../../../"
     ANSIBLE_STDOUT_CALLBACK: default
     ANSIBLE_CALLBACK_RESULT_FORMAT: yaml
-  group_vars: ../../../../group_vars
+  group_vars: ../../../../../group_vars
   playbooks:
     converge: converge.yml
     verify: verify.yml

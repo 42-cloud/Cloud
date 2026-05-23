@@ -25,7 +25,9 @@ services:
       MYSQL_USER: "{{ wordpress_db_user }}"
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     volumes:
-      - db_data:"{{ __wordpress_db_dir_path_dest }}"
+      - db_data:{{ __wordpress_db_dir_path_dest | string | replace('"', '') | replace("'", "") }}:rw
+      - "./mariadb.conf:{{ __wordpress_db_conf_path_dest }}:ro"
+      - "./init.sql:{{ __wordpress_db_sql_template_path_dest }}:ro"
     deploy:
       resources:
         limits:
@@ -53,7 +55,7 @@ services:
         define('WP_HOME', '${WORDPRESS_HOME}');
         define('WP_SITEURL', "{{ wordpress_site_url }}");
     volumes:
-      - wordpress_data:"{{ __wordpress_wp_dir_path_dest }}"
+        - wordpress_data:{{ __wordpress_wp_dir_path_dest | string | replace('"', '') | replace("'", "") }}:rw
     deploy:
       resources:
         limits:
@@ -77,10 +79,10 @@ services:
     image: docker.angie.software/angie:1.11.5
     container_name: angie
     ports:
-      - "{{__wordpress_angie_port }}:8080"
-      - "{{ __wordpress_angie_ssl_port }}:443"
+      - "{{ wordpress_expose_http | default('80') }}:80"
+      - "{{ wordpress_expose_https | default('443') }}:443"
     volumes:
-      - "{{ __wordpress_angie_conf_path_host }}:{{ __wordpress_angie_conf_path_dest }}:ro"
+      - "./angie.conf:{{ __wordpress_angie_conf_path_dest }}:ro"
     depends_on:
       wordpress:
         condition: service_healthy

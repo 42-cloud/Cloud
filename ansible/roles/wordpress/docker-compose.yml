@@ -25,7 +25,9 @@ services:
       MYSQL_USER: "mysql"
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     volumes:
-      - db_data:"/var/lib/mysql_data"
+      - db_data:/var/lib/mysql_data:rw
+      - "./mariadb.conf:/etc/mysql/mariadb.conf.d/50-server.conf:ro"
+      - "./init.sql:/docker-entrypoint-initdb.d/init.sql:ro"
     deploy:
       resources:
         limits:
@@ -53,7 +55,7 @@ services:
         define('WP_HOME', '${WORDPRESS_HOME}');
         define('WP_SITEURL', "cloud.one");
     volumes:
-      - wordpress_data:"/var/www/html"
+        - wordpress_data:/var/www/html:rw
     deploy:
       resources:
         limits:
@@ -77,10 +79,10 @@ services:
     image: docker.angie.software/angie:1.11.5
     container_name: angie
     ports:
-      - "8080:8080"
-      - "443:443"
+      - "8080:80"
+      - "8443:443"
     volumes:
-      - "/opt/cloud-1/angie/angie.conf:/etc/nginx/angie.conf:ro"
+      - "./angie.conf:/etc/nginx/angie.conf:ro"
     depends_on:
       wordpress:
         condition: service_healthy
