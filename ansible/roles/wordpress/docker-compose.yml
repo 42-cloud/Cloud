@@ -1,3 +1,4 @@
+---
 x-config: &config
   restart: unless-stopped
   security_opt:
@@ -20,7 +21,7 @@ services:
     image: mariadb:11.8
     container_name: mariadb
     environment:
-      MYSQL_RANDOM_ROOT_PASSWORD: '1'
+      MYSQL_RANDOM_ROOT_PASSWORD: "1"
       MYSQL_DATABASE: wordpress
       MYSQL_USER: "mysql"
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
@@ -55,7 +56,7 @@ services:
         define('WP_HOME', '${WORDPRESS_HOME}');
         define('WP_SITEURL', "cloud.one");
     volumes:
-        - wordpress_data:/var/www/html:rw
+      - wordpress_data:/var/www/html:rw
     deploy:
       resources:
         limits:
@@ -89,10 +90,10 @@ services:
       phpmyadmin:
         condition: service_healthy
     # healthcheck:
-      # test: ["CMD-SHELL", "curl -q http://localhost/ || exit 1"]
-      # interval: 10s
-      # timeout: 5s
-      # retries: 5
+    # test: ["CMD-SHELL", "curl -q http://localhost/ || exit 1"]
+    # interval: 10s
+    # timeout: 5s
+    # retries: 5
     deploy:
       resources:
         limits:
@@ -140,7 +141,7 @@ services:
     depends_on:
       - prometheus
       # prometheus:
-        # condition: service_healthy
+    # condition: service_healthy
     deploy:
       resources:
         limits:
@@ -169,7 +170,7 @@ services:
     depends_on:
       - angie
       # angie:
-        # condition: service_healthy
+    # condition: service_healthy
     deploy:
       resources:
         limits:
@@ -178,7 +179,6 @@ services:
           memory: 256m
     networks:
       - monitoring
-
 
 networks:
   cloudone-front:

@@ -5,10 +5,9 @@
   hosts: all
   gather_facts: false # Quicker, if you do not need facts
   vars:
-    global_project_path: '/opt/cloud-1'
-  
-  tasks:
+    global_project_path: "/opt/cloud-1"
 
+  tasks:
     - name: Load role default vars
       ansible.builtin.include_vars:
         file: "../../defaults/main.yml"
@@ -84,7 +83,7 @@
         - wordpress
         - angie
         - phpmyadmin
-    
+
     - name: Assert all containers are running and healthy
       ansible.builtin.assert:
         that:
@@ -103,7 +102,7 @@
 
     # --- VERIFICATION INTEGRATION ---
 
-    - name: Access Wordpress installation page via Angie 
+    - name: Access Wordpress installation page via Angie
       ansible.builtin.uri:
         url: "https://127.0.0.1:{{ wordpress_angie_ssl_port }}"
         method: GET

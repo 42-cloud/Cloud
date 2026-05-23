@@ -1,5 +1,4 @@
 ---
-
 - name: Set dynamic target directory
   ansible.builtin.set_fact:
     __wordpress_target_dir: "{{ wordpress_compose_src | default(__wordpress_project_path) }}"
@@ -8,7 +7,7 @@
   ansible.builtin.template:
     src: .env.j2
     dest: "{{ __wordpress_target_dir }}/.env"
-    mode: '0600'
+    mode: "0600"
   delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
   become: "{{ wordpress_become_compose | default(true) }}"
 
@@ -16,7 +15,7 @@
   ansible.builtin.template:
     src: mariadb.conf.j2
     dest: "{{ __wordpress_target_dir }}/mariadb.conf" # <-- Dynamique
-    mode: '0644'
+    mode: "0644"
   delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
   become: "{{ wordpress_become_compose | default(true) }}"
 
@@ -24,7 +23,7 @@
   ansible.builtin.template:
     src: init.sql.j2
     dest: "{{ __wordpress_target_dir }}/init.sql" # <-- Dynamique
-    mode: '0644'
+    mode: "0644"
   delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
   become: "{{ wordpress_become_compose | default(true) }}"
 
@@ -32,7 +31,7 @@
   ansible.builtin.template:
     src: angie.conf.j2
     dest: "{{ __wordpress_target_dir }}/angie.conf" # Écrit dans le dossier actif (Molecule ou Prod)
-    mode: '0644'
+    mode: "0644"
   delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
   become: "{{ wordpress_become_compose | default(true) }}"
 
@@ -40,12 +39,12 @@
   ansible.builtin.template:
     src: docker-compose.yml.j2
     dest: "{{ __wordpress_target_dir }}/docker-compose.yml"
-    mode: '0640'
+    mode: "0640"
   delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
   become: "{{ wordpress_become_compose | default(true) }}"
 
 # delegated to localhost in test
-- name: launch docker compose
+- name: Launch docker compose
   community.docker.docker_compose_v2:
     project_src: "{{ __wordpress_target_dir }}"
     state: present

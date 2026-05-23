@@ -81,7 +81,7 @@ tasks:
 # ──────────────────────────────────────────
   compose:help:
     desc: Some exemples
-    cmds: 
+    cmds:
       - |
         echo -e "{{ .PPL }}WORKFLOW EXEMPLE{{ .NC }}"
         echo -e "{{ .PPL }}Run: task compose:up PROFILE=monitoring for grafana and prometheus{{ .NC }}"
@@ -89,7 +89,7 @@ tasks:
     silent: true
   compose:up:
     desc: Up the docker compose in local
-    cmds: 
+    cmds:
       - |
         echo -e "{{ .PPL }}Process compose up...{{ .NC }}"
         cd compose && docker compose {{if .PROFILE}}--profile {{.PROFILE}}{{end}} up -d
