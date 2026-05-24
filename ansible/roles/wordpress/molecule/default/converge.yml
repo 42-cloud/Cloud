@@ -14,7 +14,7 @@
     wordpress_expose_https: "8443"
     wordpress_delegate_host: localhost
     wordpress_become_compose: false
-    wordpress_compose_src: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}"
+    wordpress_compose_src: "{{ molecule_ephemeral_directory }}/wordpress_stack"
   tasks:
     - name: "Include wordpress role"
       ansible.builtin.include_role:

@@ -9,5 +9,8 @@ terraform.tfstate.backup
 .ansible
 *.ini
 **/.vault_pass*
+ansible/roles/wordpress/angie
+ansible/roles/wordpress/mariadb
+ansible/roles/wordpress/docker-compose.yml
 
 **/.env

@@ -3,6 +3,14 @@
   ansible.builtin.set_fact:
     __wordpress_target_dir: "{{ wordpress_compose_src | default(__wordpress_project_path) }}"
 
+- name: Ensure dynamic target root directory exists
+  ansible.builtin.file:
+    path: "{{ __wordpress_target_dir }}"
+    state: directory
+    mode: "0755"
+  delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
+  become: "{{ wordpress_become_compose | default(true) }}"
+
 - name: Deploy .env file
   ansible.builtin.template:
     src: .env.j2
@@ -11,10 +19,22 @@
   delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
   become: "{{ wordpress_become_compose | default(true) }}"
 
+- name: Ensure configuration subdirectories exist
+  ansible.builtin.file:
+    path: "{{ __wordpress_target_dir }}/{{ item }}"
+    state: directory
+    mode: "0775"
+  loop:
+    - mariadb
+    - angie
+    - wordpress
+  delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
+  become: "{{ wordpress_become_compose | default(true) }}"
+
 - name: Populate db conf
   ansible.builtin.template:
     src: mariadb.conf.j2
-    dest: "{{ __wordpress_target_dir }}/mariadb.conf" # <-- Dynamique
+    dest: "{{ __wordpress_db_conf_path_host }}"
     mode: "0644"
   delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
   become: "{{ wordpress_become_compose | default(true) }}"
@@ -22,7 +42,7 @@
 - name: Populate init sql
   ansible.builtin.template:
     src: init.sql.j2
-    dest: "{{ __wordpress_target_dir }}/init.sql" # <-- Dynamique
+    dest: "{{ __wordpress_target_dir }}/mariadb/init.sql"
     mode: "0644"
   delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
   become: "{{ wordpress_become_compose | default(true) }}"
@@ -30,7 +50,7 @@
 - name: Deploy Angie configuration file
   ansible.builtin.template:
     src: angie.conf.j2
-    dest: "{{ __wordpress_target_dir }}/angie.conf" # Écrit dans le dossier actif (Molecule ou Prod)
+    dest: "{{ __wordpress_target_dir }}/angie/angie.conf"
     mode: "0644"
   delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
   become: "{{ wordpress_become_compose | default(true) }}"

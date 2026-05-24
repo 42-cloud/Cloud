@@ -10,6 +10,4 @@ bootstrap_db_uid: "999"
 bootstrap_db_gid: "999"
 bootstrap_db_dir: "{{ global_db_dir | default('/var/lib/mysql_data') }}"
 
-bootstrap_admin_users_list:
-  - toto
-  - tata
+bootstrap_admin_users_list: []

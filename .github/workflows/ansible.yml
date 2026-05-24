@@ -44,7 +44,6 @@ jobs:
           if [ -f requirements.yml ]; then
             ansible-galaxy collection install -r requirements.yml
           fi
-
       - name: Run Ansible Lint
         uses: ansible/ansible-lint-action@v24.12.0
         with:

@@ -26,8 +26,8 @@ services:
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     volumes:
       - db_data:{{ __wordpress_db_dir_path_dest | string | replace('"', '') | replace("'", "") }}:rw
-      - "./mariadb.conf:{{ __wordpress_db_conf_path_dest }}:ro"
-      - "./init.sql:{{ __wordpress_db_sql_template_path_dest }}:ro"
+      - "{{ __wordpress_db_conf_path_host }}:{{ __wordpress_db_conf_path_dest }}:ro"
+      - "{{ __wordpress_db_sql_template_path_host }}:{{ __wordpress_db_sql_template_path_dest }}:ro"
     deploy:
       resources:
         limits:
@@ -51,11 +51,8 @@ services:
       WORDPRESS_DB_USER: "{{ wordpress_db_user }}"
       WORDPRESS_DB_PASSWORD: ${WORDPRESS_DB_PASSWORD}
       WORDPRESS_DB_NAME: wordpress
-      WORDPRESS_CONFIG_EXTRA: |
-        define('WP_HOME', '${WORDPRESS_HOME}');
-        define('WP_SITEURL', "{{ wordpress_site_url }}");
     volumes:
-        - wordpress_data:{{ __wordpress_wp_dir_path_dest | string | replace('"', '') | replace("'", "") }}:rw
+        - wordpress_data:/var/www/html:rw
     deploy:
       resources:
         limits:
@@ -82,7 +79,8 @@ services:
       - "{{ wordpress_expose_http | default('80') }}:80"
       - "{{ wordpress_expose_https | default('443') }}:443"
     volumes:
-      - "./angie.conf:{{ __wordpress_angie_conf_path_dest }}:ro"
+      - "{{ __wordpress_angie_conf_path_host }}:{{ __wordpress_angie_conf_path_dest }}:ro"
+      - "{{ __wordpress_target_dir }}/angie/certs:/etc/nginx/certs:ro"
     depends_on:
       wordpress:
         condition: service_healthy

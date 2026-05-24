@@ -39,7 +39,9 @@
   ansible.builtin.user:
     name: "{{ item }}"
     groups: admins
-  loop: "{{ bootstrap_admin_users_list}}"
+    append: true
+    state: present
+  loop: "{{ bootstrap_admin_users_list }}"
 
 - name: Configure sudoers for admin group
   ansible.builtin.copy:

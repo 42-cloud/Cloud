@@ -77,6 +77,40 @@ tasks:
       - bash scripts/tfvars.sh
     silent: true
 # ──────────────────────────────────────────
+# ANSIBLE
+# ──────────────────────────────────────────
+  ansible:help:
+    desc: Ansible tasks
+    cmds:
+      - |
+        echo -e "{{ .PPL }}Ansible tasks{{ .NC }}"
+        echo -e "{{ .PPL }Run: task ansible:test{{ .NC }}"
+
+  ansible:test:
+    desc: "Ansible Molecule Tests for a specific roles or all of them. Usage: task ansible:test [role=wordpress]"
+    dir: '{{.USER_WORKING_DIR}}'
+    cmds:
+      - |
+        if [ -n "{{ .role }}" ]; then
+          if [ -d "ansible/roles/{{ .role }}/molecule/default" ]; then
+            echo -e "{{ .PPL }}Running Molecule test for role: {{ .role }}{{ .NC }}"
+            cd ansible/roles/{{.role}} && molecule destroy && molecule test
+          else
+            echo -e "{{ .PPL }}Role {{ .role }} not found{{ .NC }}"
+            exit 1
+          fi
+        else
+          echo -e "{{ .PPL }}Running tests for all roles{{ .NC }}"
+          for role_dir in ansible/roles/*; do
+            echo -e "{{.role_dir}}"
+            if [ -d "$role_dir/molecule/default" ]; then
+              echo -e "{{.PPL}}Testing role: $(basename $role_dir){{.NC}}"
+              (cd "$role_dir" && molecule destroy && molecule test)
+            fi
+          done
+        fi
+    silent: true
+# ──────────────────────────────────────────
 # DOCKER COMPOSE
 # ──────────────────────────────────────────
   compose:help:
