@@ -1,11 +1,18 @@
 ---
 - name: Verify Host Bootstrap
   hosts: all
-  gather_facts: false
+  gather_facts: true
+  vars:
+    global_project_path: "/opt/cloud-1"
+
   tasks:
     - name: Load role default vars
       ansible.builtin.include_vars:
         file: "../../defaults/main.yml"
+
+    - name: Load role vars
+      ansible.builtin.include_vars:
+        file: "../../vars/main.yml"
 
     - name: Check UFW service status
       ansible.builtin.command: ufw status verbose
@@ -28,6 +35,42 @@
           - "'22/tcp' in bootstrap_ufw_status.stdout"
           - "'80/tcp' in bootstrap_ufw_status.stdout"
           - "'443/tcp' in bootstrap_ufw_status.stdout"
+
+    # --- VERIFICATION USERS ---
+    - name: Populate ansible_facts with group database
+      ansible.builtin.getent:
+        database: group
+
+    - name: Assert admin group exists
+      ansible.builtin.assert:
+        that:
+          - "'admins' in ansible_facts.getent_group"
+        fail_msg: "The 'admins' group was not created"
+
+    - name: Populate ansible_facts with passwd database
+      ansible.builtin.getent:
+        database: passwd
+
+    - name: Ensure users args are member of admin group
+      ansible.builtin.assert:
+        that:
+          - "item in ansible_facts.getent_passwd"
+          - "item in ansible_facts.getent_group['admins'][2].split(',')"
+        fail_msg: "User {{ item }} is missing or is not an admin"
+      loop: "{{ bootstrap_admin_users_list }}"
+
+    - name: Check sudo privileges for admin users
+      ansible.builtin.command: "sudo -l -U {{ item }}"
+      register: __bootstrap_sudo_privileges
+      changed_when: false
+      loop: "{{ bootstrap_admin_users_list }}"
+
+    - name: Assert users have passwordless root privileges
+      ansible.builtin.assert:
+        that:
+          - "'(ALL) NOPASSWD: ALL' in item.stdout"
+        fail_msg: "L'utilisateur {{ item.item }} n'a pas les privilèges sudo requis (NOPASSWD: ALL)"
+      loop: "{{ __bootstrap_sudo_privileges.results }}"
 
     # --- VERIFICATION WORDPRESS ---
     - name: Get WordPress storage directory details
@@ -62,3 +105,24 @@
           - bootstrap_db_dir_res.stat.uid == bootstrap_db_uid | int
           - bootstrap_db_dir_res.stat.gid == bootstrap_db_gid | int
           - bootstrap_db_dir_res.stat.mode == '0700'
+
+    # --- VERIFICATION DIRS ---
+    - name: Get conf directory details
+      ansible.builtin.stat:
+        path: "{{ item }}"
+      loop:
+        - "{{ __bootstrap_project_path }}"
+        - "{{ __bootstrap_project_path }}/mariadb"
+        - "{{ __bootstrap_project_path }}/wordpress"
+        - "{{ __bootstrap_project_path }}/angie"
+      register: __bootstrap_directories_stats
+
+    - name: Assert config directorties exists and have correct permissions
+      ansible.builtin.assert:
+        that:
+          - item.stat.exists
+          - item.stat.isdir
+          - item.stat.mode == '0775'
+          - item.stat.gr_name == 'admins'
+        fail_msg: "Missing config directory {{ item.item }}"
+      loop: "{{ __bootstrap_directories_stats.results }}"

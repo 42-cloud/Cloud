@@ -1,0 +1,15 @@
+---
+# .yamllint
+extends: default
+
+rules:
+  line-length:
+    max: 120
+    allow-non-breakable-words: true
+
+ignore: |
+  .pre-commit-config.yaml
+  melange/
+  compose/
+  .github/
+  Taskfile.yml

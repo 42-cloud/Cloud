@@ -2,6 +2,9 @@
 - name: Converge Host Bootstrap
   hosts: all
   gather_facts: true
+  vars:
+    global_project_path: "/opt/cloud-1"
+
   tasks:
     - name: "Include bootstrap role"
       ansible.builtin.include_role:

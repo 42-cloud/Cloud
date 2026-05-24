@@ -1,0 +1,55 @@
+---
+- name: Prepare instance with bootstrap requirements
+  hosts: all
+  become: true
+  vars:
+    global_project_path: "/opt/cloud-1"
+    bootstrap_admin_users_list: ["toto", "tata"]
+    wordpress_compose_src: "{{ molecule_ephemeral_directory }}/wordpress_stack"
+  tasks:
+    - name: Ensure APT cache is up to date
+      ansible.builtin.apt:
+        update_cache: true
+
+    - name: Install Docker CLI only (required for Ansible community.docker modules)
+      ansible.builtin.apt:
+        name: docker.io
+        state: present
+
+    - name: Execute bootstrap role to create groups and directories
+      ansible.builtin.include_role:
+        name: "bootstrap"
+
+    - name: Ensure angie certs directory exists on host
+      ansible.builtin.file:
+        path: "{{ wordpress_compose_src }}/angie/certs"
+        state: directory
+        mode: "0755"
+      delegate_to: localhost
+      become: false
+
+    - name: Generate an OpenSSL private key
+      community.crypto.openssl_privatekey:
+        path: "{{ wordpress_compose_src }}/angie/certs/mycert.key"
+        size: 2048
+        type: RSA
+        mode: "0644"
+      delegate_to: localhost
+      become: false
+
+    - name: Generate an OpenSSL Certificate Signing Request (CSR)
+      community.crypto.openssl_csr:
+        path: "{{ wordpress_compose_src }}/angie/certs/mycert.csr"
+        privatekey_path: "{{ wordpress_compose_src }}/angie/certs/mycert.key"
+        common_name: "localhost"
+      delegate_to: localhost
+      become: false
+
+    - name: Generate a Self-Signed OpenSSL certificate
+      community.crypto.x509_certificate:
+        path: "{{ wordpress_compose_src }}/angie/certs/mycert.crt"
+        privatekey_path: "{{ wordpress_compose_src }}/angie/certs/mycert.key"
+        csr_path: "{{ wordpress_compose_src }}/angie/certs/mycert.csr"
+        provider: selfsigned
+      delegate_to: localhost
+      become: false

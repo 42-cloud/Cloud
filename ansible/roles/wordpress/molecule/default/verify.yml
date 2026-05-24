@@ -1,0 +1,129 @@
+---
+# Purpose: assert that the instance really ended up in the expected state.
+# Molecule calls this playbook with `molecule verify`.
+- name: Verify
+  hosts: all
+  gather_facts: false
+  vars:
+    global_project_path: "/opt/cloud-1"
+    wordpress_compose_src: "{{ molecule_ephemeral_directory }}/wordpress_stack"
+    wordpress_expose_https: 8443
+    wordpress_expose_http: "8080"
+
+  tasks:
+    - name: Load role default vars
+      ansible.builtin.include_vars:
+        file: "../../defaults/main.yml"
+
+    - name: Load role variables
+      ansible.builtin.include_vars:
+        file: ../../vars/main.yml
+
+    # --- VERIFICATION ON HOST ---
+    - name: Stat configuration files
+      ansible.builtin.stat:
+        path: "{{ item.path }}"
+      delegate_to: localhost
+      loop:
+        - path: "{{ __wordpress_db_conf_path_host }}"
+          mode: "0644"
+          fail_msg: "db conf file is missing or has incorrect permissions."
+        - path: "{{ __wordpress_db_sql_template_path_host }}"
+          mode: "0644"
+          fail_msg: "init sql file is missing or has incorrect permissions."
+        - path: "{{ __wordpress_angie_conf_path_host }}"
+          mode: "0644"
+          fail_msg: "angie conf file is missing or has incorrect permissions."
+      register: wordpress_conf_stat_results
+
+    - name: Verify configuration files requirements
+      ansible.builtin.assert:
+        that:
+          - item.stat.exists
+          - item.stat.isreg
+          - item.stat.mode == item.item.mode
+        fail_msg: "{{ item.item.fail_msg }}"
+      loop: "{{  wordpress_conf_stat_results.results }}"
+
+    # --- --- DB --- ---
+
+    - name: Check db conf content
+      ansible.builtin.command: "cat {{ __wordpress_db_conf_path_host }}"
+      register: wordpress_db_conf_content
+      delegate_to: localhost
+      changed_when: false
+
+    - name: Check that configuration template is filled
+      ansible.builtin.assert:
+        that:
+          - "'bind-address = 0.0.0.0' in wordpress_db_conf_content.stdout"
+          - "'innodb_buffer_pool_size' in wordpress_db_conf_content.stdout"
+
+    # --- VERIFICATION FOR VOLUMES
+
+    - name: Check Docker volumes existence
+      community.docker.docker_volume_info:
+        name: "{{ item }}"
+      loop:
+        - "{{ wordpress_project_name }}_db_data"
+        - "{{ wordpress_project_name }}_wordpress_data"
+      delegate_to: localhost
+      register: __wordpress_volume_info
+
+    - name: Assert volumes are present
+      ansible.builtin.assert:
+        that:
+          - item.exists
+        fail_msg: "Volume {{ item.item }} is missing."
+      loop: "{{ __wordpress_volume_info.results }}"
+
+    # --- VERIFICATION ON CONTAINERS ---
+
+    - name: Get info on running containers
+      community.docker.docker_container_info:
+        name: "{{ item }}"
+      delegate_to: localhost
+      register: __wordpress_docker_containers_info
+      loop:
+        - mariadb
+        - wordpress
+        - angie
+        - phpmyadmin
+
+    - name: Assert all containers are running and healthy
+      ansible.builtin.assert:
+        that:
+          - item.exists
+          - item.container.State.Status == 'running'
+          - item.container.State.Health.Status | default('healthy') == 'healthy'
+        fail_msg: "Service {{ item.item }} did not launch or is unhealthy"
+      loop: "{{ __wordpress_docker_containers_info.results }}"
+
+    - name: Check Angie SSL port is responsive
+      ansible.builtin.wait_for:
+        host: "127.0.0.1"
+        port: "{{ wordpress_expose_https | default('443') }}"
+        timeout: 30
+        state: started
+      delegate_to: localhost
+
+
+    # --- VERIFICATION INTEGRATION ---
+
+    - name: Access Wordpress page via Angie
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:8080"
+        method: GET
+        return_content: true
+        status_code: [200, 302]
+      delegate_to: localhost
+      register: wordpress_ready
+      until: wordpress_ready.status in [200, 302]
+      retries: 15
+      delay: 5
+
+    - name: Check DB connection is functional
+      ansible.builtin.assert:
+        that:
+          - "'Error establishing a database connection' not in wordpress_ready.content"
+        fail_msg: "wordpress container cannot communicate with DB"

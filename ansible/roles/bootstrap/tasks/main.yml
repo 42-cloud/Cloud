@@ -30,6 +30,26 @@
   community.general.ufw:
     state: enabled
 
+- name: Create admin group
+  ansible.builtin.group:
+    name: admins
+    state: present
+
+- name: Create admin users
+  ansible.builtin.user:
+    name: "{{ item }}"
+    groups: admins
+    append: true
+    state: present
+  loop: "{{ bootstrap_admin_users_list }}"
+
+- name: Configure sudoers for admin group
+  ansible.builtin.copy:
+    content: "%admins ALL=(ALL) NOPASSWD:ALL"
+    dest: /etc/sudoers.d/admins-group
+    mode: "0440"
+    validate: /usr/sbin/visudo -cf %s
+
 - name: Create persistent directories for db with mysql permission
   ansible.builtin.file:
     path: "{{ bootstrap_db_dir }}"
@@ -45,3 +65,17 @@
     owner: "{{ bootstrap_wp_uid | int }}"
     group: "{{ bootstrap_wp_gid | int }}"
     mode: "0755"
+
+- name: Create configuration directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: admins
+    mode: "0775"
+  loop:
+    - "{{ __bootstrap_project_path }}"
+    - "{{ __bootstrap_project_path }}/mariadb"
+    - "{{ __bootstrap_project_path }}/wordpress"
+    - "{{ __bootstrap_project_path }}/angie"
+  become: true

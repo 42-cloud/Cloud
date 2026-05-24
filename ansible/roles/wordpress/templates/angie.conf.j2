@@ -1,0 +1,79 @@
+events {}
+
+http {
+	include /etc/angie/prometheus_all.conf;
+	server {
+		listen 8080;
+		status_zone main_server;
+
+        error_page 500 502 503 504 /50x.html;
+
+		location / {
+			status_zone wordpress;
+			proxy_pass http://wordpress:80;
+			proxy_set_header Host $host;
+			proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+		}
+
+		location /phpmyadmin/ {
+			status_zone phpmyadmin;
+			proxy_pass http://phpmyadmin:80/;
+			proxy_set_header Host $host;
+			proxy_set_header X-Real-IP $remote_addr;
+		}
+
+		location /status/ {
+			api /status/;
+		}
+		location /metrics/ {
+			prometheus all;
+		}
+	}
+
+    server {
+        listen                      443 ssl;
+        listen                      [::]:443 ssl;
+        # http2                       on;
+        server_name                 localhost;
+
+        ssl_certificate             /etc/nginx/certs/mycert.crt;
+        ssl_certificate_key         /etc/nginx/certs/mycert.key;
+        ssl_protocols               TLSv1.2 TLSv1.3;
+
+        proxy_set_header            Host $host;
+        proxy_set_header            X-Real-IP $remote_addr;
+        proxy_set_header            X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header            X-Forwarded-Proto $scheme;
+        proxy_set_header            X-Forwarded-Port 8443;
+
+        index                       index.html index.htm index.php;
+        error_page                  500 502 503 504 /50x.html;
+    
+        location = /admin {
+            return 301 /admin/;
+        }
+
+        location /admin/ {
+            return 301 /wp-admin/;
+        }
+
+        location / {
+            status_zone             wordpress_https;
+            proxy_pass              http://wordpress:80;
+            proxy_read_timeout      300;
+        }
+
+        location = /favicon.ico {
+            log_not_found off;
+            access_log off;
+            expires 7d;
+        }
+
+        location ~ /\.ht {
+			deny all;
+		}
+
+    }
+}
