@@ -5,16 +5,75 @@ resource "aws_key_pair" "cloudone" {
 
 resource "aws_vpc" "cloudone" {
   cidr_block = "10.0.0.0/16"
+  
   tags = {
     Name = "${var.project_name}-vpc"
   }
 }
 
+# ==========================================
+# OBSERVABILITY & IAM
+# ==========================================
+
+resource "aws_flow_log" "cloudone" {
+  vpc_id          = aws_vpc.cloudone.id
+  traffic_type    = "ALL"
+  log_destination = aws_cloudwatch_log_group.cloudone.arn
+  iam_role_arn    = aws_iam_role.cloudone.arn
+}
+
+resource "aws_cloudwatch_log_group" "cloudone" {
+  name            = "${var.project_name}-vpc-flow-logs"
+  retention_in_days = 2
+}
+
+data "aws_iam_policy_document" "assume_role" {
+  statement {
+    effect = "Allow"
+
+    principals {
+      type        = "Service"
+      identifiers = ["vpc-flow-logs.amazonaws.com"]
+    }
+
+    actions = ["sts:AssumeRole"]
+  }
+}
+resource "aws_iam_role" "cloudone" {
+  name               = "${var.project_name}-flowlog-role"
+  assume_role_policy = data.aws_iam_policy_document.assume_role.json
+}
+
+data "aws_iam_policy_document" "cloudone" {
+  statement {
+    effect = "Allow"
+
+    actions = [
+      "logs:CreateLogStream",
+      "logs:PutLogEvents",
+      "logs:DescribeLogGroups",
+      "logs:DescribeLogStreams",
+    ]
+
+    resources = ["${aws_cloudwatch_log_group.cloudone.arn}:*"]
+  }
+}
+
+resource "aws_iam_role_policy" "cloudone" {
+  name   = "${var.project_name}-flowlog-policy"
+  role   = aws_iam_role.cloudone.id
+  policy = data.aws_iam_policy_document.cloudone.json
+}
+
+# ==========================================
+# NETWORK & ROUTING
+# ==========================================
+
 resource "aws_subnet" "cloudone" {
   vpc_id                  = aws_vpc.cloudone.id
   cidr_block              = "10.0.1.0/24"
   availability_zone       = "${var.aws_region}a"
-  map_public_ip_on_launch = true
+  map_public_ip_on_launch = false
   tags = {
     Name = "${var.project_name}-subnet"
   }
@@ -41,20 +100,75 @@ resource "aws_route_table_association" "cloudone" {
   route_table_id = aws_route_table.cloudone.id
 }
 
+# ==========================================
+# FIREWALL
+# ==========================================
+resource "aws_default_security_group" "default" {
+    vpc_id = aws_vpc.cloudone.id
+    tags = {
+        Name = "${var.project_name}-default-sg-restricted"
+    }
+}
 resource "aws_security_group" "cloudone" {
   name   = "${var.project_name}-sg"
   vpc_id = aws_vpc.cloudone.id
 
   ingress {
+    description = "SSH access for Ansible"
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
     cidr_blocks = [var.ip_host]
   }
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
+
+  ingress {
+    description = "HTTP access for Angie"
+    from_port   = 8080 # check ansible wordpress_expose_http
+    to_port     = 8080
+    protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
+
+  ingress {
+    description = "HTTPS access for Angie"
+    from_port   = 8443 # check ansible wordpress_expose_https
+    to_port     = 8443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  # --- OUTGOING (EGRESS) ---
+  egress {
+    description = "External HTTP requests + update"
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    description = "External HTTPS requests + update"
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    description = "DNS resolving"
+    from_port   = 53
+    to_port     = 53
+    protocol    = "udp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  # can be necessary for some ansible tasks (apt install, docker pull)
+  egress {
+    description = "DNS resolving via TCP"
+    from_port   = 53
+    to_port     = 53
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
 }
