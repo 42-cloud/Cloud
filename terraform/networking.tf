@@ -27,6 +27,7 @@ data "aws_iam_policy_document" "cloudwatch_kms_policy" {
     resources = ["*"]
     # checkov:skip=CKV_AWS_111:Full KMS administrative access is explicitly delegated to the root account to prevent key lockout.
     # checkov:skip=CKV_AWS_356:KMS Key Policies require "*" in the resource field to target the key they are attached to
+    # checkov:skip=CKV_AWS_109:Root account must retain permission management capabilities (kms:PutKeyPolicy) over its own key
   }
 
   statement {

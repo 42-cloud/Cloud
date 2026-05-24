@@ -116,6 +116,7 @@
         method: GET
         return_content: true
         validate_certs: false
+        # checkov:skip=CKV_ANSIBLE_1: Self signed certificates are used
         status_code: [200, 302]
       delegate_to: localhost
       register: wordpress_ready
