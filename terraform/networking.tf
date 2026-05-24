@@ -25,6 +25,8 @@ data "aws_iam_policy_document" "cloudwatch_kms_policy" {
     }
     actions   = ["kms:*"]
     resources = ["*"]
+    # checkov:skip=CKV_AWS_111:Full KMS administrative access is explicitly delegated to the root account to prevent key lockout.
+    # checkov:skip=CKV_AWS_356:KMS Key Policies require "*" in the resource field to target the key they are attached to
   }
 
   statement {
@@ -42,6 +44,12 @@ data "aws_iam_policy_document" "cloudwatch_kms_policy" {
       "kms:Describe*"
     ]
     resources = ["*"]
+    condition {
+      test     = "ArnEquals"
+      variable = "kms:EncryptionContext:aws:logs:arn"
+      values   = ["arn:aws:logs:${var.aws_region}:${data.aws_caller_identity.current.account_id}:log-group:${var.project_name}-vpc-flow-logs"]
+    }
+    # checkov:skip=CKV_AWS_356:KMS key policies must use "*" as the resource. Scope is securely narrowed via the encryption context ARN condition.
   }
 }
 
@@ -51,6 +59,7 @@ resource "aws_kms_key" "cloudwatch_key" {
   description             = "KMS Key for CloudWatch Log Group encryption"
   deletion_window_in_days = 7
   policy                  = data.aws_iam_policy_document.cloudwatch_kms_policy.json
+  enable_key_rotation     = true
 }
 
 # ==========================================
@@ -68,6 +77,8 @@ resource "aws_cloudwatch_log_group" "cloudone" {
   name              = "${var.project_name}-vpc-flow-logs"
   retention_in_days = 3
   kms_key_id        = aws_kms_key.cloudwatch_key.arn
+
+  # checkov:skip=CKV_AWS_338:Short retention of 2 days is intentional to reduce storage costs in this evaluation environment.
 }
 
 data "aws_iam_policy_document" "assume_role" {
