@@ -27,24 +27,30 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
-          cache: 'pip'
+
+      - name: Install Linting tools and dependencies
+        run: |
+          python -m pip install --upgrade pip &&
+          pip install yamllint ansible-lint ansible-navigator "ansible-core>=2.15,<2.16"
 
       - name: Run Yaml Lint
         uses: ibiqlik/action-yamllint@v3
         with:
           file_or_dir: .
 
-      - name: Install Ansible Core and Dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install ansible-core>=2.15,<2.16 ansible-navigator
-
-      - name: Install Ansible Galaxy Collections
-        run: |
-          if [ -f requirements.yml ]; then
-            ansible-galaxy collection install -r requirements.yml
-          fi
       - name: Run Ansible Lint
-        uses: ansible/ansible-lint-action@v24.12.0
-        with:
-          targets: "ansible/"
+        run: |
+          touch .ansible.ci.cfg
+          if [ -n "community.general" ]; then
+            ansible-galaxy collection install community.general
+          fi
+          if [ -n "community.crypto" ]; then
+            ansible-galaxy collection install community.crypto
+          fi
+          if [ -n "community.docker" ]; then
+            ansible-galaxy collection install community.docker
+          fi
+          ansible-lint ansible/
+        env:
+          ANSIBLE_CONFIG: ".ansible.ci.cfg"
+          ANSIBLE_VAULT_PASSWORD_LIST: "cloudone=${{ secrets.VAULT_PASS_CLOUDONE }}"

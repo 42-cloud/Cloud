@@ -3,7 +3,7 @@
 # Molecule calls this playbook with `molecule converge`.
 - name: Converge
   hosts: all
-  gather_facts: true # Disable if your role does not rely on facts
+  gather_facts: true
   vars:
     global_project_path: "/opt/cloud-1"
     global_db_password: "test_db_password_local"

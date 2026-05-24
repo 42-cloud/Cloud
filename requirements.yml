@@ -1,3 +1,4 @@
+---
 # ansible/requirements.yml
 collections:
   - name: community.general
