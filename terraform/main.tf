@@ -15,6 +15,7 @@ resource "aws_instance" "cloud1" {
   vpc_security_group_ids = [aws_security_group.cloudone.id]
   key_name               = aws_key_pair.cloudone.key_name
   ebs_optimized          = true
+  iam_instance_profile   = aws_iam_instance_profile.ec2_profile.name
 
   root_block_device {
     encrypted   = true
@@ -29,6 +30,8 @@ resource "aws_instance" "cloud1" {
   tags = {
     Name = "${var.project_name}-${each.value}"
   }
+  # BYPASS CKV_AWS_126
+  # checkov:skip=CKV_AWS_126:Detailed monitoring is disabled to avoid additional CloudWatch costs.
 }
 
 resource "aws_eip" "wordpress_eip" {

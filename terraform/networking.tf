@@ -12,6 +12,48 @@ resource "aws_vpc" "cloudone" {
 }
 
 # ==========================================
+# KMS
+# ==========================================
+
+data "aws_iam_policy_document" "cloudwatch_kms_policy" {
+  statement {
+    sid    = "Enable IAM User Permissions"
+    effect = "Allow"
+    principals {
+      type        = "AWS"
+      identifiers = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
+    }
+    actions   = ["kms:*"]
+    resources = ["*"]
+  }
+
+  statement {
+    sid    = "Allow CloudWatch Logs to use the key"
+    effect = "Allow"
+    principals {
+      type        = "Service"
+      identifiers = ["logs.${var.aws_region}.amazonaws.com"]
+    }
+    actions = [
+      "kms:Encrypt*",
+      "kms:Decrypt*",
+      "kms:ReEncrypt*",
+      "kms:GenerateDataKey*",
+      "kms:Describe*"
+    ]
+    resources = ["*"]
+  }
+}
+
+data "aws_caller_identity" "current" {}
+
+resource "aws_kms_key" "cloudwatch_key" {
+  description             = "KMS Key for CloudWatch Log Group encryption"
+  deletion_window_in_days = 7
+  policy                  = data.aws_iam_policy_document.cloudwatch_kms_policy.json
+}
+
+# ==========================================
 # OBSERVABILITY & IAM
 # ==========================================
 
@@ -23,8 +65,9 @@ resource "aws_flow_log" "cloudone" {
 }
 
 resource "aws_cloudwatch_log_group" "cloudone" {
-  name            = "${var.project_name}-vpc-flow-logs"
-  retention_in_days = 2
+  name              = "${var.project_name}-vpc-flow-logs"
+  retention_in_days = 3
+  kms_key_id        = aws_kms_key.cloudwatch_key.arn
 }
 
 data "aws_iam_policy_document" "assume_role" {
@@ -33,7 +76,7 @@ data "aws_iam_policy_document" "assume_role" {
 
     principals {
       type        = "Service"
-      identifiers = ["vpc-flow-logs.amazonaws.com"]
+      identifiers = ["vpc-flow-logs.amazonaws.com", "ec2.amazonaws.com"]
     }
 
     actions = ["sts:AssumeRole"]
@@ -42,6 +85,11 @@ data "aws_iam_policy_document" "assume_role" {
 resource "aws_iam_role" "cloudone" {
   name               = "${var.project_name}-flowlog-role"
   assume_role_policy = data.aws_iam_policy_document.assume_role.json
+}
+
+resource "aws_iam_instance_profile" "ec2_profile" {
+  name = "${var.project_name}-ec2-instance-profile"
+  role = aws_iam_role.cloudone.name # On pointe sur le rôle existant
 }
 
 data "aws_iam_policy_document" "cloudone" {
@@ -104,14 +152,15 @@ resource "aws_route_table_association" "cloudone" {
 # FIREWALL
 # ==========================================
 resource "aws_default_security_group" "default" {
-    vpc_id = aws_vpc.cloudone.id
+    vpc_id      = aws_vpc.cloudone.id
     tags = {
         Name = "${var.project_name}-default-sg-restricted"
     }
 }
 resource "aws_security_group" "cloudone" {
-  name   = "${var.project_name}-sg"
-  vpc_id = aws_vpc.cloudone.id
+  name          = "${var.project_name}-sg"
+  description   = "Security group for Wordpress and Angie proxy"
+  vpc_id        = aws_vpc.cloudone.id
 
   ingress {
     description = "SSH access for Ansible"

@@ -121,6 +121,7 @@ NB : Ansible gets access to remote machine
 |:--|:--|:--|:--|
 | **AMI** | Pre-configured _Amazon Machine Image_ providing the base Ubuntu OS template. | `data.aws_ami` | [AWS AMI Docs](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/AMIs.html) |
 | **EC2 Instance** | _Amazon Elastic Compute Cloud_ is a virtual compute server hosting the application, containers, and services. | `aws_instance` | [AWS EC2 Docs](https://aws.amazon.com/ec2/) |
+| **KMS Key** | Centralized key managenent | `aws_kms_key` | [AWS KMS](https://aws.amazon.com/fr/kms/) |
 | **EBS Block Store** | Persistent cloud storage volume attached to the instance acting as its root hard drive (`gp3`). | `root_block_device` | [AWS EBS Docs](https://aws.amazon.com/ebs/) |
 | **Elastic IP (EIP)** | Static, persistent public IPv4 address assigned to ensure a fixed endpoint. | `aws_eip` | [AWS EIP Docs](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/elastic-ip-addresses-eip.html) |
 | **VPC** | _Virtual Private Cloud_ : Isolated virtual private network space providing network boundary control. | `aws_vpc` | [AWS VPC Docs](https://aws.amazon.com/vpc/) |
@@ -146,6 +147,7 @@ Some Checkov lints that we fixed:
 |CKV_AWS_79|security|metadata should be secured against SSRF with a token => IMDSv2|no INDSv1 which use classic HTTP GET|
 |CKV_AWS_130|networking|assign private IP by default. Necessity of public IP can be mitigated in different ways (see architecture)|no public IP by default|
 |CKV_AWS_135|performance|instance should have a dedicated bandwidth to EBS volumes|do not share disk traffic with standard network traffic|
+|CKV_AWS_158|security|encrypt logs|-|
 |CKV_AWS_382|networking|outgoing trafic rules should be restricted to necessary protocols|no `-1` (all protocols) on `0.0.0.0`|
 |CKV2_ANSIBLE_1|use HTTPS in module calls (ex `uri`)|-|
 
