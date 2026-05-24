@@ -2,12 +2,57 @@
 
 Automated deployment of Wordpress related services using Terraform and Ansible
 
+[![CI/CD Pipeline](https://github.com/42-cloud/Cloud/actions/workflows/security.yml/badge.svg)](https://github.com/42-cloud/Cloud/actions)
+
+[![CI/CD Pipeline](https://github.com/42-cloud/Cloud/actions/workflows/ansible.yml/badge.svg)](https://github.com/42-cloud/Cloud/actions)
+
+# Tasks list
+
+__network and security__
+- [ ] only `80` and `443` should be accessible (replace 8080 and 8443)
+- [ ] usage of TLS
+- [x] network isolation of DB from the internet
+
+__roles__
+- [ ] roles in Ansible code
+  - [ ] Readme for `wordpress` role
+  - [ ] Add `observability` role
+  - [x] Molecule tests
+
+__resilience__
+- [ ] dynamic DNS
+- [ ] auto-restart if server is rebooted with data preserved
+
+__scalability__
+- [ ] parallel deploy to multiple servers
+
+
 # Setup
 
 ## Prerequisites
 
 ```bash
+# Ensure local bin directory exists
+mkdir -p $HOME/bin
+
+# add taskfile
 sh -c "$(curl -sSL https://taskfile.dev/install.sh)" -- -d -b $HOME/bin
+
+# add terraform
+TERRAFORM_VERSION="1.11.0"
+curl -sSL "https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip" -o /tmp/terraform.zip
+unzip -q /tmp/terraform.zip -d $HOME/bin/
+rm /tmp/terraform.zip
+
+# add ansible
+python3 -m venv $HOME/.ansible_venv
+source $HOME/.ansible_venv/bin/activate
+pip install --upgrade pip
+pip install ansible-core checkov argcomplete
+ln -sf $HOME/.ansible_venv/bin/ansible $HOME/bin/ansible
+ln -sf $HOME/.ansible_venv/bin/ansible-playbook $HOME/bin/ansible-playbook
+deactivate
+
 ```
 
 ## Tasks
@@ -26,6 +71,10 @@ task plan
 task apply
 
 ```
+
+## Usage
+
+Access the app on `https://cloud1.duckdns.org`
 
 
 # Stack
@@ -190,6 +239,11 @@ Some others that we ignored:
 |`docker`|generic role to install daemon and docker compose|
 |`wordpress`|centralized role for stack management : would be too difficult to manage 2 different roles for wordpress and db|
 
+#### Ansible Vault
+
+```bash
+ansible-vault encrypt_string --vault-password-file .vault_pass_cloudone --name <name> <password>
+```
 
 ## Security
 
@@ -205,7 +259,17 @@ Some others that we ignored:
 
 > Reverse proxy. Fork of nginx with extended features
 
+### Wordpress
 
+### MariaDB
+
+### PHPMyAdmin
+
+## Network
+
+### Duck DNS
+
+ - we should reestabish mapping every time the infrastructure is redeployed (AWS generates a new public Elastic IP)
 
 ---
 
@@ -231,6 +295,7 @@ Resource type
 
 ## AI Usage
 
-- fix and improve script
 - guide setup with a prompt asking to proofcheck our approach and suggest alternatives with pros and cons -> we remain in charge of choosing the next step
+- fix and improve terraform variables collection script
+- debugging help
 - PR review

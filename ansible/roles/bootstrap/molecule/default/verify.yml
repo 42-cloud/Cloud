@@ -126,3 +126,41 @@
           - item.stat.gr_name == 'admins'
         fail_msg: "Missing config directory {{ item.item }}"
       loop: "{{ __bootstrap_directories_stats.results }}"
+
+    # --- VERIFICATION DUCK DNS ---
+
+    - name: Check mock server received a valid DuckDNS update call
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:8081/update?domains=test-domain&token=test-token&ip="
+        method: GET
+        return_content: true
+      register: __bootstrap_mock_check
+
+    - name: Assert DuckDNS API call returned OK
+      ansible.builtin.assert:
+        that:
+          - "__bootstrap_mock_check.content == 'OK'"
+        fail_msg: >
+          Returned by mock Duck DNS Server: '{{ __bootstrap_mock_check.content }}' 
+          — incorrect params or unreachable
+
+    - name: Read host crontab entries
+      ansible.builtin.command: crontab -l
+      register: __bootstrap_crontab
+      changed_when: false
+
+    - name: Assert DuckDNS update is configured for persistence
+      ansible.builtin.assert:
+        that:
+          - "'Sync AWS Elastic IP with DuckDNS' in __bootstrap_crontab.stdout"
+          - "'@reboot' in __bootstrap_crontab.stdout"
+          - "'*/10' in __bootstrap_crontab.stdout"
+          - "'test-token' in __bootstrap_crontab.stdout"
+          - "'test-domain' in __bootstrap_crontab.stdout"
+        fail_msg: "DuckDNS cron updates are misconfigured"
+
+    - name: Assert mock server is still running
+      ansible.builtin.wait_for:
+        host: 127.0.0.1
+        port: 8081
+        timeout: 3

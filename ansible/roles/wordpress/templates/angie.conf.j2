@@ -36,7 +36,7 @@ http {
         listen                      443 ssl;
         listen                      [::]:443 ssl;
         # http2                       on;
-        server_name                 localhost;
+        server_name                 {{ global_domain_name }};
 
         ssl_certificate             /etc/nginx/certs/mycert.crt;
         ssl_certificate_key         /etc/nginx/certs/mycert.key;

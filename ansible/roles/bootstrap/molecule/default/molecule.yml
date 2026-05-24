@@ -8,11 +8,18 @@ driver:
 platforms:
   - name: bootstrap-ubuntu-test
     image: geerlingguy/docker-ubuntu2204-ansible:latest
+    command: /lib/systemd/systemd
     privileged: true
     pre_build_image: true
     user: root
+    cgroupns_mode: host
     volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
       - /lib/modules:/lib/modules:ro
+    tmpfs:
+    - /tmp
+    - /run
+    - /run/lock
 
 provisioner:
   name: ansible
