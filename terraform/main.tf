@@ -14,14 +14,42 @@ resource "aws_instance" "cloud1" {
   subnet_id              = aws_subnet.cloudone.id
   vpc_security_group_ids = [aws_security_group.cloudone.id]
   key_name               = aws_key_pair.cloudone.key_name
+  ebs_optimized          = true
+  iam_instance_profile   = aws_iam_instance_profile.ec2_profile.name
+
+  root_block_device {
+    encrypted   = true
+    volume_type = "gp3"
+  }
+
+  metadata_options {
+    http_endpoint = "enabled"
+    http_tokens   = "required" # Impose IMDSv2
+  }
+  
   tags = {
     Name = "${var.project_name}-${each.value}"
+  }
+  # BYPASS CKV_AWS_126
+  # checkov:skip=CKV_AWS_126:Detailed monitoring is disabled to avoid additional CloudWatch costs.
+}
+
+resource "aws_eip" "wordpress_eip" {
+  for_each = toset(var.instance_names)
+  
+  instance = aws_instance.cloud1[each.key].id
+  domain   = "vpc"
+  tags = {
+    Name = "${var.project_name}-eip-${each.value}"
   }
 }
 
 resource "local_file" "dynamic_inventory" {
-  content  = join("\n", [for name, instance in aws_instance.cloud1 : "[${name}]\nansible_host=${instance.public_ip}"])
-  filename = "../ansible/inventory/inventory.ini"
-  directory_permission = "0755"
-  file_permission = "0644"
+  content  = join("\n", concat(
+    ["[wordpress]"],
+    [for name, eip in aws_eip.wordpress_eip : "${name} ansible_host=${eip.public_ip} ansible_user=ubuntu"]
+  ))
+  filename              = "../ansible/inventory/inventory.ini"
+  directory_permission  = "0755"
+  file_permission       = "0644"
 }

@@ -112,9 +112,11 @@
 
     - name: Access Wordpress page via Angie
       ansible.builtin.uri:
-        url: "http://127.0.0.1:8080"
+        url: "https://127.0.0.1:8443"
         method: GET
         return_content: true
+        validate_certs: false
+        # checkov:skip=CKV_ANSIBLE_1: Self signed certificates are used
         status_code: [200, 302]
       delegate_to: localhost
       register: wordpress_ready
