@@ -1,7 +1,45 @@
 ---
+# wordpress - molecule/tasks/main.yml
+
+# --- CERT KEYS ---
+
+- name: Handle TLS certificates
+  delegate_to: "localhost"
+  become: "{{ wordpress_become_compose | default(true) }}"
+  block:
+    - name: Ensure cert directory exists
+      ansible.builtin.file:
+        path: "{{ wordpress_cert_dir }}"
+        state: directory
+        mode: "0755"
+
+    - name: Generate key
+      community.crypto.openssl_privatekey:
+        path: "{{ wordpress_cert_key_path }}"
+        size: 2048
+        type: RSA
+        mode: "0644"
+
+    - name: Generate CSR
+      community.crypto.openssl_csr:
+        path: "{{ wordpress_cert_csr_path }}"
+        privatekey_path: "{{ wordpress_cert_key_path }}"
+        common_name: "{{ wordpress_cert_domain }}"
+
+    - name: Generate Certificate
+      community.crypto.x509_certificate:
+        path: "{{ wordpress_cert_crt_path }}"
+        privatekey_path: "{{ wordpress_cert_key_path }}"
+        csr_path: "{{ wordpress_cert_csr_path }}"
+        provider: selfsigned
+        selfsigned_not_after: "+365d"
+        mode: "0644"
+
+# --- CONFIG AND COMPOSE UP ---
+
 - name: Set dynamic target directory
   ansible.builtin.set_fact:
-    __wordpress_target_dir: "{{ wordpress_compose_src | default(__wordpress_project_path) }}"
+    __wordpress_target_dir: "{{ wordpress_compose_src | default(wordpress_project_path) }}"
 
 - name: Ensure dynamic target root directory exists
   ansible.builtin.file:
@@ -34,7 +72,7 @@
 - name: Populate db conf
   ansible.builtin.template:
     src: mariadb.conf.j2
-    dest: "{{ __wordpress_db_conf_path_host }}"
+    dest: "{{ wordpress_db_conf_path_host }}"
     mode: "0644"
   delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
   become: "{{ wordpress_become_compose | default(true) }}"

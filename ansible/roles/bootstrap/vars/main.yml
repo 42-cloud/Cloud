@@ -1,2 +1,2 @@
 ---
-__bootstrap_project_path: "{{ global_project_path }}"
+# internal vars

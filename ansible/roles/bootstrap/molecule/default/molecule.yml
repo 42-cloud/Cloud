@@ -17,9 +17,9 @@ platforms:
       - /sys/fs/cgroup:/sys/fs/cgroup:rw
       - /lib/modules:/lib/modules:ro
     tmpfs:
-    - /tmp
-    - /run
-    - /run/lock
+      - /tmp
+      - /run
+      - /run/lock
 
 provisioner:
   name: ansible
@@ -35,6 +35,8 @@ provisioner:
   ansible_args:
     - "--diff"
     - "-v"
+    - --extra-vars
+    - "bootstrap_duckdns_domain=test-domain bootstrap_duckdns_token=test-token bootstrap_duckdns_api_base=http://127.0.0.1:8081"
   env:
     ANSIBLE_ROLES_PATH: "../../../"
     ANSIBLE_STDOUT_CALLBACK: default

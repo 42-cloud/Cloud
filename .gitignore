@@ -15,3 +15,5 @@ ansible/roles/wordpress/wordpress
 ansible/roles/wordpress/docker-compose.yml
 
 **/.env
+**/.key
+**/.csr

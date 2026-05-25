@@ -74,10 +74,10 @@
     group: admins
     mode: "0775"
   loop:
-    - "{{ __bootstrap_project_path }}"
-    - "{{ __bootstrap_project_path }}/mariadb"
-    - "{{ __bootstrap_project_path }}/wordpress"
-    - "{{ __bootstrap_project_path }}/angie"
+    - "{{ bootstrap_project_path }}"
+    - "{{ bootstrap_project_path }}/mariadb"
+    - "{{ bootstrap_project_path }}/wordpress"
+    - "{{ bootstrap_project_path }}/angie"
   become: true
 
 # --- DUCK DNS ---
@@ -87,7 +87,7 @@
     __bootstrap_duckdns_token: "{{ global_duckdns_token | default('') }}"
 
 - name: Configure DuckDNS Automated Update Pipeline
-  when: 
+  when:
     - __bootstrap_duckdns_domain != ''
     - __bootstrap_duckdns_token != ''
   block:
@@ -97,23 +97,23 @@
         method: GET
         return_content: true
         validate_certs: "{{ 'https' in bootstrap_duckdns_api_base }}"
-      register: __duckdns_initial_sync
+      register: __bootstrap_duckdns_initial_sync
 
     - name: Debug initial DuckDNS synchronization output
       ansible.builtin.debug:
-        var: __duckdns_initial_sync.content
-    
+        var: __bootstrap_duckdns_initial_sync.content
+
     - name: Install Cron background scheduler
       ansible.builtin.apt:
         name: cron
         state: present
-      
+
     - name: Schedule persistent DuckDNS cron job (every 10 minutes)
       ansible.builtin.cron:
         name: "Sync AWS Elastic IP with DuckDNS"
         minute: "*/10"
         job: "curl -s 'https://www.duckdns.org/update?domains={{ __bootstrap_duckdns_domain }}&token={{ __bootstrap_duckdns_token }}&ip=' > /dev/null 2>&1"
-  
+
     - name: Schedule persistent DuckDNS cron job (every 10 minutes)
       ansible.builtin.cron:
         name: "Sync AWS Elastic IP with DuckDNS at boot"

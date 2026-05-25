@@ -2,11 +2,6 @@
 - name: Converge Host Bootstrap
   hosts: all
   gather_facts: true
-  vars:
-    global_project_path: "/opt/cloud-1"
-    global_duckdns_domain: "test-domain"
-    global_duckdns_token: "test-token"
-    bootstrap_duckdns_api_base: "http://127.0.0.1:8081"
   roles:
     - role: bootstrap
 
@@ -23,19 +18,19 @@
 
     - name: Diagnostic — Verify Mock Process is Alive
       ansible.builtin.command: pgrep -f mock_duckdns.py
-      register: __mock_process_check
+      register: __bootstrap_mock_process_check
       changed_when: false
       failed_when: false
 
     - name: Diagnostic — Print Running Mock PID
       ansible.builtin.debug:
-        msg: "Mock server is running with PID: {{ __mock_process_check.stdout }}"
-      when: __mock_process_check.rc == 0
+        msg: "Mock server is running with PID: {{ __bootstrap_mock_process_check.stdout }}"
+      when: __bootstrap_mock_process_check.rc == 0
 
     - name: Diagnostic — Fail Warn if Mock Process is Dead
       ansible.builtin.fail:
         msg: "CRITICAL: The background mock server process dropped before converge stage!"
-      when: __mock_process_check.rc != 0
+      when: __bootstrap_mock_process_check.rc != 0
 
     - name: "Include bootstrap role"
       ansible.builtin.include_role:

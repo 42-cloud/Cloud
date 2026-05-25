@@ -101,7 +101,7 @@ resource "aws_iam_role" "cloudone" {
 
 resource "aws_iam_instance_profile" "ec2_profile" {
   name = "${var.project_name}-ec2-instance-profile"
-  role = aws_iam_role.cloudone.name # On pointe sur le rôle existant
+  role = aws_iam_role.cloudone.name
 }
 
 data "aws_iam_policy_document" "cloudone" {

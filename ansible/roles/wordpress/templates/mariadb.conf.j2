@@ -1,10 +1,10 @@
 [client]
-socket = {{ __wordpress_db_socket }}
+socket = {{ wordpress_db_socket }}
 
 [mysqld]
 # storage for db files (mounted as a volume)
-datadir = {{ __wordpress_db_dir_path_dest }}
-socket = {{ __wordpress_db_socket }}
+datadir = {{ wordpress_db_dir_path_dest }}
+socket = {{ wordpress_db_socket }}
 
 #--- InnoDB storage engine
 innodb_file_per_table = 1
@@ -17,7 +17,7 @@ bind-address = 0.0.0.0
 port = {{ wordpress_db_port }}
 
 #--- Loggings
-log_error = {{ __wordpress_db_error_log_path }}
+log_error = {{ wordpress_db_error_log_path }}
 
 #-- Security
 user = {{ wordpress_db_user }}

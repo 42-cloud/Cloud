@@ -1,4 +1,5 @@
 ---
+# wordpress - molecule/default/molecule.yml
 dependency:
   name: galaxy
   options:
@@ -29,7 +30,9 @@ provisioner:
       pipelining: false
   ansible_args:
     - "--diff"
-    - "-vv"
+    - "-vvv"
+    - --extra-vars
+    - "wordpress_compose_src={{ molecule_ephemeral_directory }}/wordpress_stack wordpress_expose_http=8080 wordpress_expose_https=8443"
   env:
     ANSIBLE_ROLES_PATH: "../../../"
     ANSIBLE_STDOUT_CALLBACK: default

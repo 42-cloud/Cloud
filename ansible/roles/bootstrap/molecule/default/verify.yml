@@ -2,8 +2,6 @@
 - name: Verify Host Bootstrap
   hosts: all
   gather_facts: true
-  vars:
-    global_project_path: "/opt/cloud-1"
 
   tasks:
     - name: Load role default vars
@@ -111,10 +109,10 @@
       ansible.builtin.stat:
         path: "{{ item }}"
       loop:
-        - "{{ __bootstrap_project_path }}"
-        - "{{ __bootstrap_project_path }}/mariadb"
-        - "{{ __bootstrap_project_path }}/wordpress"
-        - "{{ __bootstrap_project_path }}/angie"
+        - "{{ bootstrap_project_path }}"
+        - "{{ bootstrap_project_path }}/mariadb"
+        - "{{ bootstrap_project_path }}/wordpress"
+        - "{{ bootstrap_project_path }}/angie"
       register: __bootstrap_directories_stats
 
     - name: Assert config directorties exists and have correct permissions
@@ -141,8 +139,7 @@
         that:
           - "__bootstrap_mock_check.content == 'OK'"
         fail_msg: >
-          Returned by mock Duck DNS Server: '{{ __bootstrap_mock_check.content }}' 
-          — incorrect params or unreachable
+          Returned by mock Duck DNS Server: '{{ __bootstrap_mock_check.content }}'  — incorrect params or unreachable
 
     - name: Read host crontab entries
       ansible.builtin.command: crontab -l
