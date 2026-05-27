@@ -110,6 +110,32 @@ tasks:
           done
         fi
     silent: true
+
+  ansible:play:
+    desc: "Launch Ansible site playbook"
+    dir: '{{.TASKFILE_DIR}}/ansible'
+    cmds:
+     - ansible-playbook -i inventory/inventory.ini site.yml --vault-id cloudone@{{.TASKFILE_DIR}}/.vault_pass_cloudone --diff
+
+  ansible:wordpress:
+    desc: "Run ONLY the wordpress role tasks"
+    dir: '{{.TASKFILE_DIR}}/ansible'
+    cmds:
+      - ansible-playbook -i inventory/inventory.ini site.yml --vault-id cloudone@{{.TASKFILE_DIR}}/.vault_pass_cloudone --tags wordpress --diff
+
+  ansible:boot:
+    desc: "Run ONLY the wordpress role tasks"
+    dir: '{{.TASKFILE_DIR}}/ansible'
+    cmds:
+      - ansible-playbook -i inventory/inventory.ini site.yml --vault-id cloudone@{{.TASKFILE_DIR}}/.vault_pass_cloudone --tags bootstrap --diff
+
+  ansible:docker:
+    desc: "Run ONLY the wordpress role tasks"
+    dir: '{{.TASKFILE_DIR}}/ansible'
+    cmds:
+      - ansible-playbook -i inventory/inventory.ini site.yml --vault-id cloudone@{{.TASKFILE_DIR}}/.vault_pass_cloudone --tags docker --diff
+
+
 # ──────────────────────────────────────────
 # DOCKER COMPOSE
 # ──────────────────────────────────────────
