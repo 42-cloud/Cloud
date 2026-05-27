@@ -14,10 +14,13 @@ __network and security__
 - [x] network isolation of DB from the internet
 
 __roles__
-- [ ] roles in Ansible code
+- [ ] Add `observability` role
+- [ ] Wordpress role
   - [ ] Readme for `wordpress` role
-  - [ ] Add `observability` role
   - [x] Molecule tests
+  - [ ] PHP My Admin configuration
+  - [ ] handler to reload angie
+  - [ ] handler to reload wordpress apache
 
 __resilience__
 - [ ] dynamic DNS
@@ -26,13 +29,18 @@ __resilience__
 __scalability__
 - [ ] parallel deploy to multiple servers
 
+__flexibility__
+- [ ] provider-agnostic configuration
+- [ ] can create various users with admin rights on EC2, app admin rights on wordpress
 
 # Setup
 
 ## Prerequisites
 
+All commands are compatible with Ubuntu
+
 ```bash
-# Ensure local bin directory exists
+# Ensure local bin (or .local/bin) directory exists
 mkdir -p $HOME/bin
 
 # add taskfile
@@ -53,6 +61,18 @@ ln -sf $HOME/.ansible_venv/bin/ansible $HOME/bin/ansible
 ln -sf $HOME/.ansible_venv/bin/ansible-playbook $HOME/bin/ansible-playbook
 deactivate
 
+# add AWS CLI
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+unzip awscliv2.zip
+./aws/install -i $HOME/.local/aws-cli -b $HOME/bin
+
+# GET key details for AWS IAM profile
+# AWS Management Console > IAM > Users > Create access key
+
+# Configure AWS CLI
+aws configure
+# fill details from IAM
+
 ```
 
 ## Tasks
@@ -67,8 +87,11 @@ task init
 # check terraform project correctness
 task plan
 
-# deploy
+# deploy infrastructure
 task apply
+
+# deploy configuration
+task ansible:play
 
 ```
 
@@ -216,6 +239,11 @@ Some others that we ignored:
   - group_vars
   - vars (within a role)
   - default (within a role) : allow to reuse group_vars as they have a lower priority than them, contrary to vars
+- Variables can be overloaded for tests in `molecule.yaml`
+
+__caveats__
+
+- best practice (ansible-lint) want us to use role-prefixed variables. We need however to take care not to multiplicate symbols referring to a same value (global > vars > defaults > test in molecule.yaml or in individual test files) or to set up fallback values in multiple places.
 
 #### TDD with molecules
 
@@ -225,7 +253,7 @@ Some others that we ignored:
   - verify
   - destroy
 
-**adapting tests to dockerized test environment**
+__adapting tests to dockerized test environment__
 - molecule runs tests in docker container. For `docker` role, we have distinct tasks whether the environment is prod or test:
   - in test env, we are within a container with no `systemd`. Therefore, we use `ansible.builtin.shell` to look for / launch `dockerd` process
   - prod relies on `ansible.builtin.service` module
@@ -261,9 +289,17 @@ ansible-vault encrypt_string --vault-password-file .vault_pass_cloudone --name <
 
 ### Wordpress
 
+> An open source CMS
+
+NB : There is no official module for Wordpress management. Partly because cli evolves too fast and should be compatible with many php versions
+
 ### MariaDB
 
+> An open sourve fork of MySQL
+
 ### PHPMyAdmin
+
+> An administration tool for DB
 
 ## Network
 
@@ -284,6 +320,7 @@ ansible-vault encrypt_string --vault-password-file .vault_pass_cloudone --name <
 | [Automating IT with Ansible](https://www.educative.io/courses/automating-it-infrastructure-with-ansible) | 📘 | |
 | [Infra as Code using Terraform](https://www.educative.io/courses/infrastructure-as-code-using-terraform) | 📘 | |
 | [Stephane Robert](https://blog.stephane-robert.info/docs/infra-as-code/gestion-de-configuration/ansible/) | 📘 | Excellent tutorials |
+| [Installing WP with Ansible](https://oneuptime.com/blog/post/2026-02-21-ansible-deploy-wordpress-site/view) | 📘 | Tutorial using MySQL setup, PHP-FPM, Nginx, wp-cli. ⚠️ Not the same containerized approach yet useful for wp cli steps |
 
 Resource type
 
