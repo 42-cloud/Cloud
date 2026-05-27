@@ -88,7 +88,9 @@
   block:
     - name: Execute DuckDNS API sync
       ansible.builtin.uri:
-        url: "{{ bootstrap_duckdns_api_base }}/update?domains={{ bootstrap_duckdns_domain }}&token={{ bootstrap_duckdns_token }}&ip="
+        url: >-
+          "{{ bootstrap_duckdns_api_base }}/update?domains={{ bootstrap_duckdns_domain }}
+          &token={{ bootstrap_duckdns_token }}&ip="
         method: GET
         return_content: true
         validate_certs: "{{ 'https' in bootstrap_duckdns_api_base }}"
@@ -111,10 +113,14 @@
       ansible.builtin.cron:
         name: "Sync AWS Elastic IP with DuckDNS"
         minute: "*/10"
-        job: "curl -s '{{ bootstrap_duckdns_api_base }}/update?domains={{ bootstrap_duckdns_domain }}&token={{ bootstrap_duckdns_token }}&ip=' > /dev/null 2>&1"
+        job: >-
+          "curl -s '{{ bootstrap_duckdns_api_base }}/update?domains={{ bootstrap_duckdns_domain }}
+          &token={{ bootstrap_duckdns_token }}&ip=' > /dev/null 2>&1"
 
     - name: Schedule persistent DuckDNS cron job (at boot)
       ansible.builtin.cron:
         name: "Sync AWS Elastic IP with DuckDNS at boot"
         special_time: reboot
-        job: "curl -s '{{ bootstrap_duckdns_api_base }}/update?domains={{ bootstrap_duckdns_domain }}&token={{ bootstrap_duckdns_token }}&ip=' > /dev/null 2>&1"
+        job: >-
+          "curl -s '{{ bootstrap_duckdns_api_base }}/update?domains={{ bootstrap_duckdns_domain }}
+          &token={{ bootstrap_duckdns_token }}&ip=' > /dev/null 2>&1"

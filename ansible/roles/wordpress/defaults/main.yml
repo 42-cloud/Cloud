@@ -59,7 +59,6 @@ wordpress_angie_container_name: "angie"
 
 # PHP My admin
 
-
 # TLS
 wordpress_cert_dir: "{{ wordpress_compose_src }}/angie/certs"
 wordpress_duckdns_domain: "{{ global_duckdns_domain | default('') }}"

@@ -1,12 +1,13 @@
+---
 # yaml-language-server: $schema=https://taskfile.dev/schema.json
 
-version: '3'
+version: "3"
 
 vars:
-  RED: '\033[0;31m'
-  GREEN: '\033[0;32m'
-  PPL: '\033[0;35m'
-  NC: '\033[0m'
+  RED: "\\033[0;31m"
+  GREEN: "\\033[0;32m"
+  PPL: "\\033[0;35m"
+  NC: "\\033[0m"
   VOLUME: ""
   PROFILE: ""
 
@@ -16,9 +17,9 @@ tasks:
     cmds:
       - task --list
     silent: true
-# ──────────────────────────────────────────
-# TERRAFORM
-# ──────────────────────────────────────────
+  # ──────────────────────────────────────────
+  # TERRAFORM
+  # ──────────────────────────────────────────
   fmt:
     desc: Terraform fmt
     cmds:
@@ -76,9 +77,9 @@ tasks:
     cmds:
       - bash scripts/tfvars.sh
     silent: true
-# ──────────────────────────────────────────
-# ANSIBLE
-# ──────────────────────────────────────────
+  # ──────────────────────────────────────────
+  # ANSIBLE
+  # ──────────────────────────────────────────
   ansible:help:
     desc: Ansible tasks
     cmds:
@@ -88,7 +89,7 @@ tasks:
 
   ansible:test:
     desc: "Ansible Molecule Tests for a specific roles or all of them. Usage: task ansible:test [role=wordpress]"
-    dir: '{{.USER_WORKING_DIR}}'
+    dir: "{{.USER_WORKING_DIR}}"
     cmds:
       - |
         if [ -n "{{ .role }}" ]; then
@@ -113,32 +114,35 @@ tasks:
 
   ansible:play:
     desc: "Launch Ansible site playbook"
-    dir: '{{.TASKFILE_DIR}}/ansible'
+    dir: "{{.TASKFILE_DIR}}/ansible"
     cmds:
-     - ansible-playbook -i inventory/inventory.ini site.yml --vault-id cloudone@{{.TASKFILE_DIR}}/.vault_pass_cloudone --diff
+      - ansible-playbook -i inventory/inventory.ini site.yml --vault-id cloudone@{{.TASKFILE_DIR}}/.vault_pass_cloudone
+        --diff
 
   ansible:wordpress:
     desc: "Run ONLY the wordpress role tasks"
-    dir: '{{.TASKFILE_DIR}}/ansible'
+    dir: "{{.TASKFILE_DIR}}/ansible"
     cmds:
-      - ansible-playbook -i inventory/inventory.ini site.yml --vault-id cloudone@{{.TASKFILE_DIR}}/.vault_pass_cloudone --tags wordpress --diff
+      - ansible-playbook -i inventory/inventory.ini site.yml --vault-id cloudone@{{.TASKFILE_DIR}}/.vault_pass_cloudone
+        --tags wordpress --diff
 
   ansible:boot:
     desc: "Run ONLY the wordpress role tasks"
-    dir: '{{.TASKFILE_DIR}}/ansible'
+    dir: "{{.TASKFILE_DIR}}/ansible"
     cmds:
-      - ansible-playbook -i inventory/inventory.ini site.yml --vault-id cloudone@{{.TASKFILE_DIR}}/.vault_pass_cloudone --tags bootstrap --diff
+      - ansible-playbook -i inventory/inventory.ini site.yml --vault-id cloudone@{{.TASKFILE_DIR}}/.vault_pass_cloudone
+        --tags bootstrap --diff
 
   ansible:docker:
     desc: "Run ONLY the wordpress role tasks"
-    dir: '{{.TASKFILE_DIR}}/ansible'
+    dir: "{{.TASKFILE_DIR}}/ansible"
     cmds:
-      - ansible-playbook -i inventory/inventory.ini site.yml --vault-id cloudone@{{.TASKFILE_DIR}}/.vault_pass_cloudone --tags docker --diff
+      - ansible-playbook -i inventory/inventory.ini site.yml --vault-id cloudone@{{.TASKFILE_DIR}}/.vault_pass_cloudone
+        --tags docker --diff
 
-
-# ──────────────────────────────────────────
-# DOCKER COMPOSE
-# ──────────────────────────────────────────
+  # ──────────────────────────────────────────
+  # DOCKER COMPOSE
+  # ──────────────────────────────────────────
   compose:help:
     desc: Some exemples
     cmds:

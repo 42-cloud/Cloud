@@ -5,10 +5,10 @@ global_project_path: "/opt/cloud-1"
 global_db_dir: "/var/lib/mysql_data"
 global_wp_dir: "/var/www/html"
 global_admin_users_list:
-- name: codastream
-  db_user: 'wp_codastream'
+  - name: codastream
+    db_user: "wp_codastream"
 
-global_duckdns_domain: "youpi-cloud1"
+global_duckdns_domain: "youpi-cloud"
 global_domain_name: "{{ global_duckdns_domain }}.duckdns.org"
 global_wp_siteurl: "https://{{ global_domain_name }}"
 

@@ -34,13 +34,15 @@
 
     # --- cryptographic match ---
     - name: Extract Public Key Modulus from Certificate
-      ansible.builtin.command: openssl x509 -noout -modulus -in {{ wordpress_compose_src }}/angie/certs/{{ wordpress_cert_domain }}.crt
+      ansible.builtin.command: openssl x509 -noout -modulus -in {{ wordpress_compose_src }}/angie/certs/{{
+        wordpress_cert_domain }}.crt
       register: __wordpress_crt_modulus
       delegate_to: localhost
       changed_when: false
 
     - name: Extract Public Key Modulus from Private Key
-      ansible.builtin.command: openssl rsa -noout -modulus -in {{ wordpress_compose_src }}/angie/certs/{{ wordpress_cert_domain }}.key
+      ansible.builtin.command: openssl rsa -noout -modulus -in {{ wordpress_compose_src }}/angie/certs/{{
+        wordpress_cert_domain }}.key
       register: __wordpress_key_modulus
       delegate_to: localhost
       changed_when: false
@@ -53,7 +55,8 @@
 
     # --- domain identity ---
     - name: Inspect Certificate Subject Metadata
-      ansible.builtin.command: openssl x509 -noout -subject -in {{ wordpress_compose_src }}/angie/certs/{{ wordpress_cert_domain }}.crt
+      ansible.builtin.command: openssl x509 -noout -subject -in {{ wordpress_compose_src }}/angie/certs/{{
+        wordpress_cert_domain }}.crt
       register: __wordpress_crt_subject
       delegate_to: localhost
       changed_when: false

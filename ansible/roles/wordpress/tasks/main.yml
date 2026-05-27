@@ -5,7 +5,7 @@
   ansible.builtin.apt:
     name: python3-cryptography
     state: present
-    update_cache: yes
+    update_cache: true
   become: true
 
 # --- CERT KEYS ---
@@ -93,6 +93,7 @@
     src: angie.conf.j2
     dest: "{{ wordpress_compose_src }}/angie/angie.conf"
     mode: "0644"
+  notify: Reload angie
   delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
   become: "{{ wordpress_become_compose | default(true) }}"
 
@@ -138,7 +139,7 @@
   delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
 
 - name: Run Wordpress automated configuration
-  # when: __wordpress_wp_core_is_configured.rc != 0
+  when: __wordpress_wp_core_is_configured.rc != 0
   delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
   block:
     - name: Execute wp-core install
@@ -148,24 +149,27 @@
         --title="{{ wordpress_wp_site_title }}" \
         --admin_user="{{ wordpress_wp_admin_user }}" \
         --admin_password="{{ wordpress_wp_admin_default_password }}" \
-        --admin_email="{{ wordpress_wp_admin_email}}"
-
-    - name: Allow SVG uploads in WordPress configuration
-      ansible.builtin.shell: |
-        {{ wordpress_wp_cli_exec }} wp plugin install safe-svg --activate
+        --admin_email="{{ wordpress_wp_admin_email }}"
+      changed_when: true
 
     - name: Disable file editing from Wordpress admin dashboard
       ansible.builtin.shell: |
         {{ wordpress_wp_cli_exec }} wp config set DISALLOW_FILE_EDIT true --raw
+      changed_when: true
 
     - name: Install and activate theme
       ansible.builtin.shell: |
         {{ wordpress_wp_cli_exec }} wp theme install extendable --activate
+      changed_when: true
 
     - name: Purge all posts and pages
       ansible.builtin.shell: |
-            {{ wordpress_wp_cli_exec }} wp post delete $({{ wordpress_wp_cli_exec }} wp post list --post_type=post --format=ids) --force
-            {{ wordpress_wp_cli_exec }} wp post delete $({{ wordpress_wp_cli_exec }} wp post list --post_type=page --format=ids) --force
+        {{ wordpress_wp_cli_exec }} wp post delete \
+          $({{ wordpress_wp_cli_exec }} wp post list \
+          --post_type=post --format=ids) --force
+        {{ wordpress_wp_cli_exec }} wp post delete \
+          $({{ wordpress_wp_cli_exec }} wp post list \
+          --post_type=page --format=ids) --force
       failed_when: false
       changed_when: false
 
@@ -176,16 +180,18 @@
           --post_title="The project" \
           --post_content="Welcome to our Cloud-1 project page. A project about hardening and automation" \
           --post_status=publish
+      changed_when: true
 
     - name: Download logos directly inside the container volume
       ansible.builtin.shell: |
-        {{ wordpress_wp_cli_exec }} curl -sSL "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/{{ item.url_name }}.png" \
+        {{ wordpress_wp_cli_exec }} curl -sSL \
+          "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/{{ item.url_name }}.png" \
           -o "/var/www/html/{{ item.file_name }}-logo.png"
       loop:
-        - { url_name: 'terraform', file_name: 'terraform' }
-        - { url_name: 'ansible', file_name: 'ansible' }
+        - { url_name: "terraform", file_name: "terraform" }
+        - { url_name: "ansible", file_name: "ansible" }
       changed_when: true
-      tags: [ 'download_logos' ]
+      tags: ["download_logos"]
 
     - name: Create Ansible post
       ansible.builtin.shell: |
@@ -194,51 +200,85 @@
               --post_title="Ansible" \
               --post_status=publish \
               --porcelain \
-              --post_content="<p><strong>Ansible</strong> is the <em>Configuration Management</em>.</p>
-              <h3>Main features:</h3>
-              <ul>
-                <li><strong>Infrastructure hardening :</strong>UFW configuration.</li>
-                <li><strong>IAM :</strong> users and <code>admins</code> group creation.</li>
-                <li><strong>Networking automation :</strong> Synchronizing AWS IP with <em>DuckDNS</em> domain.</li>
-                <li><strong>Docker installation</strong></li>
-                <li><strong>Wordpress and other services installation and configuration</strong></li>
-              </ul>
-              <p>We declared 3 roles.</p>
-              <p>We realized tests to validate deploy locally.</p>"
-      register: __wordpress_Ansible_post_id
+              --post_content="{{ lookup('ansible.builtin.file', 'files/wordpress/posts/ansible.html') }}"
+      register: __wordpress_ansible_post_id
+      changed_when: true
 
     - name: Create Terraform post
       ansible.builtin.shell: |
         {{ wordpress_wp_cli_exec }} wp post create \
               --post_type=post \
-              --post_title="HashiCorp-Terraform" \
+              --post_title="Terraform" \
               --post_status=publish \
               --porcelain \
-              --post_content="<p><strong>Terraform</strong> acts as the <em>Infrastructure as Code (IaC)</em> foundation.</p>
-              <h3>Main features:</h3>
-              <ul>
-                <li><strong>Network Topology:</strong> Provisioning of a dedicated AWS VPC, secure subnets, and internet gateways.</li>
-                <li><strong>Compute Isolation:</strong> Deployment of the EC2 instance inside specific Security Groups with custom ingress filtering.</li>
-                <li><strong>SecOps Hardening:</strong> Enforcement of <strong>IMDSv2</strong> to mitigate SSRF vulnerabilities.</li>
-                <li><strong>Data Protection:</strong> Activation of <strong>AWS KMS</strong> for encrypted gp3 storage volumes and cloud logs.</li>
-                <li><strong>Auditability:</strong> Implementation of VPC Flow Logs routed directly to CloudWatch groups.</li>
-              </ul>
-              <p>We decoupled the cloud resources construction from the OS configuration, keeping our infrastructure declarative.</p>
-              <p>We embedded secure remote state storage to prevent state locking and sensitive data leakage.</p>"
-      register: __wordpress_HashiCorp_Terraform_post_id
+              --post_content="{{ lookup('ansible.builtin.file', 'files/wordpress/posts/terraform.html') }}"
+      register: __wordpress_terraform_post_id
+      changed_when: true
+
+    - name: Create Yaml post
+      ansible.builtin.shell: |
+        {{ wordpress_wp_cli_exec }} wp post create \
+              --post_type=post \
+              --post_title="Yaml" \
+              --post_status=publish \
+              --porcelain \
+              --post_content="{{ lookup('ansible.builtin.file', 'files/wordpress/posts/yaml.html') }}"
+      register: __wordpress_yaml_post_id
+      changed_when: true
+
+    - name: Verify logo files exist in container
+      ansible.builtin.shell: |
+        {{ wordpress_wp_cli_exec }} ls -la /var/www/html/terraform-logo.png /var/www/html/ansible-logo.png
+      register: __wordpress_logo_check
+      changed_when: false
+      when: ansible_verbosity >= 1
+
+    - name: Debug logo presence
+      ansible.builtin.debug:
+        var: __wordpress_logo_check.stdout
+      when: ansible_verbosity >= 1
+
+    - name: Debug post IDs
+      ansible.builtin.debug:
+        msg:
+          - "terraform id: '{{ __wordpress_terraform_post_id.stdout }}'"
+          - "ansible id: '{{ __wordpress_Ansible_post_id.stdout }}'"
+      when: ansible_verbosity >= 1
+
+    - name: Debug final post_id values at import time
+      ansible.builtin.debug:
+        msg: "post_id='{{ item.post_id | trim }}' file='{{ item.file_name }}'"
+      loop:
+        - { file_name: "terraform", post_id: "{{ __wordpress_terraform_post_id.stdout }}" }
+        - { file_name: "ansible", post_id: "{{ __wordpress_ansible_post_id.stdout }}" }
+      when: ansible_verbosity >= 1
+
+    - name: Configure WordPress media sizes
+      ansible.builtin.shell: |
+        {{ wordpress_wp_cli_exec }} wp option update large_size_w 800
+        {{ wordpress_wp_cli_exec }} wp option update large_size_h 600
+        {{ wordpress_wp_cli_exec }} wp option update medium_size_w 400
+        {{ wordpress_wp_cli_exec }} wp option update medium_size_h 300
+      changed_when: true
 
     - name: Import image and set it as Featured Image
       ansible.builtin.shell: |
         {{ wordpress_wp_cli_exec }} wp media import /var/www/html/{{ item.file_name }}-logo.png \
-          --post_id={{ item.post_id }} \
+          --post_id={{ item.post_id | trim }} \
           --title="{{ item.display_name }} Logo" \
           --featured_image
       loop:
         - name: "HashiCorp-Terraform"
           file_name: "terraform"
           display_name: "Terraform"
-          post_id: "{{ __wordpress_HashiCorp_Terraform_post_id.stdout }}"
+          post_id: "{{ __wordpress_terraform_post_id.stdout }}"
         - name: "Ansible"
           file_name: "ansible"
           display_name: "Ansible"
-          post_id: "{{ __wordpress_Ansible_post_id.stdout }}"
+          post_id: "{{ __wordpress_ansible_post_id.stdout }}"
+      changed_when: true
+
+    - name: Regenerate thumbnails
+      ansible.builtin.shell: |
+        {{ wordpress_wp_cli_exec }} wp media regenerate --yes
+      changed_when: false
