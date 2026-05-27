@@ -138,7 +138,7 @@
   delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
 
 - name: Run Wordpress automated configuration
-  when: __wordpress_wp_core_is_configured.rc != 0
+  # when: __wordpress_wp_core_is_configured.rc != 0
   delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
   block:
     - name: Execute wp-core install
@@ -177,14 +177,15 @@
           --post_content="Welcome to our Cloud-1 project page. A project about hardening and automation" \
           --post_status=publish
 
-    - name: Download logos to project directory
-      ansible.builtin.get_url:
-        url: "https://icon.icepanel.io/Technology/svg/{{ item.url_name }}.svg"
-        dest: "{{ wordpress_compose_src }}/wordpress/{{ item.file_name }}-logo.svg"
-        mode: "0644"
+    - name: Download logos directly inside the container volume
+      ansible.builtin.shell: |
+        {{ wordpress_wp_cli_exec }} curl -sSL "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/{{ item.url_name }}.png" \
+          -o "/var/www/html/{{ item.file_name }}-logo.png"
       loop:
-        - { url_name: 'HashiCorp-Terraform', file_name: 'terraform' }
-        - { url_name: 'Ansible', file_name: 'ansible' }
+        - { url_name: 'terraform', file_name: 'terraform' }
+        - { url_name: 'ansible', file_name: 'ansible' }
+      changed_when: true
+      tags: [ 'download_logos' ]
 
     - name: Create Ansible post
       ansible.builtin.shell: |
@@ -228,7 +229,7 @@
 
     - name: Import image and set it as Featured Image
       ansible.builtin.shell: |
-        {{ wordpress_wp_cli_exec }} wp media import /var/www/html/{{ item.file_name }}-logo.svg \
+        {{ wordpress_wp_cli_exec }} wp media import /var/www/html/{{ item.file_name }}-logo.png \
           --post_id={{ item.post_id }} \
           --title="{{ item.display_name }} Logo" \
           --featured_image
