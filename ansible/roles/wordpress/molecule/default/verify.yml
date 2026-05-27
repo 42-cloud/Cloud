@@ -29,7 +29,7 @@
       ansible.builtin.assert:
         that:
           - __wordpress_tls_key_stat.stat.exists
-          - __wordpress_tls_key_stat.stat.mode == '0644'
+          - __wordpress_tls_key_stat.stat.mode == '0600'
         fail_msg: "The private key is exposed or missing"
 
     # --- cryptographic match ---
@@ -173,7 +173,7 @@
       changed_when: false
       # noqa: command-instead-of-module
 
-    - name: Verify WordPress DB configuration health status
+    - name: Verify Wordpress DB configuration health status
       ansible.builtin.command: >
         curl -k -s --header "Host: {{ wordpress_cert_domain }}" https://127.0.0.1:8443
       register: __wordpress_page_content
@@ -186,3 +186,17 @@
         that:
           - "'Error establishing a database connection' not in __wordpress_page_content.stdout"
         fail_msg: "wordpress container cannot communicate with DB"
+
+    - name: Get Wordpress installation status
+      ansible.builtin.shell: |
+        docker exec --user www-data {{ wordpress_wp_container_name }} wp core is-installed
+      register: __wordpress_cli_installed
+      failed_when: false
+      changed_when: false
+      delegate_to: localhost
+
+    - name: Check Wordpress installation status
+      ansible.builtin.assert:
+        that:
+          - __wordpress_cli_installed.rc == 0
+        fail_msg: "Wordpress core is not configured or installed!"

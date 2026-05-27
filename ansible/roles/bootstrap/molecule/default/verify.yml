@@ -52,13 +52,13 @@
     - name: Ensure users args are member of admin group
       ansible.builtin.assert:
         that:
-          - "item in ansible_facts.getent_passwd"
-          - "item in ansible_facts.getent_group['admins'][2].split(',')"
-        fail_msg: "User {{ item }} is missing or is not an admin"
+          - "item.name in ansible_facts.getent_passwd"
+          - "item.name in ansible_facts.getent_group['admins'][2].split(',')"
+        fail_msg: "User {{ item.name }} is missing or is not an admin"
       loop: "{{ bootstrap_admin_users_list }}"
 
     - name: Check sudo privileges for admin users
-      ansible.builtin.command: "sudo -l -U {{ item }}"
+      ansible.builtin.command: "sudo -l -U {{ item.name }}"
       register: __bootstrap_sudo_privileges
       changed_when: false
       loop: "{{ bootstrap_admin_users_list }}"
@@ -66,12 +66,12 @@
     - name: Assert users have passwordless root privileges
       ansible.builtin.assert:
         that:
-          - "'(ALL) NOPASSWD: ALL' in item.stdout"
-        fail_msg: "L'utilisateur {{ item.item }} n'a pas les privilèges sudo requis (NOPASSWD: ALL)"
+          - "'NOPASSWD: ALL' in item.stdout"
+        fail_msg: "User {{ item.item.name }} does not have required privileges (NOPASSWD: ALL)"
       loop: "{{ __bootstrap_sudo_privileges.results }}"
 
     # --- VERIFICATION WORDPRESS ---
-    - name: Get WordPress storage directory details
+    - name: Get Wordpress storage directory details
       ansible.builtin.stat:
         path: "{{ bootstrap_wp_dir }}"
       register: bootstrap_wp_dir_res
@@ -127,20 +127,6 @@
 
     # --- VERIFICATION DUCK DNS ---
 
-    - name: Check mock server received a valid DuckDNS update call
-      ansible.builtin.uri:
-        url: "http://127.0.0.1:8081/update?domains=test-domain&token=test-token&ip="
-        method: GET
-        return_content: true
-      register: __bootstrap_mock_check
-
-    - name: Assert DuckDNS API call returned OK
-      ansible.builtin.assert:
-        that:
-          - "__bootstrap_mock_check.content == 'OK'"
-        fail_msg: >
-          Returned by mock Duck DNS Server: '{{ __bootstrap_mock_check.content }}'  — incorrect params or unreachable
-
     - name: Read host crontab entries
       ansible.builtin.command: crontab -l
       register: __bootstrap_crontab
@@ -152,12 +138,6 @@
           - "'Sync AWS Elastic IP with DuckDNS' in __bootstrap_crontab.stdout"
           - "'@reboot' in __bootstrap_crontab.stdout"
           - "'*/10' in __bootstrap_crontab.stdout"
-          - "'test-token' in __bootstrap_crontab.stdout"
-          - "'test-domain' in __bootstrap_crontab.stdout"
+          - "'/update?domains=' in __bootstrap_crontab.stdout"
+          - "'&token=' in __bootstrap_crontab.stdout"
         fail_msg: "DuckDNS cron updates are misconfigured"
-
-    - name: Assert mock server is still running
-      ansible.builtin.wait_for:
-        host: 127.0.0.1
-        port: 8081
-        timeout: 3

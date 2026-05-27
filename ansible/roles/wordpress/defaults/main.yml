@@ -5,8 +5,12 @@ wordpress_project_name: "cloudone"
 wordpress_domain_name: "{{ global_domain_name | default('cloud1.duckdns.org') }}"
 wordpress_project_path: "{{ global_project_path | default('/opt/cloud-1') }}"
 
+# admins
+wordpress_admin_users_list: "{{ global_admin_users_list | default([]) | list }}"
+
 # Pivot variable for tests
 wordpress_compose_src: "{{ wordpress_project_path }}"
+wordpress_docker_cmd: "docker"
 
 # Angie ports
 wordpress_expose_http: "80"
@@ -25,24 +29,40 @@ wordpress_db_socket: "/run/mysqld/mysqld.sock"
 wordpress_db_port: 3306
 wordpress_db_innodb_buffer_pool_size: "128M"
 wordpress_db_user: "mysql"
+wordpress_db_root_password: "{{ global_db_root_password | default('dev_db_admin_pass_fallback') }}"
+wordpress_db_admin_default_password: "{{ global_db_admin_default_password | default('dev_db_admin_pass_fallback') }}"
 wordpress_db_group: "mysql"
+wordpress_db_password: "{{ global_db_password | default('dev_db_pass_fallback') }}"
 wordpress_db_mem_limit: "512m"
 wordpress_db_mem_res_limit: "256m"
-wordpress_db_password: "{{ global_db_password | default('dev_db_pass_fallback') }}"
 wordpress_db_validate_cmd: ""
+wordpress_db_name: "wordpress"
+wordpress_db_container_name: "mariadb"
 
-# WordPress
+# Wordpress
+wordpress_wp_uid: "33"
+wordpress_wp_gid: "33"
 wordpress_wp_dir_path_dest: "{{ global_wp_dir | default('/var/www/html') }}"
-wordpress_wp_password: "{{ global_wp_password | default('dev_wp_pass_fallback') }}"
+wordpress_wp_admin_user: "wp-admin"
+wordpress_wp_admin_default_password: "{{ global_wp_admin_default_password | default('dev_wp_admin_pass_fallback') }}"
+wordpress_wp_admin_email: "admin@cloud.one"
 wordpress_wp_mem_limit: "256m"
 wordpress_wp_mem_res_limit: "128m"
+wordpress_wp_container_name: "wordpress"
+wordpress_wp_cli_exec: "{{ wordpress_docker_cmd }} exec --user www-data {{ wordpress_wp_container_name }}"
+wordpress_wp_site_title: "Cloud 1"
 
 # Angie
 wordpress_angie_conf_path_host: "{{ wordpress_compose_src }}/angie/angie.conf"
 wordpress_angie_conf_path_dest: "/etc/angie/angie.conf"
+wordpress_angie_container_name: "angie"
+
+# PHP My admin
+
 
 # TLS
 wordpress_cert_dir: "{{ wordpress_compose_src }}/angie/certs"
+wordpress_duckdns_domain: "{{ global_duckdns_domain | default('') }}"
 wordpress_cert_domain: "{{ global_duckdns_domain | default('cloud1') }}.duckdns.org"
 wordpress_cert_key_path: "{{ wordpress_cert_dir }}/{{ wordpress_cert_domain }}.key"
 wordpress_cert_crt_path: "{{ wordpress_cert_dir }}/{{ wordpress_cert_domain }}.crt"

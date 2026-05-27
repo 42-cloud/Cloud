@@ -18,12 +18,12 @@ services:
   mariadb:
     <<: *config
     image: mariadb:11.8
-    container_name: mariadb
+    container_name: {{ wordpress_db_container_name }}
     environment:
       MYSQL_RANDOM_ROOT_PASSWORD: '1'
-      MYSQL_DATABASE: wordpress
+      MYSQL_DATABASE: "{{ wordpress_db_name }}"
       MYSQL_USER: "{{ wordpress_db_user }}"
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_PASSWORD: "{{ wordpress_db_password }}"
     volumes:
       - db_data:{{ wordpress_db_dir_path_dest | string | replace('"', '') | replace("'", "") }}:rw
       - "{{ wordpress_db_conf_path_host }}:{{ wordpress_db_conf_path_dest }}:ro"
@@ -35,7 +35,7 @@ services:
         reservations:
           memory: "{{ wordpress_db_mem_res_limit }}"
     healthcheck:
-      test: ["CMD-SHELL", "mariadb-admin ping -u $$MYSQL_USER -p$$MYSQL_PASSWORD"]
+      test: ["CMD-SHELL", "mariadb-admin ping -u {{ wordpress_db_user | default('wp_user') }} -p'{{ wordpress_db_password }}'"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -44,13 +44,15 @@ services:
 
   wordpress:
     <<: *config
-    image: wordpress:6.9-php8.3-apache
-    container_name: wordpress
+    build:
+        context: ./wordpress
+        dockerfile: Dockerfile
+    container_name: {{ wordpress_wp_container_name }}
     environment:
       WORDPRESS_DB_HOST: mariadb
       WORDPRESS_DB_USER: "{{ wordpress_db_user }}"
-      WORDPRESS_DB_PASSWORD: ${WORDPRESS_DB_PASSWORD}
-      WORDPRESS_DB_NAME: wordpress
+      WORDPRESS_DB_PASSWORD: "{{ wordpress_db_password }}"
+      WORDPRESS_DB_NAME: "{{ wordpress_db_name }}"
     volumes:
         - wordpress_data:/var/www/html:rw
     deploy:
@@ -74,10 +76,10 @@ services:
   angie:
     <<: *config
     image: docker.angie.software/angie:1.11.5
-    container_name: angie
+    container_name: {{ wordpress_angie_container_name }}
     ports:
-      - "{{ wordpress_expose_http | default('80') }}:80"
-      - "{{ wordpress_expose_https | default('443') }}:443"
+      - "{{ wordpress_expose_http | default('80') | int }}:80"
+      - "{{ wordpress_expose_https | default('443') | int }}:443"
     volumes:
       - "{{ wordpress_angie_conf_path_host }}:{{ wordpress_angie_conf_path_dest }}:ro"
       - "{{ wordpress_cert_dir }}:/etc/angie/certs:ro"

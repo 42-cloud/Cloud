@@ -184,16 +184,16 @@ resource "aws_security_group" "cloudone" {
 
   ingress {
     description = "HTTP access for Angie"
-    from_port   = 8080 # check ansible wordpress_expose_http
-    to_port     = 8080
+    from_port   = 80
+    to_port     = 80
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
 
   ingress {
     description = "HTTPS access for Angie"
-    from_port   = 8443 # check ansible wordpress_expose_https
-    to_port     = 8443
+    from_port   = 443
+    to_port     = 443
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }

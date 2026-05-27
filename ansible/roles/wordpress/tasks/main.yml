@@ -1,10 +1,17 @@
 ---
 # wordpress - molecule/tasks/main.yml
 
+- name: Ensure Python cryptography library is installed for SSL modules
+  ansible.builtin.apt:
+    name: python3-cryptography
+    state: present
+    update_cache: yes
+  become: true
+
 # --- CERT KEYS ---
 
 - name: Handle TLS certificates
-  delegate_to: "localhost"
+  delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
   become: "{{ wordpress_become_compose | default(true) }}"
   block:
     - name: Ensure cert directory exists
@@ -18,7 +25,7 @@
         path: "{{ wordpress_cert_key_path }}"
         size: 2048
         type: RSA
-        mode: "0644"
+        mode: "0600"
 
     - name: Generate CSR
       community.crypto.openssl_csr:
@@ -37,13 +44,9 @@
 
 # --- CONFIG AND COMPOSE UP ---
 
-- name: Set dynamic target directory
-  ansible.builtin.set_fact:
-    __wordpress_target_dir: "{{ wordpress_compose_src | default(wordpress_project_path) }}"
-
-- name: Ensure dynamic target root directory exists
+- name: Ensure target root directory exists
   ansible.builtin.file:
-    path: "{{ __wordpress_target_dir }}"
+    path: "{{ wordpress_compose_src }}"
     state: directory
     mode: "0755"
   delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
@@ -52,14 +55,14 @@
 - name: Deploy .env file
   ansible.builtin.template:
     src: .env.j2
-    dest: "{{ __wordpress_target_dir }}/.env"
+    dest: "{{ wordpress_compose_src }}/.env"
     mode: "0600"
   delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
   become: "{{ wordpress_become_compose | default(true) }}"
 
 - name: Ensure configuration subdirectories exist
   ansible.builtin.file:
-    path: "{{ __wordpress_target_dir }}/{{ item }}"
+    path: "{{ wordpress_compose_src }}/{{ item }}"
     state: directory
     mode: "0775"
   loop:
@@ -80,7 +83,7 @@
 - name: Populate init sql
   ansible.builtin.template:
     src: init.sql.j2
-    dest: "{{ __wordpress_target_dir }}/mariadb/init.sql"
+    dest: "{{ wordpress_compose_src }}/mariadb/init.sql"
     mode: "0644"
   delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
   become: "{{ wordpress_become_compose | default(true) }}"
@@ -88,7 +91,15 @@
 - name: Deploy Angie configuration file
   ansible.builtin.template:
     src: angie.conf.j2
-    dest: "{{ __wordpress_target_dir }}/angie/angie.conf"
+    dest: "{{ wordpress_compose_src }}/angie/angie.conf"
+    mode: "0644"
+  delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
+  become: "{{ wordpress_become_compose | default(true) }}"
+
+- name: Copy wordpress Dockerfile
+  ansible.builtin.copy:
+    src: wordpress/Dockerfile
+    dest: "{{ wordpress_compose_src }}/wordpress/Dockerfile"
     mode: "0644"
   delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
   become: "{{ wordpress_become_compose | default(true) }}"
@@ -96,7 +107,7 @@
 - name: Populate docker compose
   ansible.builtin.template:
     src: docker-compose.yml.j2
-    dest: "{{ __wordpress_target_dir }}/docker-compose.yml"
+    dest: "{{ wordpress_compose_src }}/docker-compose.yml"
     mode: "0640"
   delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
   become: "{{ wordpress_become_compose | default(true) }}"
@@ -104,7 +115,129 @@
 # delegated to localhost in test
 - name: Launch docker compose
   community.docker.docker_compose_v2:
-    project_src: "{{ __wordpress_target_dir }}"
+    project_src: "{{ wordpress_compose_src }}"
     state: present
   delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
   become: "{{ wordpress_become_compose | default(true) }}"
+
+# --- WORDPRESS install and customization ---
+
+- name: Check if wp-cli is installed
+  ansible.builtin.shell: |
+    docker exec {{ wordpress_wp_container_name }} which wp
+  register: __wordpress_cli_check
+  changed_when: false
+  delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
+
+- name: Check if wp core is installed
+  ansible.builtin.shell: |
+    {{ wordpress_wp_cli_exec }} wp core is-installed
+  register: __wordpress_wp_core_is_configured
+  failed_when: false
+  changed_when: false
+  delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
+
+- name: Run Wordpress automated configuration
+  when: __wordpress_wp_core_is_configured.rc != 0
+  delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
+  block:
+    - name: Execute wp-core install
+      ansible.builtin.shell: |
+        {{ wordpress_wp_cli_exec }} wp core install \
+        --url="https://{{ wordpress_duckdns_domain }}.duckdns.org" \
+        --title="{{ wordpress_wp_site_title }}" \
+        --admin_user="{{ wordpress_wp_admin_user }}" \
+        --admin_password="{{ wordpress_wp_admin_default_password }}" \
+        --admin_email="{{ wordpress_wp_admin_email}}"
+
+    - name: Allow SVG uploads in WordPress configuration
+      ansible.builtin.shell: |
+        {{ wordpress_wp_cli_exec }} wp plugin install safe-svg --activate
+
+    - name: Disable file editing from Wordpress admin dashboard
+      ansible.builtin.shell: |
+        {{ wordpress_wp_cli_exec }} wp config set DISALLOW_FILE_EDIT true --raw
+
+    - name: Install and activate theme
+      ansible.builtin.shell: |
+        {{ wordpress_wp_cli_exec }} wp theme install extendable --activate
+
+    - name: Purge all posts and pages
+      ansible.builtin.shell: |
+            {{ wordpress_wp_cli_exec }} wp post delete $({{ wordpress_wp_cli_exec }} wp post list --post_type=post --format=ids) --force
+            {{ wordpress_wp_cli_exec }} wp post delete $({{ wordpress_wp_cli_exec }} wp post list --post_type=page --format=ids) --force
+      failed_when: false
+      changed_when: false
+
+    - name: Create static pages
+      ansible.builtin.shell: |
+        {{ wordpress_wp_cli_exec }} wp post create \
+          --post_type=page \
+          --post_title="The project" \
+          --post_content="Welcome to our Cloud-1 project page. A project about hardening and automation" \
+          --post_status=publish
+
+    - name: Download logos to project directory
+      ansible.builtin.get_url:
+        url: "https://icon.icepanel.io/Technology/svg/{{ item.url_name }}.svg"
+        dest: "{{ wordpress_compose_src }}/wordpress/{{ item.file_name }}-logo.svg"
+        mode: "0644"
+      loop:
+        - { url_name: 'HashiCorp-Terraform', file_name: 'terraform' }
+        - { url_name: 'Ansible', file_name: 'ansible' }
+
+    - name: Create Ansible post
+      ansible.builtin.shell: |
+        {{ wordpress_wp_cli_exec }} wp post create \
+              --post_type=post \
+              --post_title="Ansible" \
+              --post_status=publish \
+              --porcelain \
+              --post_content="<p><strong>Ansible</strong> is the <em>Configuration Management</em>.</p>
+              <h3>Main features:</h3>
+              <ul>
+                <li><strong>Infrastructure hardening :</strong>UFW configuration.</li>
+                <li><strong>IAM :</strong> users and <code>admins</code> group creation.</li>
+                <li><strong>Networking automation :</strong> Synchronizing AWS IP with <em>DuckDNS</em> domain.</li>
+                <li><strong>Docker installation</strong></li>
+                <li><strong>Wordpress and other services installation and configuration</strong></li>
+              </ul>
+              <p>We declared 3 roles.</p>
+              <p>We realized tests to validate deploy locally.</p>"
+      register: __wordpress_Ansible_post_id
+
+    - name: Create Terraform post
+      ansible.builtin.shell: |
+        {{ wordpress_wp_cli_exec }} wp post create \
+              --post_type=post \
+              --post_title="HashiCorp-Terraform" \
+              --post_status=publish \
+              --porcelain \
+              --post_content="<p><strong>Terraform</strong> acts as the <em>Infrastructure as Code (IaC)</em> foundation.</p>
+              <h3>Main features:</h3>
+              <ul>
+                <li><strong>Network Topology:</strong> Provisioning of a dedicated AWS VPC, secure subnets, and internet gateways.</li>
+                <li><strong>Compute Isolation:</strong> Deployment of the EC2 instance inside specific Security Groups with custom ingress filtering.</li>
+                <li><strong>SecOps Hardening:</strong> Enforcement of <strong>IMDSv2</strong> to mitigate SSRF vulnerabilities.</li>
+                <li><strong>Data Protection:</strong> Activation of <strong>AWS KMS</strong> for encrypted gp3 storage volumes and cloud logs.</li>
+                <li><strong>Auditability:</strong> Implementation of VPC Flow Logs routed directly to CloudWatch groups.</li>
+              </ul>
+              <p>We decoupled the cloud resources construction from the OS configuration, keeping our infrastructure declarative.</p>
+              <p>We embedded secure remote state storage to prevent state locking and sensitive data leakage.</p>"
+      register: __wordpress_HashiCorp_Terraform_post_id
+
+    - name: Import image and set it as Featured Image
+      ansible.builtin.shell: |
+        {{ wordpress_wp_cli_exec }} wp media import /var/www/html/{{ item.file_name }}-logo.svg \
+          --post_id={{ item.post_id }} \
+          --title="{{ item.display_name }} Logo" \
+          --featured_image
+      loop:
+        - name: "HashiCorp-Terraform"
+          file_name: "terraform"
+          display_name: "Terraform"
+          post_id: "{{ __wordpress_HashiCorp_Terraform_post_id.stdout }}"
+        - name: "Ansible"
+          file_name: "ansible"
+          display_name: "Ansible"
+          post_id: "{{ __wordpress_Ansible_post_id.stdout }}"

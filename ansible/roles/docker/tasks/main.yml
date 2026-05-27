@@ -11,6 +11,7 @@
     name:
       - ca-certificates
       - curl
+      - python3-docker
       - python3-debian # required by deb822
     state: present
   become: true
