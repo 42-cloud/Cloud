@@ -225,16 +225,6 @@
         {{ wordpress_wp_cli_exec }} wp option update medium_size_h 300
       changed_when: true
 
-    # - name: Inject images into WordPress container volume
-    #   community.docker.docker_container_copy_into:
-    #     container: "{{ wordpress_wp_container_name | default('wordpress') }}"
-    #     container_path: "/var/www/html/{{ item | basename }}"
-    #     local_follow: true
-    #     path: "{{ item }}"
-    #   with_fileglob:
-    #   - "{{ role_path }}/files/wordpress/images/*"
-    #   delegate_to: localhost
-
     - name: Import images from container root and set as Featured Image
       ansible.builtin.shell: |
         {{ wordpress_wp_cli_exec }} wp media import "/tmp/wp-assets/{{ item.filename }}" \
