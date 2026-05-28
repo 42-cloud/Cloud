@@ -72,6 +72,12 @@
   delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
   become: "{{ wordpress_become_compose | default(true) }}"
 
+- name: Copy WordPress Docker build context (including images) to remote hosts
+  ansible.builtin.copy:
+    src: "wordpress/" # Pointe vers roles/wordpress/files/wordpress/ sur localhost
+    dest: "{{ wordpress_compose_src }}/wordpress/"
+    mode: "0755"
+
 - name: Populate db conf
   ansible.builtin.template:
     src: mariadb.conf.j2
@@ -118,6 +124,7 @@
   community.docker.docker_compose_v2:
     project_src: "{{ wordpress_compose_src }}"
     state: present
+    build: policy
   delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
   become: "{{ wordpress_become_compose | default(true) }}"
 
@@ -139,7 +146,7 @@
   delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
 
 - name: Run Wordpress automated configuration
-  when: __wordpress_wp_core_is_configured.rc != 0
+  # when: __wordpress_wp_core_is_configured.rc != 0
   delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
   block:
     - name: Execute wp-core install
@@ -182,103 +189,62 @@
           --post_status=publish
       changed_when: true
 
-    - name: Download logos directly inside the container volume
+    - name: Check if 'tools' category exists
       ansible.builtin.shell: |
-        {{ wordpress_wp_cli_exec }} curl -sSL \
-          "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/{{ item.url_name }}.png" \
-          -o "/var/www/html/{{ item.file_name }}-logo.png"
-      loop:
-        - { url_name: "terraform", file_name: "terraform" }
-        - { url_name: "ansible", file_name: "ansible" }
-      changed_when: true
-      tags: ["download_logos"]
-
-    - name: Create Ansible post
-      ansible.builtin.shell: |
-        {{ wordpress_wp_cli_exec }} wp post create \
-              --post_type=post \
-              --post_title="Ansible" \
-              --post_status=publish \
-              --porcelain \
-              --post_content="{{ lookup('ansible.builtin.file', 'files/wordpress/posts/ansible.html') }}"
-      register: __wordpress_ansible_post_id
-      changed_when: true
-
-    - name: Create Terraform post
-      ansible.builtin.shell: |
-        {{ wordpress_wp_cli_exec }} wp post create \
-              --post_type=post \
-              --post_title="Terraform" \
-              --post_status=publish \
-              --porcelain \
-              --post_content="{{ lookup('ansible.builtin.file', 'files/wordpress/posts/terraform.html') }}"
-      register: __wordpress_terraform_post_id
-      changed_when: true
-
-    - name: Create Yaml post
-      ansible.builtin.shell: |
-        {{ wordpress_wp_cli_exec }} wp post create \
-              --post_type=post \
-              --post_title="Yaml" \
-              --post_status=publish \
-              --porcelain \
-              --post_content="{{ lookup('ansible.builtin.file', 'files/wordpress/posts/yaml.html') }}"
-      register: __wordpress_yaml_post_id
-      changed_when: true
-
-    - name: Verify logo files exist in container
-      ansible.builtin.shell: |
-        {{ wordpress_wp_cli_exec }} ls -la /var/www/html/terraform-logo.png /var/www/html/ansible-logo.png
-      register: __wordpress_logo_check
+        {{ wordpress_wp_cli_exec }} wp term get category tools --by=slug
+      register: wordpress_tools_category_exists
       changed_when: false
-      when: ansible_verbosity >= 1
+      failed_when: false
 
-    - name: Debug logo presence
-      ansible.builtin.debug:
-        var: __wordpress_logo_check.stdout
-      when: ansible_verbosity >= 1
+    - name: Create 'tools' category
+      when: wordpress_tools_category_exists.rc != 0
+      ansible.builtin.shell: |
+        {{ wordpress_wp_cli_exec }} wp term create category "Tools" --slug="tools"
+      changed_when: true
 
-    - name: Debug post IDs
-      ansible.builtin.debug:
-        msg:
-          - "terraform id: '{{ __wordpress_terraform_post_id.stdout }}'"
-          - "ansible id: '{{ __wordpress_Ansible_post_id.stdout }}'"
-      when: ansible_verbosity >= 1
-
-    - name: Debug final post_id values at import time
-      ansible.builtin.debug:
-        msg: "post_id='{{ item.post_id | trim }}' file='{{ item.file_name }}'"
+    - name: Create WordPress posts from local HTML files
+      ansible.builtin.shell: |
+        echo {{ lookup('ansible.builtin.file', 'files/wordpress/posts/' ~ item ~ '.html') | quote }} | {{ wordpress_wp_cli_exec }} wp post create \
+              --post_type=post \
+              --post_title="{{ item | capitalize }}" \
+              --post_status=publish \
+              --post_category="tools" \
+              --porcelain
       loop:
-        - { file_name: "terraform", post_id: "{{ __wordpress_terraform_post_id.stdout }}" }
-        - { file_name: "ansible", post_id: "{{ __wordpress_ansible_post_id.stdout }}" }
-      when: ansible_verbosity >= 1
+        - ansible
+        - terraform
+        - yaml
+      register: __wordpress_posts_bulk
+      changed_when: true
 
     - name: Configure WordPress media sizes
       ansible.builtin.shell: |
-        {{ wordpress_wp_cli_exec }} wp option update large_size_w 800
-        {{ wordpress_wp_cli_exec }} wp option update large_size_h 600
+        {{ wordpress_wp_cli_exec }} wp option update large_size_w 600
+        {{ wordpress_wp_cli_exec }} wp option update large_size_h 400
         {{ wordpress_wp_cli_exec }} wp option update medium_size_w 400
         {{ wordpress_wp_cli_exec }} wp option update medium_size_h 300
       changed_when: true
 
-    - name: Import image and set it as Featured Image
+    # - name: Inject images into WordPress container volume
+    #   community.docker.docker_container_copy_into:
+    #     container: "{{ wordpress_wp_container_name | default('wordpress') }}"
+    #     container_path: "/var/www/html/{{ item | basename }}"
+    #     local_follow: true
+    #     path: "{{ item }}"
+    #   with_fileglob:
+    #   - "{{ role_path }}/files/wordpress/images/*"
+    #   delegate_to: localhost
+
+    - name: Import images from container root and set as Featured Image
       ansible.builtin.shell: |
-        {{ wordpress_wp_cli_exec }} wp media import /var/www/html/{{ item.file_name }}-logo.png \
-          --post_id={{ item.post_id | trim }} \
+        {{ wordpress_wp_cli_exec }} wp media import "/tmp/wp-assets/{{ item.filename }}" \
+          --post_id={{ (wp_posts[item.name] | trim) }} \
           --title="{{ item.display_name }} Logo" \
           --featured_image
-      loop:
-        - name: "HashiCorp-Terraform"
-          file_name: "terraform"
-          display_name: "Terraform"
-          post_id: "{{ __wordpress_terraform_post_id.stdout }}"
-        - name: "Ansible"
-          file_name: "ansible"
-          display_name: "Ansible"
-          post_id: "{{ __wordpress_ansible_post_id.stdout }}"
+      vars:
+        wp_posts: "{{ dict(__wordpress_posts_bulk.results | map(attribute='item') | zip(__wordpress_posts_bulk.results | map(attribute='stdout'))) }}"
+      loop: &image_loop
+      - { name: "ansible", filename: "ansible.png", display_name: "Ansible" }
+      - { name: "terraform", filename: "terraform.png", display_name: "Terraform" }
+      - { name: "yaml", filename: "yaml.png", display_name: "Yaml" }
       changed_when: true
-
-    - name: Regenerate thumbnails
-      ansible.builtin.shell: |
-        {{ wordpress_wp_cli_exec }} wp media regenerate --yes
-      changed_when: false

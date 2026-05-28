@@ -47,9 +47,8 @@ resource "aws_eip" "wordpress_eip" {
 resource "local_file" "dynamic_inventory" {
   content  = join("\n", concat(
     ["[wordpress]"],
-    [for name, eip in aws_eip.wordpress_eip : <<-EOF
-${name} ansible_host=${eip.public_ip} ansible_user=ubuntu ansible_ssh_private_key_file=${replace(var.public_key_path, ".pub", "")}
-EOF
+    [for name, eip in aws_eip.wordpress_eip :
+        "${name} ansible_host=${eip.public_ip} ansible_user=ubuntu ansible_ssh_private_key_file=${replace(var.public_key_path, ".pub", "")} global_duckdns_domain=${name}"
     ]
   ))
   filename              = "../ansible/inventory/inventory.ini"
