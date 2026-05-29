@@ -1,0 +1,87 @@
+---
+- name: Verify Docker
+  hosts: all
+  gather_facts: false
+  tasks:
+
+    - name: Load role default vars
+      ansible.builtin.include_vars:
+        file: "../../defaults/main.yml"
+
+    - name: Load role variables
+      ansible.builtin.include_vars:
+        file: ../../vars/main.yml
+
+    # --- VERIFICATION DOCKER DEPENDENCIES  ---
+    - name: Gather package stats
+      ansible.builtin.package_facts:
+        strategy: all
+
+    - name: Check presence of docker dependencies
+      ansible.builtin.assert:
+        that:
+          - item in ansible_facts.packages
+        fail_msg: "Missing package {{ item }}"
+      loop:
+        - ca-certificates
+        - curl
+        - python3-debian
+
+    # --- VERIFICATION GPG ---
+    - name: Gather stat for gpg
+      ansible.builtin.stat:
+        path: "{{ __docker_gpg_path }}"
+      register: docker_gpg
+
+    - name: Check gpg presence and permissions are 0644
+      ansible.builtin.assert:
+        that:
+          - docker_gpg.stat.exists
+          - docker_gpg.stat.mode == '0644'
+
+    # --- VERIFICATION DOCKER REPOSITORY ---
+    - name: Gather stat for repo
+      ansible.builtin.stat:
+        path: "{{ __docker_repo_config_file_path }}"
+      register: docker_repo_config
+
+    - name: Check docker repo presence
+      ansible.builtin.assert:
+        that:
+          - docker_repo_config.stat.exists
+
+    # --- VERIFICATION DOCKER INSTALLATION ---
+    - name: Gather package stats after docker repo addition
+      ansible.builtin.package_facts:
+        strategy: all
+
+    - name: Check presence of docker and docker compose
+      ansible.builtin.assert:
+        that:
+          - item in ansible_facts.packages
+      loop:
+        - docker-ce
+        - docker-ce-cli
+        - docker-compose-plugin
+
+    - name: Check docker version
+      ansible.builtin.assert:
+        that:
+          - ansible_facts.packages['docker-ce'][0]['version'] == docker_version
+
+    - name: Check docker compose version
+      ansible.builtin.assert:
+        that:
+          - ansible_facts.packages['docker-compose-plugin'][0]['version'] == docker_compose_version
+
+    - name: Test Docker daemon responsiveness (Universal)
+      ansible.builtin.command: docker info
+      register: docker_info_result
+      changed_when: false
+      failed_when: false
+
+    - name: Assert Docker is running and responding
+      ansible.builtin.assert:
+        that:
+          - docker_info_result.rc == 0
+        fail_msg: "docker daemon is not operational"

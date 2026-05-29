@@ -30,6 +30,14 @@ task apply
 
 # Stack
 
+## Ubuntu as base OS
+
+### package installation method
+
+- DEB822 (from RFC 822) is the new APT norm to declare package repositories on Debian and Ubuntu. Successor to `.list`. 
+  - it relies on key: value pairs for suites, components, architecture
+  - every repo has its gpg key
+
 ## Automation and Orchestration
 
 ### Go-Task
@@ -92,6 +100,36 @@ __Best practices__
 
 > An agentless configuration management tool
 
+#### Variables
+
+- 3 levels of variables
+  - group_vars
+  - vars (within a role)
+  - default (within a role) : allow to reuse group_vars as they have a lower priority than them, contrary to vars
+
+#### TDD with molecules
+
+- a *test_sequence* can have many steps, among which main ones:
+  - create
+  - converge
+  - verify
+  - destroy
+
+**adapting tests to dockerized test environment**
+- molecule runs tests in docker container. For `docker` role, we have distinct tasks whether the environment is prod or test:
+  - in test env, we are within a container with no `systemd`. Therefore, we use `ansible.builtin.shell` to look for / launch `dockerd` process
+  - prod relies on `ansible.builtin.service` module
+- similarly, test assertion rely on command `docker info`
+
+#### Roles
+
+|Role|Responsibilities|
+|:-- |:--|
+|`bootstrap`|OS preparation, SSH config, UFW config, create directories for data persistence with appropriate permissions|
+|`docker`|generic role to install daemon and docker compose|
+|`wordpress`|centralized role for stack management : would be too difficult to manage 2 different roles for wordpress and db|
+
+
 ## Security
 
 ### Checkov
@@ -120,6 +158,7 @@ __Best practices__
 | [Chainguard doc](https://edu.chainguard.dev/) | 📔 | for Melange and Apko |
 | [Automating IT with Ansible](https://www.educative.io/courses/automating-it-infrastructure-with-ansible) | 📘 | |
 | [Infra as Code using Terraform](https://www.educative.io/courses/infrastructure-as-code-using-terraform) | 📘 | |
+| [Stephane Robert](https://blog.stephane-robert.info/docs/infra-as-code/gestion-de-configuration/ansible/) | 📘 | Excellent tutorials |
 
 Resource type
 
@@ -132,4 +171,5 @@ Resource type
 ## AI Usage
 
 - fix and improve script
+- guide setup with a prompt asking to proofcheck our approach and suggest alternatives with pros and cons -> we remain in charge of choosing the next step
 - PR review
