@@ -4,10 +4,12 @@ contents:
     - ./melange.rsa.pub
   repositories:
     - https://packages.wolfi.dev/os
-    - ./
+    - ./packages
+    - ../healthcheck-http/packages
   packages:
     - wolfi-baselayout
     - angie
+    - healthcheck
 
 entrypoint:
   command: /usr/bin/angie -g "daemon off; pid /tmp/angie.pid;"

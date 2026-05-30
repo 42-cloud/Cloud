@@ -9,3 +9,16 @@ terraform.tfstate.backup
 *.ini
 
 **/.env
+
+.gitignore
+
+.vault_pass_cloudone
+compose/results.json
+compose/trivy
+melange/angie/angie.tar
+healthcheck
+healthcheck-mysql
+healthcheck-http
+*.exe
+
+packages/

@@ -1,6 +1,6 @@
 package:
   name: angie
-  version: 1.11.4
+  version: 1.11.6
   epoch: 0
   description: Efficient, powerful and scalable web server, drop-in replacement for nginx
   copyright:
@@ -8,6 +8,10 @@ package:
 
 environment:
   contents:
+    keyring:
+      - https://packages.wolfi.dev/os/wolfi-signing.rsa.pub
+    repositories:
+      - https://packages.wolfi.dev/os
     packages:
       - build-base
       - busybox
@@ -20,7 +24,7 @@ pipeline:
   - uses: fetch
     with:
       uri: https://download.angie.software/files/angie-${{package.version}}.tar.gz
-      expected-sha256: b95009ceef7a1c40809aead95f71901ca1c5c9d2630eca0763853811b641983c
+      expected-sha256: 3ca80da3d6d0f419f1c0b95f3a106d70216c4240e37874f906792c94dbcf4e5e
 
   - runs: |
       ./configure \
