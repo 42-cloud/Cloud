@@ -40,6 +40,7 @@ provisioner:
       bootstrap_duckdns_domain=test-domain
       bootstrap_duckdns_token=test-token
       bootstrap_duckdns_api_base=http://172.17.0.1:8081
+      bootstrap_duckdns_validate_certs=false
   env:
     ANSIBLE_ROLES_PATH: "../../../"
     ANSIBLE_STDOUT_CALLBACK: default

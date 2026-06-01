@@ -105,8 +105,8 @@
 
 - name: Copy wordpress Dockerfile
   ansible.builtin.copy:
-    src: wordpress/Dockerfile
-    dest: "{{ wordpress_compose_src }}/wordpress/Dockerfile"
+    src: wordpress/
+    dest: "{{ wordpress_compose_src }}/wordpress/"
     mode: "0644"
   delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
   become: "{{ wordpress_become_compose | default(true) }}"
