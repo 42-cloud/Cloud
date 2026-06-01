@@ -5,3 +5,8 @@ COPY images/ /tmp/wp-assets/
 
 RUN curl -sL https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar \
     -o /usr/local/bin/wp && chmod +x /usr/local/bin/wp
+
+USER www-data
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD curl -f http://localhost/wp-login.php || exit 1

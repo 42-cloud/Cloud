@@ -87,6 +87,13 @@ tasks:
         echo -e "{{ .PPL }}Ansible tasks{{ .NC }}"
         echo -e "{{ .PPL }Run: task ansible:test{{ .NC }}"
 
+
+  ansible:lint:
+    desc: Ansible lint
+    cmds:
+      - ansible-lint .
+    silent: true
+
   ansible:test:
     desc: "Ansible Molecule Tests for a specific roles or all of them. Usage: task ansible:test [role=wordpress]"
     dir: "{{.USER_WORKING_DIR}}"
@@ -165,3 +172,23 @@ tasks:
         echo -e "{{ .PPL }}Process compose down...{{ .NC }}"
         cd compose && docker compose {{if .PROFILE}}--profile {{.PROFILE}}{{end}} down {{if .VOLUME}}-v{{end}}
     silent: true
+
+  # ──────────────────────────────────────────
+  # CI
+  # ──────────────────────────────────────────
+
+  act:
+    desc: run CI script locally (checkov fail)
+    cmds:
+      - |
+        act --platform ubuntu-latest=catthehacker/ubuntu:act-latest --secret-file .secrets
+
+  checkov:
+    desc: run checkov
+    cmds:
+      - >-
+        checkov -d . --output cli
+        --quiet
+        --output junitxml
+        --output-file-path console,results_junitxml.xml
+        --soft-fail

@@ -41,6 +41,10 @@
         provider: selfsigned
         selfsigned_not_after: "+365d"
         mode: "0644"
+  rescue:
+    - name: Fail explicitly if TLS generation fails
+      ansible.builtin.fail:
+        msg: "TLS certificate generation failed"
 
 # --- CONFIG AND COMPOSE UP ---
 
@@ -204,12 +208,16 @@
 
     - name: Create WordPress posts from local HTML files
       ansible.builtin.shell: |
-        echo {{ lookup('ansible.builtin.file', 'files/wordpress/posts/' ~ item ~ '.html') | quote }} | {{ wordpress_wp_cli_exec }} wp post create \
-              --post_type=post \
-              --post_title="{{ item | capitalize }}" \
-              --post_status=publish \
-              --post_category="tools" \
-              --porcelain
+        set -o pipefail
+        echo {{ lookup('ansible.builtin.file', 'files/wordpress/posts/' ~ item ~ '.html') | quote }} \
+          | {{ wordpress_wp_cli_exec }} wp post create \
+          --post_type=post \
+          --post_title="{{ item | capitalize }}" \
+          --post_status=publish \
+          --post_category="tools" \
+          --porcelain
+      args:
+        executable: /bin/bash
       loop:
         - ansible
         - terraform
@@ -232,9 +240,14 @@
           --title="{{ item.display_name }} Logo" \
           --featured_image
       vars:
-        wp_posts: "{{ dict(__wordpress_posts_bulk.results | map(attribute='item') | zip(__wordpress_posts_bulk.results | map(attribute='stdout'))) }}"
-      loop: &image_loop
-      - { name: "ansible", filename: "ansible.png", display_name: "Ansible" }
-      - { name: "terraform", filename: "terraform.png", display_name: "Terraform" }
-      - { name: "yaml", filename: "yaml.png", display_name: "Yaml" }
+        wp_posts: "{{ dict(__wordpress_posts_bulk.results | map(attribute='item') \
+          | zip(__wordpress_posts_bulk.results | map(attribute='stdout'))) }}"
+      loop:
+        - { name: "ansible", filename: "ansible.png", display_name: "Ansible" }
+        - { name: "terraform", filename: "terraform.png", display_name: "Terraform" }
+        - { name: "yaml", filename: "yaml.png", display_name: "Yaml" }
       changed_when: true
+  rescue:
+    - name: Fail explicitly if wordpress configuration fails
+      ansible.builtin.fail:
+        msg: "Wordpress configuration failed"
