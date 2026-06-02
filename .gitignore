@@ -10,3 +10,8 @@ terraform/terraform.tfvars
 .terraform/
 melange/*/healthcheck*
 melange/*/melange.rsa*
+
+ansible/inventory/
+compose/results.json
+compose/trivy
+
