@@ -1,11 +1,15 @@
-.terraform/
-terraform.tfstate
-terraform.tfstate.backup
-*.tfvars
+*.tar
+pipelines/
+packages/
+.env
+.vault_pass*
 *.rsa
-*.rsa*
-
-
+terraform/.terraform/
+terraform/terraform.tfstate*
+terraform/terraform.tfvars
+.terraform/
+melange/*/healthcheck*
+melange/*/melange.rsa*
 .ansible
 *.ini
 **/.vault_pass*
@@ -13,4 +17,3 @@ ansible/roles/wordpress/angie
 ansible/roles/wordpress/mariadb
 ansible/roles/wordpress/docker-compose.yml
 
-**/.env

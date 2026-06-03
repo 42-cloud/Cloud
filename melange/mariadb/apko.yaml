@@ -5,39 +5,40 @@ contents:
   repositories:
     - https://packages.wolfi.dev/os
     - ./packages
-    - ../healthcheck-http/packages
+    - ../healthcheck-sql/packages
   packages:
     - wolfi-baselayout
-    - angie
-    - healthcheck
+    - mariadb-12.2
+    - mariadb-12.2-oci-entrypoint
+    - healthcheck-sql
 
 entrypoint:
-  command: /usr/bin/angie -g "daemon off; pid /tmp/angie.pid;"
+  command: /usr/local/bin/docker-entrypoint.sh
 
 accounts:
   users:
-    - username: angie
-      uid: 65532
+    - username: mysql
+      uid: 70
   groups:
-    - groupname: angie
-      gid: 65532
-  run-as: "65532"
+    - groupname: mysql
+      gid: 70
+  run-as: "70"
 
 paths:
-  - path: /var/log/angie
+  - path: /var/lib/mysql
     type: directory
-    uid: 65532
-    gid: 65532
+    uid: 70
+    gid: 70
     permissions: 0o755
-  - path: /var/cache/angie
+  - path: /run/mysqld
     type: directory
-    uid: 65532
-    gid: 65532
+    uid: 70
+    gid: 70
     permissions: 0o755
-  - path: /run/angie
+  - path: /docker-entrypoint-initdb.d
     type: directory
-    uid: 65532
-    gid: 65532
+    uid: 70
+    gid: 70
     permissions: 0o755
 
 archs:

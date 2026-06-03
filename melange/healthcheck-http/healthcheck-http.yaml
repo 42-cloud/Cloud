@@ -1,0 +1,23 @@
+package:
+  name: healthcheck-http
+  version: "1.0.0"
+  epoch: 0
+  description: healthcheck via http for distroless image
+  copyright:
+    - license: MIT
+
+environment:
+  contents:
+    keyring:
+      - https://packages.wolfi.dev/os/wolfi-signing.rsa.pub
+    repositories:
+      - https://packages.wolfi.dev/os
+    packages:
+      - go-1.26
+
+pipeline:
+  - uses: go/build
+    with:
+      output: healthcheck-http
+      packages: .
+      go-package: go-1.26
