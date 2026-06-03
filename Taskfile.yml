@@ -10,6 +10,7 @@ vars:
   NC: "\\033[0m"
   VOLUME: ""
   PROFILE: ""
+  DOCKER_USER: kazibuya
 
 tasks:
   default:
@@ -17,45 +18,66 @@ tasks:
     cmds:
       - task --list
     silent: true
-  # ──────────────────────────────────────────
-  # TERRAFORM
-  # ──────────────────────────────────────────
-  fmt:
+
+# ──────────────────────────────────────────
+# SETUP
+# ──────────────────────────────────────────
+  keygen:
+    desc: Create melange key for build image
+    cmds:
+      - |
+        echo -e "{{ .PPL }}Melange key generation...{{ .NC }}"
+        cd melange && melange keygen
+    silent: true
+
+  pipeline:
+    desc: Fetch pipeline repo of WolfiOS
+    cmds:
+      - |
+        git clone --depth 1 --filter=blob:none --sparse https://github.com/wolfi-dev/os.git /tmp/wolfi-os &&
+        cd /tmp/wolfi-os && git sparse-checkout set pipelines && git checkout &&
+        cp -r pipelines {{.ROOT_DIR}}/melange/
+        rm -rf /tmp/wolfi-os
+
+# ──────────────────────────────────────────
+# TERRAFORM
+# ──────────────────────────────────────────
+  terraform:fmt:
     desc: Terraform fmt
     cmds:
       - |
         echo -e "{{ .PPL }}Process terraform fmt...{{ .NC }}"
         cd terraform && terraform fmt
     silent: true
-  init:
+  terraform:init:
     desc: Terraform init
     cmds:
       - |
         echo -e "{{ .PPL }}Process terraform init...{{ .NC }}"
         cd terraform && terraform init
     silent: true
-  plan:
+  terraform:plan:
     desc: Terraform plan
     cmds:
       - |
         echo -e "{{ .PPL }}Process terraform plan...{{ .NC }}"
         cd terraform && terraform plan
     silent: true
-  apply:
+  terraform:apply:
     desc: Terraform apply
     cmds:
       - |
         echo -e "{{ .PPL }}Process terraform apply...{{ .NC }}"
         cd terraform && terraform apply
     silent: true
-  output:
+  terraform:output:
     desc: Terraform output
     cmds:
       - |
         echo -e "{{ .PPL }}Process terraform output...{{ .NC }}"
         cd terraform && terraform output
     silent: true
-  down:
+  terraform:down:
     desc: Terraform destroy
     cmds:
       - |
@@ -65,14 +87,14 @@ tasks:
         echo -e "{{ .PPL }}Rm inventory...{{ .NC }}"
         rm -f ansible/inventory/inventory.ini
     silent: true
-  show:
+  terraform:show:
     desc: Terraform show
     cmds:
       - |
         echo -e "{{ .PPL }}Process terraform show...{{ .NC }}"
         cd terraform && terraform show
     silent: true
-  tfvars:
+  terraform:tfvars:
     desc: Create a terraform.tfvars
     cmds:
       - bash scripts/tfvars.sh
@@ -173,9 +195,9 @@ tasks:
         cd compose && docker compose {{if .PROFILE}}--profile {{.PROFILE}}{{end}} down {{if .VOLUME}}-v{{end}}
     silent: true
 
-  # ──────────────────────────────────────────
-  # CI
-  # ──────────────────────────────────────────
+# ──────────────────────────────────────────
+# CI
+# ──────────────────────────────────────────
 
   act:
     desc: run CI script locally (checkov fail)
@@ -192,3 +214,79 @@ tasks:
         --output junitxml
         --output-file-path console,results_junitxml.xml
         --soft-fail
+
+# ──────────────────────────────────────────
+# MELANGE
+# ──────────────────────────────────────────
+
+  melange:
+    internal: true
+    dir: melange/{{.SERVICE}}
+    vars:
+      SERVICE: '{{.SERVICE}}'
+    cmds:
+      - rm -rf packages
+      - melange build {{.SERVICE}}.yaml --arch amd64 --signing-key ../melange.rsa --pipeline-dir ../pipelines
+
+  melange:angie:
+    cmds:
+      - task: melange
+        vars: { SERVICE: angie }
+
+  melange:healthcheck-http:
+    cmds:
+      - task: melange
+        vars: { SERVICE: healthcheck-http }
+
+  melange:healthcheck-sql:
+    cmds:
+      - task: melange
+        vars: { SERVICE: healthcheck-sql }
+
+  melange:phpmyadmin:
+    cmds:
+      - task: melange
+        vars: { SERVICE: phpmyadmin }
+
+  melange:mariadb:
+    cmds:
+      - task: melange
+        vars: { SERVICE: mariadb }
+
+  melange:wordpress:
+    cmds:
+      - task: melange
+        vars: { SERVICE: wordpress }
+
+# ──────────────────────────────────────────
+# APKO
+# ──────────────────────────────────────────
+
+  apko:
+    internal: true
+    dir: melange/{{.SERVICE}}
+    vars:
+      TAG: '{{.TAG | default "latest"}}'
+    cmds:
+      - apko build apko.yaml {{.DOCKER_USER}}/{{.SERVICE}}:{{.TAG}} {{.SERVICE}}.tar
+      - docker load < {{.SERVICE}}.tar
+
+  apko:angie:
+    cmds:
+      - task: apko
+        vars: { SERVICE: angie }
+
+  apko:phpmyadmin:
+    cmds:
+      - task: apko
+        vars: { SERVICE: phpmyadmin }
+
+  apko:mariadb:
+    cmds:
+      - task: apko
+        vars: { SERVICE: mariadb }
+
+  apko:wordpress:
+    cmds:
+      - task: apko
+        vars: { SERVICE: wordpress }
