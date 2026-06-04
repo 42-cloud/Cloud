@@ -72,7 +72,7 @@ services:
 
   angie:
     <<: *config
-    image: docker.angie.software/angie:1.11.5
+    image: kazibuya/angie:1.11.6-amd64
     container_name: angie
     ports:
       - "{{ wordpress_expose_http | default('80') }}:80"
