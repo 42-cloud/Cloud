@@ -10,7 +10,7 @@ vars:
   NC: "\\033[0m"
   VOLUME: ""
   PROFILE: ""
-  DOCKER_USER: kazibuya
+  DOCKER_USER: namichel
 
 tasks:
   default:
@@ -292,3 +292,43 @@ tasks:
     cmds:
       - task: apko
         vars: { SERVICE: wordpress }
+
+# ──────────────────────────────────────────
+# DOCKER
+# ──────────────────────────────────────────
+  docker:login:
+    desc: Login to dockerhub
+    cmds:
+      - docker login -u {{ .DOCKER_USER }}
+
+  push:
+    internal: true
+    cmds:
+      - docker push {{.DOCKER_USER}}/{{.SERVICE}}:{{.TAG}}-amd64
+
+  push:angie:
+    cmds:
+      - task: push
+        vars: { SERVICE: angie, TAG: '{{.TAG}}' }
+
+  push:mariadb:
+    cmds:
+      - task: push
+        vars: { SERVICE: mariadb, TAG: '{{.TAG}}' }
+
+  push:wordpress:
+    cmds:
+      - task: push
+        vars: { SERVICE: wordpress, TAG: '{{.TAG}}' }
+
+  push:phpmyadmin:
+    cmds:
+      - task: push
+        vars: { SERVICE: phpmyadmin, TAG: '{{.TAG}}' }
+
+  push:all:
+    cmds:
+      - task: push:angie
+      - task: push:mariadb
+      - task: push:wordpress
+      - task: push:phpmyadmin

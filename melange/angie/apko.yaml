@@ -1,7 +1,7 @@
 contents:
   keyring:
     - https://packages.wolfi.dev/os/wolfi-signing.rsa.pub
-    - ./melange.rsa.pub
+    - ../melange.rsa.pub
   repositories:
     - https://packages.wolfi.dev/os
     - ./packages
@@ -9,7 +9,7 @@ contents:
   packages:
     - wolfi-baselayout
     - angie
-    - healthcheck
+    - healthcheck-http
 
 entrypoint:
   command: /usr/bin/angie -g "daemon off; pid /tmp/angie.pid;"
