@@ -17,10 +17,9 @@ ansible/roles/wordpress/angie
 ansible/roles/wordpress/mariadb
 ansible/roles/wordpress/wordpress
 ansible/roles/wordpress/docker-compose.yml
-
 results_junitxml.xml
-
 **/.env
 **/.key
 **/.csr
 **/.secrets
+melange/melange.rsa.pub

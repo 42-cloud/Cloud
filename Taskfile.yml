@@ -220,6 +220,7 @@ tasks:
 # ──────────────────────────────────────────
 
   melange:
+    desc: build apk package service
     internal: true
     dir: melange/{{.SERVICE}}
     vars:
@@ -263,6 +264,7 @@ tasks:
 # ──────────────────────────────────────────
 
   apko:
+    desc: apko build the service
     internal: true
     dir: melange/{{.SERVICE}}
     vars:
