@@ -187,6 +187,7 @@ resource "aws_lb" "cloudone_alb" {
     # checkov:skip=CKV2_AWS_28: We will consider using self-hosted ModSecurity WAF
     # checkov:skip=CKV_AWS_18: Access logging is intentionally disabled
     # checkov:skip=CKV_AWS_91: Access logging is intentionally disabled
+    # checkov:skip=CKV_AWS_150: Deletion protection disabled intentionally in dev environment
     name                        = "${var.project_name}-alb"
     internal                    = false
     load_balancer_type          = "application"
@@ -276,8 +277,8 @@ resource "aws_default_security_group" "default" {
 
 # --- instance SG
 
-# checkov:skip=CKV_AWS_277: attached to EC2 in main.tf
 resource "aws_security_group" "cloudone" {
+# checkov:skip=CKV_AWS_277: attached to EC2 in main.tf
   name          = "${var.project_name}-sg"
   description   = "Security group for Wordpress and Angie proxy"
   vpc_id        = aws_vpc.cloudone.id
@@ -392,14 +393,4 @@ resource "aws_security_group_rule" "alb_to_instances_https" {
   security_group_id        = aws_security_group.alb_sg.id
   source_security_group_id = aws_security_group.cloudone.id
   description              = "ALB output to instances via HTTPS"
-}
-
-resource "aws_security_group_rule" "alb_egress_internet" {
-  type              = "egress"
-  from_port         = 0
-  to_port           = 0
-  protocol          = "-1"
-  security_group_id = aws_security_group.alb_sg.id
-  cidr_blocks       = ["0.0.0.0/0"]
-  description       = "Allow ALB to reply to internet clients"
 }
