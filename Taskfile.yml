@@ -1,12 +1,13 @@
+---
 # yaml-language-server: $schema=https://taskfile.dev/schema.json
 
-version: '3'
+version: "3"
 
 vars:
-  RED: '\033[0;31m'
-  GREEN: '\033[0;32m'
-  PPL: '\033[0;35m'
-  NC: '\033[0m'
+  RED: "\\033[0;31m"
+  GREEN: "\\033[0;32m"
+  PPL: "\\033[0;35m"
+  NC: "\\033[0m"
   VOLUME: ""
   PROFILE: ""
 
@@ -16,9 +17,9 @@ tasks:
     cmds:
       - task --list
     silent: true
-# ──────────────────────────────────────────
-# TERRAFORM
-# ──────────────────────────────────────────
+  # ──────────────────────────────────────────
+  # TERRAFORM
+  # ──────────────────────────────────────────
   fmt:
     desc: Terraform fmt
     cmds:
@@ -76,9 +77,9 @@ tasks:
     cmds:
       - bash scripts/tfvars.sh
     silent: true
-# ──────────────────────────────────────────
-# ANSIBLE
-# ──────────────────────────────────────────
+  # ──────────────────────────────────────────
+  # ANSIBLE
+  # ──────────────────────────────────────────
   ansible:help:
     desc: Ansible tasks
     cmds:
@@ -86,9 +87,16 @@ tasks:
         echo -e "{{ .PPL }}Ansible tasks{{ .NC }}"
         echo -e "{{ .PPL }Run: task ansible:test{{ .NC }}"
 
+
+  ansible:lint:
+    desc: Ansible lint
+    cmds:
+      - ansible-lint .
+    silent: true
+
   ansible:test:
     desc: "Ansible Molecule Tests for a specific roles or all of them. Usage: task ansible:test [role=wordpress]"
-    dir: '{{.USER_WORKING_DIR}}'
+    dir: "{{.USER_WORKING_DIR}}"
     cmds:
       - |
         if [ -n "{{ .role }}" ]; then
@@ -110,9 +118,38 @@ tasks:
           done
         fi
     silent: true
-# ──────────────────────────────────────────
-# DOCKER COMPOSE
-# ──────────────────────────────────────────
+
+  ansible:play:
+    desc: "Launch Ansible site playbook"
+    dir: "{{.TASKFILE_DIR}}/ansible"
+    cmds:
+      - ANSIBLE_CONFIG=../ansible.cfg ansible-playbook -i inventory/inventory.ini site.yml --vault-id cloudone@{{.TASKFILE_DIR}}/.vault_pass_cloudone
+        --diff
+
+  ansible:wordpress:
+    desc: "Run ONLY the wordpress role tasks"
+    dir: "{{.TASKFILE_DIR}}/ansible"
+    cmds:
+      - ansible-playbook -i inventory/inventory.ini site.yml --vault-id cloudone@{{.TASKFILE_DIR}}/.vault_pass_cloudone
+        --tags wordpress --diff
+
+  ansible:boot:
+    desc: "Run ONLY the wordpress role tasks"
+    dir: "{{.TASKFILE_DIR}}/ansible"
+    cmds:
+      - ansible-playbook -i inventory/inventory.ini site.yml --vault-id cloudone@{{.TASKFILE_DIR}}/.vault_pass_cloudone
+        --tags bootstrap --diff
+
+  ansible:docker:
+    desc: "Run ONLY the wordpress role tasks"
+    dir: "{{.TASKFILE_DIR}}/ansible"
+    cmds:
+      - ansible-playbook -i inventory/inventory.ini site.yml --vault-id cloudone@{{.TASKFILE_DIR}}/.vault_pass_cloudone
+        --tags docker --diff
+
+  # ──────────────────────────────────────────
+  # DOCKER COMPOSE
+  # ──────────────────────────────────────────
   compose:help:
     desc: Some exemples
     cmds:
@@ -135,3 +172,23 @@ tasks:
         echo -e "{{ .PPL }}Process compose down...{{ .NC }}"
         cd compose && docker compose {{if .PROFILE}}--profile {{.PROFILE}}{{end}} down {{if .VOLUME}}-v{{end}}
     silent: true
+
+  # ──────────────────────────────────────────
+  # CI
+  # ──────────────────────────────────────────
+
+  act:
+    desc: run CI script locally (checkov fail)
+    cmds:
+      - |
+        act --platform ubuntu-latest=catthehacker/ubuntu:act-latest --secret-file .secrets
+
+  checkov:
+    desc: run checkov
+    cmds:
+      - >-
+        checkov -d . --output cli
+        --quiet
+        --output junitxml
+        --output-file-path console,results_junitxml.xml
+        --soft-fail

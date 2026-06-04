@@ -1,4 +1,5 @@
 ---
+# wordpress - molecule/default/molecule.yml
 dependency:
   name: galaxy
   options:
@@ -15,7 +16,7 @@ platforms:
     user: root
     volumes:
       - /lib/modules:/lib/modules:ro
-      - /var/run/docker.sock:/var/run/docker.sock:rw
+      - "${XDG_RUNTIME_DIR:-/var}/run/docker.sock:/var/run/docker.sock"
 
 provisioner:
   name: ansible
@@ -29,7 +30,13 @@ provisioner:
       pipelining: false
   ansible_args:
     - "--diff"
-    - "-vv"
+    - "-vvv"
+    - --extra-vars
+    - >
+      wordpress_compose_src={{ molecule_ephemeral_directory }}/wordpress_stack
+      wordpress_expose_http=8080
+      wordpress_expose_https=8443
+      wordpress_duckdns_domain=test-domain
   env:
     ANSIBLE_ROLES_PATH: "../../../"
     ANSIBLE_STDOUT_CALLBACK: default

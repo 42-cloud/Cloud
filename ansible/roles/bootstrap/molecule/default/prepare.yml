@@ -1,0 +1,11 @@
+---
+- name: Prepare instances
+  hosts: all
+  become: true
+  tasks:
+    - name: Ensure python 3 and pip are present
+      ansible.builtin.apt:
+        name:
+          - python3
+        state: present
+        update_cache: true

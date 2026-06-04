@@ -1,15 +1,8 @@
 ---
-# Purpose: assert that the instance really ended up in the expected state.
-# Molecule calls this playbook with `molecule verify`.
+# wordpress - molecule/default/verify.yml
 - name: Verify
   hosts: all
   gather_facts: false
-  vars:
-    global_project_path: "/opt/cloud-1"
-    wordpress_compose_src: "{{ molecule_ephemeral_directory }}/wordpress_stack"
-    wordpress_expose_https: 8443
-    wordpress_expose_http: "8080"
-
   tasks:
     - name: Load role default vars
       ansible.builtin.include_vars:
@@ -25,13 +18,13 @@
         path: "{{ item.path }}"
       delegate_to: localhost
       loop:
-        - path: "{{ __wordpress_db_conf_path_host }}"
+        - path: "{{ wordpress_db_conf_path_host }}"
           mode: "0644"
           fail_msg: "db conf file is missing or has incorrect permissions."
-        - path: "{{ __wordpress_db_sql_template_path_host }}"
+        - path: "{{ wordpress_db_sql_template_path_host }}"
           mode: "0644"
           fail_msg: "init sql file is missing or has incorrect permissions."
-        - path: "{{ __wordpress_angie_conf_path_host }}"
+        - path: "{{ wordpress_angie_conf_path_host }}"
           mode: "0644"
           fail_msg: "angie conf file is missing or has incorrect permissions."
       register: wordpress_conf_stat_results
@@ -48,7 +41,7 @@
     # --- --- DB --- ---
 
     - name: Check db conf content
-      ansible.builtin.command: "cat {{ __wordpress_db_conf_path_host }}"
+      ansible.builtin.command: "cat {{ wordpress_db_conf_path_host }}"
       register: wordpress_db_conf_content
       delegate_to: localhost
       changed_when: false
@@ -102,30 +95,52 @@
     - name: Check Angie SSL port is responsive
       ansible.builtin.wait_for:
         host: "127.0.0.1"
-        port: "{{ wordpress_expose_https | default('443') }}"
+        port: "{{ wordpress_expose_https | default('443') | int }}"
         timeout: 30
         state: started
       delegate_to: localhost
 
-
     # --- VERIFICATION INTEGRATION ---
 
-    - name: Access Wordpress page via Angie
-      ansible.builtin.uri:
-        url: "https://127.0.0.1:8443"
-        method: GET
-        return_content: true
-        validate_certs: false
-        # checkov:skip=CKV_ANSIBLE_1: Self signed certificates are used
-        status_code: [200, 302]
+    # using curl because uri module sometimes raises UNEXPECTED_EOF_WHILE_READING with TLSv1.3
+    - name: Access Wordpress via Angie
+      ansible.builtin.command: >
+        curl -k -s -o /dev/null -w "%{http_code}"
+        --tlsv1.2
+        --header "Host: {{ wordpress_cert_domain }}"
+        https://127.0.0.1:{{ wordpress_expose_https | default('443') }}
       delegate_to: localhost
-      register: wordpress_ready
-      until: wordpress_ready.status in [200, 302]
-      retries: 15
-      delay: 5
+      register: __wordpress_curl_result
+      until: __wordpress_curl_result.stdout in ["200", "302"]
+      retries: 20
+      delay: 10
+      changed_when: false
+      # noqa: command-instead-of-module
+
+    - name: Verify Wordpress DB configuration health status
+      ansible.builtin.command: >
+        curl -k -s --header "Host: {{ wordpress_cert_domain }}" https://127.0.0.1:8443
+      register: __wordpress_page_content
+      delegate_to: localhost
+      changed_when: false
+      # noqa: command-instead-of-module
 
     - name: Check DB connection is functional
       ansible.builtin.assert:
         that:
-          - "'Error establishing a database connection' not in wordpress_ready.content"
+          - "'Error establishing a database connection' not in __wordpress_page_content.stdout"
         fail_msg: "wordpress container cannot communicate with DB"
+
+    - name: Get Wordpress installation status
+      ansible.builtin.shell: |
+        docker exec --user www-data {{ wordpress_wp_container_name }} wp core is-installed
+      register: __wordpress_cli_installed
+      failed_when: false
+      changed_when: false
+      delegate_to: localhost
+
+    - name: Check Wordpress installation status
+      ansible.builtin.assert:
+        that:
+          - __wordpress_cli_installed.rc == 0
+        fail_msg: "Wordpress core is not configured or installed!"

@@ -26,7 +26,7 @@
     - "80"
     - "443"
 
-- name: Enable UFW
+- name: Enable and reload UFW
   community.general.ufw:
     state: enabled
 
@@ -37,7 +37,7 @@
 
 - name: Create admin users
   ansible.builtin.user:
-    name: "{{ item }}"
+    name: "{{ item.name }}"
     groups: admins
     append: true
     state: present
@@ -74,8 +74,55 @@
     group: admins
     mode: "0775"
   loop:
-    - "{{ __bootstrap_project_path }}"
-    - "{{ __bootstrap_project_path }}/mariadb"
-    - "{{ __bootstrap_project_path }}/wordpress"
-    - "{{ __bootstrap_project_path }}/angie"
+    - "{{ bootstrap_project_path }}"
+    - "{{ bootstrap_project_path }}/mariadb"
+    - "{{ bootstrap_project_path }}/wordpress"
+    - "{{ bootstrap_project_path }}/angie"
   become: true
+
+# --- DUCK DNS ---
+- name: Configure DuckDNS Automated Update Pipeline
+  when:
+    - bootstrap_duckdns_domain != ''
+    - bootstrap_duckdns_token != ''
+  block:
+    - name: Execute DuckDNS API sync
+      ansible.builtin.uri:
+        url: >-
+          {{ [
+            bootstrap_duckdns_api_base,
+            '/update?domains=',
+            bootstrap_duckdns_domain | trim,
+            '&token=',
+            bootstrap_duckdns_token,
+            '&ip='
+          ] | join }}
+        method: GET
+        return_content: true
+        validate_certs: true
+      register: __bootstrap_duckdns_initial_sync
+      when: bootstrap_duckdns_domain != 'test-domain'
+
+    - name: Debug initial DuckDNS synchronization output
+      ansible.builtin.debug:
+        var: __bootstrap_duckdns_initial_sync.content
+
+    - name: Mock DuckDNS output for Molecule testing environment
+      ansible.builtin.set_fact:
+        __bootstrap_duckdns_initial_sync:
+          content: "OK"
+          status: 200
+      when: bootstrap_duckdns_domain == 'test-domain'
+
+    - name: Remove obsolete DuckDNS cron jobs
+      ansible.builtin.cron:
+        name: "{{ item }}"
+        state: absent
+      loop:
+        - "Sync AWS Elastic IP with DuckDNS"
+        - "Sync AWS Elastic IP with DuckDNS at boot"
+
+  rescue:
+    - name: Handle DuckDNS configuration failure
+      ansible.builtin.debug:
+        msg: "DuckDNS configuration failed. Check tokens or network connection"

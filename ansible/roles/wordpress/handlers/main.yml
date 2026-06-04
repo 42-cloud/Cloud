@@ -1,0 +1,8 @@
+---
+- name: Reload angie
+  community.docker.docker_container_exec:
+    container: "{{ wordpress_angie_container_name }}"
+    command: angie -s reload
+  delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
+  become: "{{ wordpress_become_compose | default(true) }}"
+  failed_when: false

@@ -3,10 +3,13 @@ events {}
 http {
 	include /etc/angie/prometheus_all.conf;
 	server {
-		listen 8080;
+		listen 80;
 		status_zone main_server;
 
         error_page 500 502 503 504 /50x.html;
+        location = /50x.html {
+            root /usr/share/angie/html;
+        }
 
 		location / {
 			status_zone wordpress;
@@ -22,6 +25,7 @@ http {
 			proxy_pass http://phpmyadmin:80/;
 			proxy_set_header Host $host;
 			proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
 		}
 
 		location /status/ {
@@ -33,24 +37,32 @@ http {
 	}
 
     server {
-        listen                      443 ssl;
-        listen                      [::]:443 ssl;
+        listen                      443 ssl default_server;
+        listen                      [::]:443 ssl default_server;
         # http2                       on;
-        server_name                 localhost;
+        server_name                 {{ wordpress_cert_domain | default('localhost') }} localhost 127.0.0.1;
 
-        ssl_certificate             /etc/nginx/certs/mycert.crt;
-        ssl_certificate_key         /etc/nginx/certs/mycert.key;
+        ssl_certificate             /etc/angie/certs/{{ wordpress_cert_domain | default('localhost') }}.crt;
+        ssl_certificate_key         /etc/angie/certs/{{ wordpress_cert_domain | default('localhost') }}.key;
         ssl_protocols               TLSv1.2 TLSv1.3;
-
-        proxy_set_header            Host $host;
-        proxy_set_header            X-Real-IP $remote_addr;
-        proxy_set_header            X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header            X-Forwarded-Proto $scheme;
-        proxy_set_header            X-Forwarded-Port 8443;
+        ssl_prefer_server_ciphers   on;
 
         index                       index.html index.htm index.php;
         error_page                  500 502 503 504 /50x.html;
+
+        location = /50x.html {
+            root /usr/share/angie/html;
+        }
     
+        location /phpmyadmin/ {
+            status_zone             phpmyadmin_https;
+            proxy_pass              http://phpmyadmin:80/;
+            proxy_set_header        Host $host;
+            proxy_set_header        X-Real-IP $remote_addr;
+            proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header        X-Forwarded-Proto https;
+        }
+
         location = /admin {
             return 301 /admin/;
         }
@@ -63,6 +75,12 @@ http {
             status_zone             wordpress_https;
             proxy_pass              http://wordpress:80;
             proxy_read_timeout      300;
+
+            proxy_set_header            Host $host;
+            proxy_set_header            X-Real-IP $remote_addr;
+            proxy_set_header            X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header            X-Forwarded-Proto https;
+            proxy_set_header            X-Forwarded-Port $server_port;
         }
 
         location = /favicon.ico {

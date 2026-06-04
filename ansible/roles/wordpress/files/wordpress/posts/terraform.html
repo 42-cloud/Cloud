@@ -1,0 +1,12 @@
+<p><strong>Terraform</strong> acts as the <em>Infrastructure as Code (IaC)</em> foundation.</p>
+
+<h3>Main features:</h3>
+<ul>
+<li><strong>Network Topology:</strong> Provisioning of a dedicated AWS VPC, secure subnets, and internet gateways.</li>
+<li><strong>Compute Isolation:</strong> Deployment of the EC2 instance inside specific Security Groups with custom ingress filtering.</li>
+<li><strong>SecOps Hardening:</strong> Enforcement of <strong>IMDSv2</strong> to mitigate SSRF vulnerabilities.</li>
+<li><strong>Data Protection:</strong> Activation of <strong>AWS KMS</strong> for encrypted gp3 storage volumes and cloud logs.</li>
+<li><strong>Auditability:</strong> Implementation of VPC Flow Logs routed directly to CloudWatch groups.</li>
+</ul>
+<p>We decoupled the cloud resources construction from the OS configuration, keeping our infrastructure declarative.</p>
+<p>We embedded secure remote state storage to prevent state locking and sensitive data leakage.</p>

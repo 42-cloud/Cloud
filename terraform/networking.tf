@@ -101,7 +101,7 @@ resource "aws_iam_role" "cloudone" {
 
 resource "aws_iam_instance_profile" "ec2_profile" {
   name = "${var.project_name}-ec2-instance-profile"
-  role = aws_iam_role.cloudone.name # On pointe sur le rôle existant
+  role = aws_iam_role.cloudone.name
 }
 
 data "aws_iam_policy_document" "cloudone" {
@@ -129,13 +129,25 @@ resource "aws_iam_role_policy" "cloudone" {
 # NETWORK & ROUTING
 # ==========================================
 
-resource "aws_subnet" "cloudone" {
+resource "aws_subnet" "cloudone_a" {
+  # checkov:skip=CKV_AWS_130: use public IP for Ansible instead of bastion
   vpc_id                  = aws_vpc.cloudone.id
   cidr_block              = "10.0.1.0/24"
   availability_zone       = "${var.aws_region}a"
-  map_public_ip_on_launch = false
+  map_public_ip_on_launch = true
   tags = {
-    Name = "${var.project_name}-subnet"
+    Name = "${var.project_name}-subnet-a"
+  }
+}
+
+resource "aws_subnet" "cloudone_b" {
+  # checkov:skip=CKV_AWS_130: use public IP for Ansible instead of bastion
+  vpc_id                  = aws_vpc.cloudone.id
+  cidr_block              = "10.0.2.0/24"
+  availability_zone       = "${var.aws_region}b"
+  map_public_ip_on_launch = true
+  tags = {
+    Name = "${var.project_name}-subnet-b"
   }
 }
 
@@ -155,9 +167,102 @@ resource "aws_route_table" "cloudone" {
   }
 }
 
-resource "aws_route_table_association" "cloudone" {
-  subnet_id      = aws_subnet.cloudone.id
+resource "aws_route_table_association" "cloudone_a" {
+  subnet_id      = aws_subnet.cloudone_a.id
   route_table_id = aws_route_table.cloudone.id
+}
+
+
+resource "aws_route_table_association" "cloudone_b" {
+  subnet_id      = aws_subnet.cloudone_b.id
+  route_table_id = aws_route_table.cloudone.id
+}
+
+
+# ==========================================
+# AWS LOAD BALANCER
+# ==========================================
+
+resource "aws_lb" "cloudone_alb" {
+    # checkov:skip=CKV2_AWS_28: We will consider using self-hosted ModSecurity WAF
+    # checkov:skip=CKV_AWS_18: Access logging is intentionally disabled
+    # checkov:skip=CKV_AWS_91: Access logging is intentionally disabled
+    # checkov:skip=CKV_AWS_150: Deletion protection disabled intentionally in dev environment
+    name                        = "${var.project_name}-alb"
+    internal                    = false
+    load_balancer_type          = "application"
+    security_groups             = [aws_security_group.alb_sg.id]
+    subnets                     = [aws_subnet.cloudone_a.id, aws_subnet.cloudone_b.id]
+    drop_invalid_header_fields  = true
+    enable_deletion_protection = false
+}
+
+resource "aws_lb_target_group" "cloudone_tg" {
+    name                = "${var.project_name}-tg"
+    port                = 443
+    protocol            = "HTTPS"
+    vpc_id              = aws_vpc.cloudone.id
+
+    health_check {
+        path                = "/wp-login.php"
+        protocol            = "HTTPS"
+        matcher             = "200, 301, 302"
+        interval            = 15
+        timeout             = 5
+        healthy_threshold   = 2
+        unhealthy_threshold = 3
+    }
+}
+
+
+resource "aws_lb_listener" "https_frontend" {
+    load_balancer_arn       = aws_lb.cloudone_alb.arn
+    port                    = "443"
+    protocol                = "HTTPS"
+    ssl_policy              = "ELBSecurityPolicy-TLS-1-2-2017-01"
+    certificate_arn         = aws_acm_certificate.alb_cert.arn
+
+    default_action {
+        type                = "forward"
+        target_group_arn    = aws_lb_target_group.cloudone_tg.arn
+    }
+
+    depends_on = [aws_lb.cloudone_alb]
+}
+
+resource "aws_lb_listener" "http_to_https" {
+  load_balancer_arn = aws_lb.cloudone_alb.arn
+  port              = "80"
+  protocol          = "HTTP"
+
+  default_action {
+    type = "redirect"
+
+    redirect {
+      port        = "443"
+      protocol    = "HTTPS"
+      status_code = "HTTP_301"
+    }
+  }
+
+  depends_on = [aws_lb.cloudone_alb]
+}
+
+resource "terraform_data" "duckdns_cname_sync" {
+  triggers_replace = [aws_lb.cloudone_alb.dns_name]
+
+  provisioner "local-exec" {
+    command = <<-EOT
+        CLEAN_TOKEN=$(echo -n "$TOKEN" | tr -d '\r\n\t ' | textclean 2>/dev/null || echo -n "$TOKEN" | tr -cd '[:alnum:]-')
+        curl -s -X GET "https://www.duckdns.org/update?domains=$DOMAINS&token=$CLEAN_TOKEN&cname=$CNAME"
+    EOT
+    
+    environment = {
+      DOMAINS = var.duck_domains[0]
+      TOKEN   = trimspace(data.aws_kms_secrets.duckdns.plaintext["token"])
+      CNAME   = aws_lb.cloudone_alb.dns_name
+    }
+  }
 }
 
 # ==========================================
@@ -169,7 +274,11 @@ resource "aws_default_security_group" "default" {
         Name = "${var.project_name}-default-sg-restricted"
     }
 }
+
+# --- instance SG
+
 resource "aws_security_group" "cloudone" {
+# checkov:skip=CKV_AWS_277: attached to EC2 in main.tf
   name          = "${var.project_name}-sg"
   description   = "Security group for Wordpress and Angie proxy"
   vpc_id        = aws_vpc.cloudone.id
@@ -180,22 +289,6 @@ resource "aws_security_group" "cloudone" {
     to_port     = 22
     protocol    = "tcp"
     cidr_blocks = [var.ip_host]
-  }
-
-  ingress {
-    description = "HTTP access for Angie"
-    from_port   = 8080 # check ansible wordpress_expose_http
-    to_port     = 8080
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  ingress {
-    description = "HTTPS access for Angie"
-    from_port   = 8443 # check ansible wordpress_expose_https
-    to_port     = 8443
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
   }
 
   # --- OUTGOING (EGRESS) ---
@@ -232,4 +325,72 @@ resource "aws_security_group" "cloudone" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+}
+
+# --- ALB SG (public)
+
+resource "aws_security_group" "alb_sg" {
+  name          = "${var.project_name}-alb-sg"
+  description   = "Security group for Wordpress and Load Balancer"
+  vpc_id        = aws_vpc.cloudone.id
+
+  # checkov:skip=CKV_AWS_260:80 should remain open
+  ingress {
+    description = "HTTP access from anywhere"
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    description = "HTTPS access from anywhere"
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+}
+
+
+# --- inter SG rules
+resource "aws_security_group_rule" "alb_to_instances" {
+  type                     = "egress"
+  from_port                = 80
+  to_port                  = 80
+  protocol                 = "tcp"
+  security_group_id        = aws_security_group.alb_sg.id
+  source_security_group_id = aws_security_group.cloudone.id
+  description              = "Forward traffic to internal instances"
+}
+
+resource "aws_security_group_rule" "instances_from_alb_http" {
+  type                     = "ingress"
+  from_port                = 80
+  to_port                  = 80
+  protocol                 = "tcp"
+  security_group_id        = aws_security_group.cloudone.id
+  source_security_group_id = aws_security_group.alb_sg.id
+  description              = "HTTP access from ALB"
+}
+
+resource "aws_security_group_rule" "instances_from_alb_https" {
+  type                     = "ingress"
+  from_port                = 443
+  to_port                  = 443
+  protocol                 = "tcp"
+  security_group_id        = aws_security_group.cloudone.id
+  source_security_group_id = aws_security_group.alb_sg.id
+  description              = "HTTPS access from ALB"
+}
+
+resource "aws_security_group_rule" "alb_to_instances_https" {
+  type                     = "egress"
+  from_port                = 443
+  to_port                  = 443
+  protocol                 = "tcp"
+  security_group_id        = aws_security_group.alb_sg.id
+  source_security_group_id = aws_security_group.cloudone.id
+  description              = "ALB output to instances via HTTPS"
 }

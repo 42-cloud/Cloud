@@ -1,20 +1,12 @@
 ---
-# Purpose: bring the instance to the desired state by running the role under test.
-# Molecule calls this playbook with `molecule converge`.
+# wordpress - molecule/default/converge.yml
 - name: Converge
   hosts: all
   gather_facts: true
+  # those variables remain in converge as they influence role behavior
   vars:
-    global_project_path: "/opt/cloud-1"
-    global_db_password: "test_db_password_local"
-    global_wp_password: "test_wp_password_local"
-    wordpress_project_name: "cloudone"
-    wordpress_db_validate_cmd: ""
-    wordpress_expose_http: "8080"
-    wordpress_expose_https: "8443"
     wordpress_delegate_host: localhost
     wordpress_become_compose: false
-    wordpress_compose_src: "{{ molecule_ephemeral_directory }}/wordpress_stack"
   tasks:
     - name: "Include wordpress role"
       ansible.builtin.include_role:

@@ -1,4 +1,5 @@
 ---
+# bootstrap defaults
 bootstrap_apko_uid: "{{ global_apko_uid | default(65532) }}"
 bootstrap_apko_gid: "{{ global_apko_gid | default(65532) }}"
 
@@ -10,4 +11,9 @@ bootstrap_db_uid: "999"
 bootstrap_db_gid: "999"
 bootstrap_db_dir: "{{ global_db_dir | default('/var/lib/mysql_data') }}"
 
-bootstrap_admin_users_list: []
+bootstrap_admin_users_list: "{{ global_admin_users_list | default([]) | list }}"
+bootstrap_project_path: "{{ global_project_path | default('/opt/cloud-1') }}"
+bootstrap_duckdns_api_base: "https://www.duckdns.org"
+bootstrap_duckdns_domain: "{{ global_duckdns_domain | default('') }}"
+bootstrap_duckdns_token: "{{ global_duckdns_token | default('') }}"
+bootstrap_duckdns_validate_certs: true

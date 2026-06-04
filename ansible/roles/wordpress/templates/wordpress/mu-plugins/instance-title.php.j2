@@ -1,0 +1,9 @@
+<?php
+/**
+ * Plugin Name: Site title overload
+ * Description: Dynamic alignment with instance name
+ */
+
+add_filter('option_blogname', function($value) {
+    return "Welcome to {{ inventory_hostname }}";
+});

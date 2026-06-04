@@ -30,10 +30,15 @@ while [ -z "$project_name" ]; do
   project_name=${input:-${project_name}}
 done
 
+# NB : AWS would nevertheless return an error around 30 instances per region
+MAX_INSTANCE=300
 instance_count=""
 # get names of instances recu
-while [ -z "$instance_count" ] || ! [[ "$instance_count" =~ ^[0-9]+$ ]]; do
-  read -p "Number of instances: " instance_count
+while [ -z "$instance_count" ] || ! [[ "$instance_count" =~ ^[0-9]+$ ]] || [ "$instance_count" -lt 1 ] || [ "$instance_count" -gt $MAX_INSTANCE ]; do
+  read -p "Number of instances (1-${MAX_INSTANCE}): " instance_count
+  if [ "$instance_count" -gt "$MAX_INSTANCE" ]; then
+    echo -e "${RED}Error:${NC} There should be between 1 and $MAX_INSTANCE instances."
+  fi
 done
 
 # validates instance name against regex
@@ -41,34 +46,30 @@ instance_names=""
 declare -A seen_names
 regex='^[a-zA-Z0-9]([a-zA-Z0-9\-]{1,61}[a-zA-Z0-9])?$'
 
-for i in $(seq 1 $instance_count); do
-  while true; do
-    read -p "Name of instance $i: " name
-    if [[ ! "$name" =~ $regex ]]; then
-      echo -e "${RED}Error:${NC} Invalid name format (3-63 chars, alphanumeric start/end, hyphens allowed)."
-      continue
-    fi
-
-    if [[ -n "${seen_names[$name]:-}" ]]; then
-      echo -e "${RED}Error:${NC} Name '$name' is already taken."
-      continue
-    fi
-
-    break
-  done
-  seen_names[$name]=1
 
 
+echo -e "${GREEN}Please enter the DuckDNS sub-domains (they should have been priorly booked) :${NC}"
+duck_domain=""
+
+while true; do
+read -p "DuckDNS subdomain: " dname
+if [ -z "$dname" ]; then continue; fi
+duck_domain=$dname
+break
+done
+
+
+instance_names=""
+for i in $(seq 1 "$instance_count"); do
   if [ -z "$instance_names" ]; then
-    instance_names="\"$name\""
+    instance_names="\"node-$i\""
   else
-    instance_names="$instance_names,\"$name\""
+    instance_names="$instance_names,\"node-$i\""
   fi
 done
 
 # get IP host for ingress secu
 IP_HOST=$(curl -s ifconfig.me)
-
 mkdir -p "$(dirname "$0")/../terraform"
 
 # create .tfvars
@@ -77,6 +78,8 @@ aws_region="${aws_region}"
 instance_type="${instance_type}"
 public_key_path="${public_key_path}"
 project_name="${project_name}"
+duck_domains=["${duck_domain}"]
+duckdns_token_encrypted="AQICAHh8Rd7AQWTIrwjmthKBrEsxLGjXoqIPpu8jTv1vOgljuQGETJWPy55G4vDKVtnG6GF/AAAAgzCBgAYJKoZIhvcNAQcGoHMwcQIBADBsBgkqhkiG9w0BBwEwHgYJYIZIAWUDBAEuMBEEDORG5dRwya1Y/iH3jwIBEIA/ytExj++v5N0j4oWrPRcDhesqnbweycccunXBRPA9Nz4KNjHXQGd+E185A0bNxM19e0IeEJF+mJ67rM5pO78T"
 instance_names=[${instance_names}]
 ip_host="${IP_HOST}/32"
 EOF

@@ -24,7 +24,7 @@ Configurable variables for defining paths and permissions of persistent volumes 
 | `bootstrap_db_uid` | `999` | UID for the directory owner (`999` is the common one for `mysql` user of MariaDB). |
 | `bootstrap_db_gid` | `999` | GID for the directory group. |
 | `bootstrap_wp_dir` | `/var/www/html` | wordpress directory mountpoint |
-| `bootstrap_wp_uid` | `33` | UID for the directory owner (`33` for `www-data` in the official WordPress container). |
+| `bootstrap_wp_uid` | `33` | UID for the directory owner (`33` for `www-data` in the official Wordpress container). |
 | `bootstrap_wp_gid` | `33` | GID for the directory group. |
 
 *Note: Allowed UFW ports (`22`, `80`, `443`) and default filtering policies are hardcoded within the tasks to ensure strict adherence to the project's security guidelines.*

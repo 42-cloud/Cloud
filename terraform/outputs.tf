@@ -1,11 +1,13 @@
-# output "ssh_command" {
-  # description = "Command to connet instances"
-  # value       = "ssh ubuntu@${aws_instance.cloud1[each.key].public_ip}"
-# }
+output "alb_dns" {
+  description = "Public entry point : load balancer"
+  value       = aws_lb.cloudone_alb.dns_name
+}
 
-output "IP" {
-  description = "Just the IP of all instances"
-  value       = {
-    for key, value in aws_instance.cloud1 : key => value.public_ip
+output "instances_ips" {
+  value = {
+    for k, v in aws_instance.cloudone : k => {
+      public  = v.public_ip
+      private = v.private_ip
+    }
   }
 }

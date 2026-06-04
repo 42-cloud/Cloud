@@ -2,12 +2,77 @@
 
 Automated deployment of Wordpress related services using Terraform and Ansible
 
+[![CI/CD Pipeline](https://github.com/42-cloud/Cloud/actions/workflows/security.yml/badge.svg)](https://github.com/42-cloud/Cloud/actions)
+
+[![CI/CD Pipeline](https://github.com/42-cloud/Cloud/actions/workflows/ansible.yml/badge.svg)](https://github.com/42-cloud/Cloud/actions)
+
+# Tasks list
+
+__network and security__
+- [ ] only `80` and `443` should be accessible (replace 8080 and 8443)
+- [ ] usage of TLS
+- [x] network isolation of DB from the internet
+
+__roles__
+- [ ] Add `observability` role
+- [ ] Wordpress role
+  - [ ] Readme for `wordpress` role
+  - [x] Molecule tests
+  - [ ] PHP My Admin configuration
+  - [ ] handler to reload angie
+  - [ ] handler to reload wordpress apache
+
+__resilience__
+- [ ] dynamic DNS
+- [ ] auto-restart if server is rebooted with data preserved
+
+__scalability__
+- [ ] parallel deploy to multiple servers
+
+__flexibility__
+- [ ] provider-agnostic configuration
+- [ ] can create various users with admin rights on EC2, app admin rights on wordpress
+
 # Setup
 
 ## Prerequisites
 
+All commands are compatible with Ubuntu
+
 ```bash
+# Ensure local bin (or .local/bin) directory exists
+mkdir -p $HOME/bin
+
+# add taskfile
 sh -c "$(curl -sSL https://taskfile.dev/install.sh)" -- -d -b $HOME/bin
+
+# add terraform
+TERRAFORM_VERSION="1.11.0"
+curl -sSL "https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip" -o /tmp/terraform.zip
+unzip -q /tmp/terraform.zip -d $HOME/bin/
+rm /tmp/terraform.zip
+
+# add ansible
+python3 -m venv $HOME/.ansible_venv
+source $HOME/.ansible_venv/bin/activate
+pip install --upgrade pip
+pip install ansible-core checkov argcomplete
+ln -sf $HOME/.ansible_venv/bin/ansible $HOME/bin/ansible
+ln -sf $HOME/.ansible_venv/bin/ansible-playbook $HOME/bin/ansible-playbook
+deactivate
+
+# add AWS CLI
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+unzip awscliv2.zip
+./aws/install -i $HOME/.local/aws-cli -b $HOME/bin
+
+# GET key details for AWS IAM profile
+# AWS Management Console > IAM > Users > Create access key
+
+# Configure AWS CLI
+aws configure
+# fill details from IAM
+
 ```
 
 ## Tasks
@@ -22,10 +87,17 @@ task init
 # check terraform project correctness
 task plan
 
-# deploy
+# deploy infrastructure
 task apply
 
+# deploy configuration
+task ansible:play
+
 ```
+
+## Usage
+
+Access the app on `https://cloud1.duckdns.org`
 
 
 # Stack
@@ -167,6 +239,11 @@ Some others that we ignored:
   - group_vars
   - vars (within a role)
   - default (within a role) : allow to reuse group_vars as they have a lower priority than them, contrary to vars
+- Variables can be overloaded for tests in `molecule.yaml`
+
+__caveats__
+
+- best practice (ansible-lint) want us to use role-prefixed variables. We need however to take care not to multiplicate symbols referring to a same value (global > vars > defaults > test in molecule.yaml or in individual test files) or to set up fallback values in multiple places.
 
 #### TDD with molecules
 
@@ -176,7 +253,7 @@ Some others that we ignored:
   - verify
   - destroy
 
-**adapting tests to dockerized test environment**
+__adapting tests to dockerized test environment__
 - molecule runs tests in docker container. For `docker` role, we have distinct tasks whether the environment is prod or test:
   - in test env, we are within a container with no `systemd`. Therefore, we use `ansible.builtin.shell` to look for / launch `dockerd` process
   - prod relies on `ansible.builtin.service` module
@@ -190,6 +267,11 @@ Some others that we ignored:
 |`docker`|generic role to install daemon and docker compose|
 |`wordpress`|centralized role for stack management : would be too difficult to manage 2 different roles for wordpress and db|
 
+#### Ansible Vault
+
+```bash
+ansible-vault encrypt_string --vault-password-file .vault_pass_cloudone --name <name> <password>
+```
 
 ## Security
 
@@ -205,7 +287,25 @@ Some others that we ignored:
 
 > Reverse proxy. Fork of nginx with extended features
 
+### Wordpress
 
+> An open source CMS
+
+NB : There is no official module for Wordpress management. Partly because cli evolves too fast and should be compatible with many php versions
+
+### MariaDB
+
+> An open sourve fork of MySQL
+
+### PHPMyAdmin
+
+> An administration tool for DB
+
+## Network
+
+### Duck DNS
+
+ - we should reestabish mapping every time the infrastructure is redeployed (AWS generates a new public Elastic IP)
 
 ---
 
@@ -220,6 +320,7 @@ Some others that we ignored:
 | [Automating IT with Ansible](https://www.educative.io/courses/automating-it-infrastructure-with-ansible) | 📘 | |
 | [Infra as Code using Terraform](https://www.educative.io/courses/infrastructure-as-code-using-terraform) | 📘 | |
 | [Stephane Robert](https://blog.stephane-robert.info/docs/infra-as-code/gestion-de-configuration/ansible/) | 📘 | Excellent tutorials |
+| [Installing WP with Ansible](https://oneuptime.com/blog/post/2026-02-21-ansible-deploy-wordpress-site/view) | 📘 | Tutorial using MySQL setup, PHP-FPM, Nginx, wp-cli. ⚠️ Not the same containerized approach yet useful for wp cli steps |
 
 Resource type
 
@@ -231,6 +332,7 @@ Resource type
 
 ## AI Usage
 
-- fix and improve script
 - guide setup with a prompt asking to proofcheck our approach and suggest alternatives with pros and cons -> we remain in charge of choosing the next step
+- fix and improve terraform variables collection script
+- debugging help
 - PR review
