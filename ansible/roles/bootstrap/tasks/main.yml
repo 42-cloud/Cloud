@@ -89,8 +89,14 @@
     - name: Execute DuckDNS API sync
       ansible.builtin.uri:
         url: >-
-          "{{ bootstrap_duckdns_api_base }}/update?domains=
-          {{ bootstrap_duckdns_domain }}&token={{ bootstrap_duckdns_token }}&ip="
+          {{ [
+            bootstrap_duckdns_api_base,
+            '/update?domains=',
+            bootstrap_duckdns_domain | trim,
+            '&token=',
+            bootstrap_duckdns_token,
+            '&ip='
+          ] | join }}
         method: GET
         return_content: true
         validate_certs: true
@@ -108,26 +114,14 @@
           status: 200
       when: bootstrap_duckdns_domain == 'test-domain'
 
-    - name: Install Cron background scheduler
-      ansible.builtin.apt:
-        name: cron
-        state: present
-
-    - name: Schedule persistent DuckDNS cron job (every 10 minutes)
+    - name: Remove obsolete DuckDNS cron jobs
       ansible.builtin.cron:
-        name: "Sync AWS Elastic IP with DuckDNS"
-        minute: "*/10"
-        job: >-
-          "curl -s '{{ bootstrap_duckdns_api_base }}/update?domains={{ bootstrap_duckdns_domain }}
-          &token={{ bootstrap_duckdns_token }}&ip=' > /dev/null 2>&1"
+        name: "{{ item }}"
+        state: absent
+      loop:
+        - "Sync AWS Elastic IP with DuckDNS"
+        - "Sync AWS Elastic IP with DuckDNS at boot"
 
-    - name: Schedule persistent DuckDNS cron job (at boot)
-      ansible.builtin.cron:
-        name: "Sync AWS Elastic IP with DuckDNS at boot"
-        special_time: reboot
-        job: >-
-          "curl -s '{{ bootstrap_duckdns_api_base }}/update?domains={{ bootstrap_duckdns_domain }}
-          &token={{ bootstrap_duckdns_token }}&ip=' > /dev/null 2>&1"
   rescue:
     - name: Handle DuckDNS configuration failure
       ansible.builtin.debug:

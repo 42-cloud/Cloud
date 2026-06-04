@@ -55,6 +55,7 @@ services:
       WORDPRESS_DB_NAME: "{{ wordpress_db_name }}"
     volumes:
         - wordpress_data:/var/www/html:rw
+        - "{{ wordpress_compose_src }}/wordpress/mu-plugins:/var/www/html/wp-content/mu-plugins:ro"
     deploy:
       resources:
         limits:

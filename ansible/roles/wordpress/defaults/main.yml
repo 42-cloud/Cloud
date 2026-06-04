@@ -50,7 +50,7 @@ wordpress_wp_mem_limit: "256m"
 wordpress_wp_mem_res_limit: "128m"
 wordpress_wp_container_name: "wordpress"
 wordpress_wp_cli_exec: "{{ wordpress_docker_cmd }} exec --user www-data {{ wordpress_wp_container_name }}"
-wordpress_wp_site_title: "Cloud 1"
+wordpress_wp_site_title: "{{ inventory_hostname }}"
 
 # Angie
 wordpress_angie_conf_path_host: "{{ wordpress_compose_src }}/angie/angie.conf"

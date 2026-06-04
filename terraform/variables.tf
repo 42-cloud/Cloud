@@ -27,3 +27,12 @@ variable "instance_names" {
   description = "List all instance name"
   type        = list(string)
 }
+
+variable "duck_domains" {
+    type = list(string)
+}
+
+variable "duckdns_token_encrypted" {
+  type      = string
+  sensitive = true
+}

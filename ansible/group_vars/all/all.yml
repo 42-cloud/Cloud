@@ -8,8 +8,8 @@ global_admin_users_list:
   - name: codastream
     db_user: "wp_codastream"
 
-global_duckdns_domain: "youpi-cloud"
-global_domain_name: "{{ global_duckdns_domain }}.duckdns.org"
+
+global_domain_name: "{{ global_duckdns_domain }}"
 global_wp_siteurl: "https://{{ global_domain_name }}"
 
 global_duckdns_token: !vault |

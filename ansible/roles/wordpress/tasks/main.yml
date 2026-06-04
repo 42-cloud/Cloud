@@ -48,39 +48,26 @@
 
 # --- CONFIG AND COMPOSE UP ---
 
-- name: Ensure target root directory exists
-  ansible.builtin.file:
-    path: "{{ wordpress_compose_src }}"
-    state: directory
-    mode: "0755"
-  delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
-  become: "{{ wordpress_become_compose | default(true) }}"
-
-- name: Deploy .env file
-  ansible.builtin.template:
-    src: .env.j2
-    dest: "{{ wordpress_compose_src }}/.env"
-    mode: "0600"
-  delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
-  become: "{{ wordpress_become_compose | default(true) }}"
-
-- name: Ensure configuration subdirectories exist
+- name: Ensure target root and subdirectories exist
   ansible.builtin.file:
     path: "{{ wordpress_compose_src }}/{{ item }}"
     state: directory
     mode: "0775"
   loop:
+    - ""
     - mariadb
     - angie
     - wordpress
   delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
   become: "{{ wordpress_become_compose | default(true) }}"
 
-- name: Copy WordPress Docker build context (including images) to remote hosts
+- name: Copy WordPress Docker build context
   ansible.builtin.copy:
-    src: "wordpress/" # Pointe vers roles/wordpress/files/wordpress/ sur localhost
+    src: "wordpress/"
     dest: "{{ wordpress_compose_src }}/wordpress/"
     mode: "0755"
+  delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
+  become: "{{ wordpress_become_compose | default(true) }}"
 
 - name: Populate db conf
   ansible.builtin.template:
@@ -104,14 +91,6 @@
     dest: "{{ wordpress_compose_src }}/angie/angie.conf"
     mode: "0644"
   notify: Reload angie
-  delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
-  become: "{{ wordpress_become_compose | default(true) }}"
-
-- name: Copy wordpress Dockerfile
-  ansible.builtin.copy:
-    src: wordpress/
-    dest: "{{ wordpress_compose_src }}/wordpress/"
-    mode: "0644"
   delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
   become: "{{ wordpress_become_compose | default(true) }}"
 
@@ -150,7 +129,7 @@
   delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
 
 - name: Run Wordpress automated configuration
-  # when: __wordpress_wp_core_is_configured.rc != 0
+  when: __wordpress_wp_core_is_configured.rc != 0
   delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
   block:
     - name: Execute wp-core install
@@ -183,6 +162,24 @@
           --post_type=page --format=ids) --force
       failed_when: false
       changed_when: false
+
+    # Otherwise would be overwritten as instances share the same bdd
+    - name: Overload site name in wp-config.php
+      ansible.builtin.shell: |
+        {{ wordpress_wp_cli_exec }} wp config set WORDPRESS_SITE_TITLE "{{ inventory_hostname }}" --type=constant
+      changed_when: true
+
+    - name: Ensure mu-plugins directory exists
+      ansible.builtin.file:
+        path: "{{ wordpress_compose_src }}/wordpress/wp-content/mu-plugins"
+        state: directory
+        mode: "0755"
+
+    - name: Deploy must use plugin for dynamic title
+      ansible.builtin.template:
+        src: wordpress/mu-plugins/instance-title.php.j2
+        dest: "{{ wordpress_compose_src }}/wordpress/wp-content/mu-plugins/instance-title.php"
+        mode: "0644"
 
     - name: Create static pages
       ansible.builtin.shell: |

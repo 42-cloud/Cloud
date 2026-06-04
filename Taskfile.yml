@@ -123,7 +123,7 @@ tasks:
     desc: "Launch Ansible site playbook"
     dir: "{{.TASKFILE_DIR}}/ansible"
     cmds:
-      - ansible-playbook -i inventory/inventory.ini site.yml --vault-id cloudone@{{.TASKFILE_DIR}}/.vault_pass_cloudone
+      - ANSIBLE_CONFIG=../ansible.cfg ansible-playbook -i inventory/inventory.ini site.yml --vault-id cloudone@{{.TASKFILE_DIR}}/.vault_pass_cloudone
         --diff
 
   ansible:wordpress:
