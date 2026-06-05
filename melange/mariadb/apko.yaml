@@ -9,11 +9,14 @@ contents:
   packages:
     - wolfi-baselayout
     - mariadb-12.2
+    - mariadb-12.2-client
     - mariadb-12.2-oci-entrypoint
     - healthcheck-sql
+    - gosu
+    - tzdata
 
 entrypoint:
-  command: /usr/local/bin/docker-entrypoint.sh
+  command: /usr/local/bin/docker-entrypoint.sh mariadbd
 
 accounts:
   users:

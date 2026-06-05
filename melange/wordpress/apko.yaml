@@ -5,13 +5,15 @@ contents:
   repositories:
     - https://packages.wolfi.dev/os
     - ./packages
-    - ../healthcheck-http/packages
+    - ../healthcheck-fcgi/packages
   packages:
     - wolfi-baselayout
     - wordpress
     - wordpress-oci-entrypoint
-    - healthcheck-http
+    - healthcheck-fcgi
     - php-fpm
+    - php-8.5-mysqlnd
+    - php-8.5-mysqli
 
 entrypoint:
   command: /usr/local/bin/docker-entrypoint.sh php-fpm

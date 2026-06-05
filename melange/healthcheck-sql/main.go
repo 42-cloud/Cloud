@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"strings"
-
 	"golang.org/x/sys/unix"
 
 	_ "github.com/go-sql-driver/mysql"

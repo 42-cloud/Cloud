@@ -8,7 +8,9 @@ terraform/.terraform/
 terraform/terraform.tfstate*
 terraform/terraform.tfvars
 .terraform/
-melange/*/healthcheck*
+melange/healthcheck-http/healthcheck
+melange/healthcheck-sql/healthcheck-mysql
+melange/healthcheck-fcgi/healthcheck-fcgi
 melange/*/melange.rsa*
 .ansible
 *.ini
@@ -23,3 +25,4 @@ results_junitxml.xml
 **/.csr
 **/.secrets
 melange/melange.rsa.pub
+compose/secrets/

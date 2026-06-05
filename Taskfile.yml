@@ -244,6 +244,11 @@ tasks:
       - task: melange
         vars: { SERVICE: healthcheck-sql }
 
+  melange:healthcheck-fcgi:
+    cmds:
+      - task: melange
+        vars: { SERVICE: healthcheck-fcgi }
+
   melange:phpmyadmin:
     cmds:
       - task: melange

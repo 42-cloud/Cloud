@@ -15,15 +15,17 @@ x-config: &config
 services:
   mariadb:
     <<: *config
-    image: mariadb:11.8
+    image: namichel/mariadb:12.2.2-amd64
     container_name: mariadb
     environment:
-      MYSQL_RANDOM_ROOT_PASSWORD: '1'
       MYSQL_DATABASE: wordpress
       MYSQL_USER: "wordpress"
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MARIADB_PASSWORD_FILE: /run/secrets/mysql_password
+      MARIADB_ROOT_PASSWORD_FILE: /run/secrets/mysql_root_password
     volumes:
       - db_data:/var/lib/mysql
+      - ./secrets/mysql_password:/run/secrets/mysql_password:ro
+      - ./secrets/mysql_root_password:/run/secrets/mysql_root_password:ro
     deploy:
       resources:
         limits:
@@ -31,7 +33,7 @@ services:
         reservations:
           memory: 256m
     healthcheck:
-      test: ["CMD-SHELL", "mariadb-admin ping -u $$MYSQL_USER -p$$MYSQL_PASSWORD"]
+      test: ["CMD", "healthcheck-sql", "--host=localhost", "--user=wordpress", "--secret=/run/secrets/mysql_password"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -40,18 +42,19 @@ services:
 
   wordpress:
     <<: *config
-    image: wordpress:6.9-php8.3-apache
+    image: namichel/wordpress:6.9.4-amd64
     container_name: wordpress
     environment:
       WORDPRESS_DB_HOST: mariadb
       WORDPRESS_DB_USER: "wordpress"
-      WORDPRESS_DB_PASSWORD: ${WORDPRESS_DB_PASSWORD}
+      WORDPRESS_DB_PASSWORD_FILE: /run/secrets/wordpress_password
       WORDPRESS_DB_NAME: wordpress
       WORDPRESS_CONFIG_EXTRA: |
         define('WP_HOME', '${WORDPRESS_HOME}');
         define('WP_SITEURL', '${WORDPRESS_SITEURL}');
     volumes:
       - wordpress_data:/var/www/html
+      - ./secrets/wordpress_password:/run/secrets/wordpress_password:ro
     deploy:
       resources:
         limits:
@@ -62,7 +65,7 @@ services:
       mariadb:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost/wp-login.php || exit 1"]
+      test: ["CMD", "healthcheck-fcgi", "--addr=localhost:9000"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -72,7 +75,7 @@ services:
 
   angie:
     <<: *config
-    image: kazibuya/angie:1.11.6-amd64
+    image: namichel/angie:1.11.6-amd64
     container_name: angie
     ports:
       - "{{ wordpress_expose_http | default('80') }}:80"
@@ -84,11 +87,11 @@ services:
         condition: service_healthy
       phpmyadmin:
         condition: service_healthy
-    # healthcheck:
-      # test: ["CMD-SHELL", "curl -q http://localhost/ || exit 1"]
-      # interval: 10s
-      # timeout: 5s
-      # retries: 5
+    healthcheck:
+      test: ["CMD", "healthcheck-http", "--url=http://localhost:8080/status/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     deploy:
       resources:
         limits:
@@ -101,7 +104,7 @@ services:
 
   phpmyadmin:
     <<: *config
-    image: phpmyadmin:5.2-apache
+    image: namichel/phpmyadmin:5.2.2-amd64
     container_name: phpmyadmin
     environment:
       PMA_HOST: mariadb
@@ -115,7 +118,7 @@ services:
         reservations:
           memory: 64m
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost/ || exit 1"]
+      test: ["CMD", "healthcheck-http", "--url=http://localhost/"]
       interval: 10s
       timeout: 5s
       retries: 5
