@@ -33,6 +33,16 @@ __flexibility__
 - [ ] provider-agnostic configuration
 - [ ] can create various users with admin rights on EC2, app admin rights on wordpress
 
+__security__
+- [x] distroless OCI images via apko/melange
+- [x] SBOM generation for all images
+- [x] automated CVE scanning via syft + grype
+- [x] GitHub Issues automation for CVE reporting
+- [x] secrets via file (tmpfs in prod)
+- [x] non-root containers
+- [ ] GHA release for melange-forge binaries
+- [ ] matrix refactor for CVE scan workflow
+
 # Setup
 
 ## Prerequisites
@@ -131,7 +141,7 @@ Access the app on `https://cloud1.duckdns.org`
 
 > A secure Linux distribution
 
-- used as a base layer for Angie
+- used as a base layer for all services
 - quickly updated in case of CVE
 - compatible with packages compiled for glibc
 
@@ -139,19 +149,42 @@ Access the app on `https://cloud1.duckdns.org`
 
 > Declarative APK builder : compiles packages from source code
 
+- each service has its own `melange.yaml` build config
+- packages are signed with a shared RSA key
+- wolfi pipelines are fetched from `wolfi-dev/os` for test support
+
 ### Apko
 
 > Image assembler : assembles packages into a _distroless_ image
 
 - **secure** : images don't have shell, reducing attack surface
-- **idempotent** : images are identical
-- **lightweight**
+- **idempotent** : images are identical given the same inputs
+- **lightweight** : single layer OCI image
 
-APKO generates: 
-- SPDX with all components and licences for each package
+Apko generates:
+- SPDX SBOM with all components, licences, and upstream source commits for each package
 - _SBOM_ (software bill of materials) which can be used to audit supply chain
 
 UID and GID are `65532` : conventional ID for non-root
+
+### melange-forge
+
+> External library of statically compiled Go binaries for distroless images
+
+- provides healthcheck binaries (`healthcheck-http`, `healthcheck-sql`, `healthcheck-fcgi`) embedded in each image
+- replaces shell-based healthchecks (`curl`, `wget`, `mariadb-admin`) which are unavailable in distroless images
+- `healthcheck-sql` uses `mlock` to prevent password from being swapped to disk
+- passwords are read from files (tmpfs in prod) rather than environment variables
+- source: [Kazibuya/melange-forge](https://github.com/Kazibuya/melange-forge)
+
+### Images
+
+| Service | Base | Tag |
+|:--|:--|:--|
+| Angie | Wolfi | `namichel/angie:1.11.6-amd64` |
+| WordPress | Wolfi | `namichel/wordpress:6.9.4-amd64` |
+| MariaDB | Wolfi | `namichel/mariadb:12.2.2-amd64` |
+| phpMyAdmin | Wolfi | `namichel/phpmyadmin:5.2.3-amd64` |
 
 ## Infrastructure as Code
 
@@ -275,6 +308,28 @@ ansible-vault encrypt_string --vault-password-file .vault_pass_cloudone --name <
 
 ## Security
 
+### Distroless images
+
+All service images are built with apko from Wolfi packages: no shell, no package manager, minimal attack surface. Healthchecks use statically compiled Go binaries from [melange-forge](https://github.com/Kazibuya/melange-forge) instead of shell utilities.
+
+### SBOM
+
+Each image build produces a signed SPDX SBOM via apko, tracking every installed package with its upstream source commit. SBOMs are committed alongside `apko.yaml` files under `melange/`.
+
+### CVE Scanning
+
+A GitHub Actions workflow runs on every push to `main`:
+
+1. **syft** catalogs all packages including Composer/Go dependencies not visible to apko
+2. **grype** scans the syft inventory against its CVE database
+3. **issue-reporter** (from [melange-forge](https://github.com/Kazibuya/melange-forge)) formats findings as structured GitHub Issues with severity labels
+
+False positives and non-applicable CVEs are tracked in `.grype.yaml`.
+
+### Secrets
+
+In local development, passwords are stored in `compose/secrets/` (gitignored) and mounted read-only into containers. In production (via Ansible), secrets are injected into a tmpfs mount, never written to disk. Both `docker-entrypoint.sh` scripts support `_FILE` environment variables natively for this purpose.
+
 ### Checkov
 
 > Static analysis for Infra As Code
@@ -287,6 +342,11 @@ ansible-vault encrypt_string --vault-password-file .vault_pass_cloudone --name <
 
 > Reverse proxy. Fork of nginx with extended features
 
+- serves WordPress via FastCGI pass to php-fpm
+- serves phpMyAdmin at `/phpmyadmin/`
+- exposes Prometheus metrics at `/metrics/`
+- exposes status API at `/status/`
+
 ### Wordpress
 
 > An open source CMS
@@ -295,7 +355,7 @@ NB : There is no official module for Wordpress management. Partly because cli ev
 
 ### MariaDB
 
-> An open sourve fork of MySQL
+> An open source fork of MySQL
 
 ### PHPMyAdmin
 
@@ -317,6 +377,10 @@ NB : There is no official module for Wordpress management. Partly because cli ev
 | [Ansible doc](https://docs.ansible.com/) | 📔 | |
 | [Taskfile doc](https://taskfile.dev/docs/guide) | 📔 | |
 | [Chainguard doc](https://edu.chainguard.dev/) | 📔 | for Melange and Apko |
+| [melange-forge](https://github.com/Kazibuya/melange-forge) | 🌐 | Go binaries for distroless images |
+| [Wolfi OS](https://github.com/wolfi-dev/os) | 🌐 | Package repository |
+| [Syft](https://github.com/anchore/syft) | 🌐 | SBOM and package cataloging |
+| [Grype](https://github.com/anchore/grype) | 🌐 | CVE scanner |
 | [Automating IT with Ansible](https://www.educative.io/courses/automating-it-infrastructure-with-ansible) | 📘 | |
 | [Infra as Code using Terraform](https://www.educative.io/courses/infrastructure-as-code-using-terraform) | 📘 | |
 | [Stephane Robert](https://blog.stephane-robert.info/docs/infra-as-code/gestion-de-configuration/ansible/) | 📘 | Excellent tutorials |
