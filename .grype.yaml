@@ -1,0 +1,4 @@
+ignore:
+  - package:
+    name: phpmyadmin
+    type: npm
