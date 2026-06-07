@@ -238,79 +238,22 @@ NB : Ansible gets access to remote machine
 | **CloudWatch Log Group** | Centralized log management and storage service repository for system monitoring data. | `aws_cloudwatch_log_group` | [AWS CloudWatch Logs Docs](https://aws.amazon.com/cloudwatch/) |
 | **IAM Role** | Identity with specific permission policies determining what AWS resources can do. | `aws_iam_role` | [AWS IAM Roles Docs](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles.html) |
 
-#### Security rules
-
-Some Checkov lints that we fixed:
-
-| *code* | *category* | *should* | *should not*|
-|:--:|:--:|:--|:--|
-|CKV_AWS_8|security|encrypt storage volumes by default|-|
-|CKV2_AWS_11|auditability|capture in/out IP trafic from VPC with a `aws_flow_log` instance|-|
-|CKV_AWS_12|networking|default security group should explicitely block by default|-|
-|CKV_AWS_23|observability|`description` field for rule of security group|undocumented rules|
-|CKV2_AWS_41|security|instance should use an IAM profile|should not store AWS access keys|
-|CKV_AWS_79|security|metadata should be secured against SSRF with a token => IMDSv2|no INDSv1 which use classic HTTP GET|
-|CKV_AWS_130|networking|assign private IP by default. Necessity of public IP can be mitigated in different ways (see architecture)|no public IP by default|
-|CKV_AWS_135|performance|instance should have a dedicated bandwidth to EBS volumes|do not share disk traffic with standard network traffic|
-|CKV_AWS_158|security|encrypt logs|-|
-|CKV_AWS_382|networking|outgoing trafic rules should be restricted to necessary protocols|no `-1` (all protocols) on `0.0.0.0`|
-|CKV2_ANSIBLE_1|use HTTPS in module calls (ex `uri`)|-|
-
-
-Some others that we ignored: 
-| *code* | *category* | *should* | *should not* | *tradeoff* |
-|:--:|:--:|:--|:--|:--|
-|CKV_AWS_126|observability|should rely on frequent checks (every 1 mn)||billed by cloud provider|
-
-### Ansible
-
-> An agentless configuration management tool
-
-#### Variables
-
-- 3 levels of variables
-  - group_vars
-  - vars (within a role)
-  - default (within a role) : allow to reuse group_vars as they have a lower priority than them, contrary to vars
-- Variables can be overloaded for tests in `molecule.yaml`
-
-__caveats__
-
-- best practice (ansible-lint) want us to use role-prefixed variables. We need however to take care not to multiplicate symbols referring to a same value (global > vars > defaults > test in molecule.yaml or in individual test files) or to set up fallback values in multiple places.
-
-#### TDD with molecules
-
-- a *test_sequence* can have many steps, among which main ones:
-  - create
-  - converge
-  - verify
-  - destroy
-
-__adapting tests to dockerized test environment__
-- molecule runs tests in docker container. For `docker` role, we have distinct tasks whether the environment is prod or test:
-  - in test env, we are within a container with no `systemd`. Therefore, we use `ansible.builtin.shell` to look for / launch `dockerd` process
-  - prod relies on `ansible.builtin.service` module
-- similarly, test assertion rely on command `docker info`
-
-#### Roles
-
-|Role|Responsibilities|
-|:-- |:--|
-|`bootstrap`|OS preparation, SSH config, UFW config, create directories for data persistence with appropriate permissions|
-|`docker`|generic role to install daemon and docker compose|
-|`wordpress`|centralized role for stack management : would be too difficult to manage 2 different roles for wordpress and db|
-
-#### Ansible Vault
-
-```bash
-ansible-vault encrypt_string --vault-password-file .vault_pass_cloudone --name <name> <password>
-```
-
-## Security
+#### Security
 
 ### Distroless images
 
 All service images are built with apko from Wolfi packages: no shell, no package manager, minimal attack surface. Healthchecks use statically compiled Go binaries from [melange-forge](https://github.com/Kazibuya/melange-forge) instead of shell utilities.
+
+### CVE comparison — official vs custom images
+
+| Service | Official image | CVEs (C/H/M/L) | Custom image | CVEs (C/H/M/L) | Packages |
+|:--|:--|:--|:--|:--|:--|
+| **Angie** | `docker.angie.software/angie:1.11.6` | 256 (32/111/109/4) | `namichel/angie:1.11.6-amd64` | **0** | 366 → 15 |
+| **WordPress** | `wordpress:6.9.4` | 923 (27/150/268/9) | `namichel/wordpress:6.9.4-amd64` | **0** | 273 → 36 |
+| **MariaDB** | `mariadb:12.2.2` | 248 (3/37/171/34) | `namichel/mariadb:12.2.2-amd64` | **1\*** | 154 → 41 |
+| **phpMyAdmin** | `phpmyadmin:5.2-apache` | 748 (23/131/218/11) | `namichel/phpmyadmin:5.2.3-amd64` | **0** | 284 → 118 |
+
+> \* `CVE-2026-8376` in `perl` (Critical): no fix available upstream, low EPSS (< 0.1%). Perl is a transitive dependency of MariaDB and cannot be removed.
 
 ### SBOM
 
@@ -322,9 +265,15 @@ A GitHub Actions workflow runs on every push to `main`:
 
 1. **syft** catalogs all packages including Composer/Go dependencies not visible to apko
 2. **grype** scans the syft inventory against its CVE database
-3. **issue-reporter** (from [melange-forge](https://github.com/Kazibuya/melange-forge)) formats findings as structured GitHub Issues with severity labels
+3. **issue-reporter** (from [melange-forge](https://github.com/Kazibuya/melange-forge)) formats findings as structured GitHub Issues with severity labels (`severity:critical`, `severity:high`, etc.)
 
-False positives and non-applicable CVEs are tracked in `.grype.yaml`.
+### Known false positives & ignored CVEs
+
+Two entries are intentionally ignored in `.grype.yaml` :
+
+**`phpmyadmin` npm package**: grype matches a [known malicious npm package](https://github.com/advisories/GHSA-rpcf-p37j-wm4j) named `phpmyadmin` against our PHP application. These are unrelated — one is a malicious npm package, the other is the legitimate PHP web interface. Ignored by package name + type.
+
+**`GO-2026-5024` in `gosu`**: this CVE affects `NewNTUnicodeString`, a Windows NT API. `gosu` runs exclusively on Linux where this code path is unreachable. Ignored by vulnerability ID + binary location (`/usr/bin/gosu`).
 
 ### Secrets
 
@@ -335,6 +284,7 @@ In local development, passwords are stored in `compose/secrets/` (gitignored) an
 > Static analysis for Infra As Code
 
 - compares code against security policies
+
 
 ## Services
 
