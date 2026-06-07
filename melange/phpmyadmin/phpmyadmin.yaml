@@ -1,6 +1,6 @@
 package:
   name: phpmyadmin
-  version: "5.2.2"
+  version: "5.2.3"
   epoch: 0
   description: "phpMyAdmin web interface for MySQL/MariaDB"
   copyright:
@@ -27,14 +27,19 @@ environment:
       - busybox
       - ca-certificates-bundle
       - wolfi-baselayout
+      - php
+      - composer
 
 pipeline:
   - uses: fetch
     with:
       uri: https://files.phpmyadmin.net/phpMyAdmin/${{package.version}}/phpMyAdmin-${{package.version}}-all-languages.tar.gz
-      expected-sha256: 8551c8bf3b166f232d5cf64bac877472e9d0cb8f2fe1858fab24f975e7d765b6
+      expected-sha256: 12ba1c425fa4071abbd4e7668c9ebdeac0b0755a467a6d6d5026122bb47c102b
   - runs: |
       tar -xzf phpMyAdmin-${{package.version}}-all-languages.tar.gz
+      cd phpMyAdmin-${{package.version}}-all-languages
+      composer update --no-interaction --no-dev --ignore-platform-reqs
+      cd ..
       mkdir -p "${{targets.destdir}}/var/www/html"
       cp -r phpMyAdmin-${{package.version}}-all-languages/* \
         "${{targets.destdir}}/var/www/html/"
