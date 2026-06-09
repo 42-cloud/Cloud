@@ -33,6 +33,16 @@ __flexibility__
 - [ ] provider-agnostic configuration
 - [ ] can create various users with admin rights on EC2, app admin rights on wordpress
 
+__security__
+- [x] distroless OCI images via apko/melange
+- [x] SBOM generation for all images
+- [x] automated CVE scanning via syft + grype
+- [x] GitHub Issues automation for CVE reporting
+- [x] secrets via file (tmpfs in prod)
+- [x] non-root containers
+- [ ] GHA release for melange-forge binaries
+- [ ] matrix refactor for CVE scan workflow
+
 # Setup
 
 ## Prerequisites
@@ -131,7 +141,7 @@ Access the app on `https://cloud1.duckdns.org`
 
 > A secure Linux distribution
 
-- used as a base layer for Angie
+- used as a base layer for all services
 - quickly updated in case of CVE
 - compatible with packages compiled for glibc
 
@@ -139,19 +149,42 @@ Access the app on `https://cloud1.duckdns.org`
 
 > Declarative APK builder : compiles packages from source code
 
+- each service has its own `melange.yaml` build config
+- packages are signed with a shared RSA key
+- wolfi pipelines are fetched from `wolfi-dev/os` for test support
+
 ### Apko
 
 > Image assembler : assembles packages into a _distroless_ image
 
 - **secure** : images don't have shell, reducing attack surface
-- **idempotent** : images are identical
-- **lightweight**
+- **idempotent** : images are identical given the same inputs
+- **lightweight** : single layer OCI image
 
-APKO generates: 
-- SPDX with all components and licences for each package
+Apko generates:
+- SPDX SBOM with all components, licences, and upstream source commits for each package
 - _SBOM_ (software bill of materials) which can be used to audit supply chain
 
 UID and GID are `65532` : conventional ID for non-root
+
+### melange-forge
+
+> External library of statically compiled Go binaries for distroless images
+
+- provides healthcheck binaries (`healthcheck-http`, `healthcheck-sql`, `healthcheck-fcgi`) embedded in each image
+- replaces shell-based healthchecks (`curl`, `wget`, `mariadb-admin`) which are unavailable in distroless images
+- `healthcheck-sql` uses `mlock` to prevent password from being swapped to disk
+- passwords are read from files (tmpfs in prod) rather than environment variables
+- source: [Kazibuya/melange-forge](https://github.com/Kazibuya/melange-forge)
+
+### Images
+
+| Service | Base | Tag |
+|:--|:--|:--|
+| Angie | Wolfi | `namichel/angie:1.11.6-amd64` |
+| WordPress | Wolfi | `namichel/wordpress:6.9.4-amd64` |
+| MariaDB | Wolfi | `namichel/mariadb:12.2.2-amd64` |
+| phpMyAdmin | Wolfi | `namichel/phpmyadmin:5.2.3-amd64` |
 
 ## Infrastructure as Code
 
@@ -205,75 +238,46 @@ NB : Ansible gets access to remote machine
 | **CloudWatch Log Group** | Centralized log management and storage service repository for system monitoring data. | `aws_cloudwatch_log_group` | [AWS CloudWatch Logs Docs](https://aws.amazon.com/cloudwatch/) |
 | **IAM Role** | Identity with specific permission policies determining what AWS resources can do. | `aws_iam_role` | [AWS IAM Roles Docs](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles.html) |
 
-#### Security rules
+#### Security
 
-Some Checkov lints that we fixed:
+### Distroless images
 
-| *code* | *category* | *should* | *should not*|
-|:--:|:--:|:--|:--|
-|CKV_AWS_8|security|encrypt storage volumes by default|-|
-|CKV2_AWS_11|auditability|capture in/out IP trafic from VPC with a `aws_flow_log` instance|-|
-|CKV_AWS_12|networking|default security group should explicitely block by default|-|
-|CKV_AWS_23|observability|`description` field for rule of security group|undocumented rules|
-|CKV2_AWS_41|security|instance should use an IAM profile|should not store AWS access keys|
-|CKV_AWS_79|security|metadata should be secured against SSRF with a token => IMDSv2|no INDSv1 which use classic HTTP GET|
-|CKV_AWS_130|networking|assign private IP by default. Necessity of public IP can be mitigated in different ways (see architecture)|no public IP by default|
-|CKV_AWS_135|performance|instance should have a dedicated bandwidth to EBS volumes|do not share disk traffic with standard network traffic|
-|CKV_AWS_158|security|encrypt logs|-|
-|CKV_AWS_382|networking|outgoing trafic rules should be restricted to necessary protocols|no `-1` (all protocols) on `0.0.0.0`|
-|CKV2_ANSIBLE_1|use HTTPS in module calls (ex `uri`)|-|
+All service images are built with apko from Wolfi packages: no shell, no package manager, minimal attack surface. Healthchecks use statically compiled Go binaries from [melange-forge](https://github.com/Kazibuya/melange-forge) instead of shell utilities.
 
+### CVE comparison — official vs custom images
 
-Some others that we ignored: 
-| *code* | *category* | *should* | *should not* | *tradeoff* |
-|:--:|:--:|:--|:--|:--|
-|CKV_AWS_126|observability|should rely on frequent checks (every 1 mn)||billed by cloud provider|
+| Service | Official image | CVEs (C/H/M/L) | Custom image | CVEs (C/H/M/L) | Packages |
+|:--|:--|:--|:--|:--|:--|
+| **Angie** | `docker.angie.software/angie:1.11.6` | 256 (32/111/109/4) | `namichel/angie:1.11.6-amd64` | **0** | 366 → 15 |
+| **WordPress** | `wordpress:6.9.4` | 923 (27/150/268/9) | `namichel/wordpress:6.9.4-amd64` | **0** | 273 → 36 |
+| **MariaDB** | `mariadb:12.2.2` | 248 (3/37/171/34) | `namichel/mariadb:12.2.2-amd64` | **1\*** | 154 → 41 |
+| **phpMyAdmin** | `phpmyadmin:5.2-apache` | 748 (23/131/218/11) | `namichel/phpmyadmin:5.2.3-amd64` | **0** | 284 → 118 |
 
-### Ansible
+> \* `CVE-2026-8376` in `perl` (Critical): no fix available upstream, low EPSS (< 0.1%). Perl is a transitive dependency of MariaDB and cannot be removed.
 
-> An agentless configuration management tool
+### SBOM
 
-#### Variables
+Each image build produces a signed SPDX SBOM via apko, tracking every installed package with its upstream source commit. SBOMs are committed alongside `apko.yaml` files under `melange/`.
 
-- 3 levels of variables
-  - group_vars
-  - vars (within a role)
-  - default (within a role) : allow to reuse group_vars as they have a lower priority than them, contrary to vars
-- Variables can be overloaded for tests in `molecule.yaml`
+### CVE Scanning
 
-__caveats__
+A GitHub Actions workflow runs on every push to `main`:
 
-- best practice (ansible-lint) want us to use role-prefixed variables. We need however to take care not to multiplicate symbols referring to a same value (global > vars > defaults > test in molecule.yaml or in individual test files) or to set up fallback values in multiple places.
+1. **syft** catalogs all packages including Composer/Go dependencies not visible to apko
+2. **grype** scans the syft inventory against its CVE database
+3. **issue-reporter** (from [melange-forge](https://github.com/Kazibuya/melange-forge)) formats findings as structured GitHub Issues with severity labels (`severity:critical`, `severity:high`, etc.)
 
-#### TDD with molecules
+### Known false positives & ignored CVEs
 
-- a *test_sequence* can have many steps, among which main ones:
-  - create
-  - converge
-  - verify
-  - destroy
+Two entries are intentionally ignored in `.grype.yaml` :
 
-__adapting tests to dockerized test environment__
-- molecule runs tests in docker container. For `docker` role, we have distinct tasks whether the environment is prod or test:
-  - in test env, we are within a container with no `systemd`. Therefore, we use `ansible.builtin.shell` to look for / launch `dockerd` process
-  - prod relies on `ansible.builtin.service` module
-- similarly, test assertion rely on command `docker info`
+**`phpmyadmin` npm package**: grype matches a [known malicious npm package](https://github.com/advisories/GHSA-rpcf-p37j-wm4j) named `phpmyadmin` against our PHP application. These are unrelated — one is a malicious npm package, the other is the legitimate PHP web interface. Ignored by package name + type.
 
-#### Roles
+**`GO-2026-5024` in `gosu`**: this CVE affects `NewNTUnicodeString`, a Windows NT API. `gosu` runs exclusively on Linux where this code path is unreachable. Ignored by vulnerability ID + binary location (`/usr/bin/gosu`).
 
-|Role|Responsibilities|
-|:-- |:--|
-|`bootstrap`|OS preparation, SSH config, UFW config, create directories for data persistence with appropriate permissions|
-|`docker`|generic role to install daemon and docker compose|
-|`wordpress`|centralized role for stack management : would be too difficult to manage 2 different roles for wordpress and db|
+### Secrets
 
-#### Ansible Vault
-
-```bash
-ansible-vault encrypt_string --vault-password-file .vault_pass_cloudone --name <name> <password>
-```
-
-## Security
+In local development, passwords are stored in `compose/secrets/` (gitignored) and mounted read-only into containers. In production (via Ansible), secrets are injected into a tmpfs mount, never written to disk. Both `docker-entrypoint.sh` scripts support `_FILE` environment variables natively for this purpose.
 
 ### Checkov
 
@@ -281,11 +285,17 @@ ansible-vault encrypt_string --vault-password-file .vault_pass_cloudone --name <
 
 - compares code against security policies
 
+
 ## Services
 
 ### Angie
 
 > Reverse proxy. Fork of nginx with extended features
+
+- serves WordPress via FastCGI pass to php-fpm
+- serves phpMyAdmin at `/phpmyadmin/`
+- exposes Prometheus metrics at `/metrics/`
+- exposes status API at `/status/`
 
 ### Wordpress
 
@@ -295,7 +305,7 @@ NB : There is no official module for Wordpress management. Partly because cli ev
 
 ### MariaDB
 
-> An open sourve fork of MySQL
+> An open source fork of MySQL
 
 ### PHPMyAdmin
 
@@ -317,6 +327,10 @@ NB : There is no official module for Wordpress management. Partly because cli ev
 | [Ansible doc](https://docs.ansible.com/) | 📔 | |
 | [Taskfile doc](https://taskfile.dev/docs/guide) | 📔 | |
 | [Chainguard doc](https://edu.chainguard.dev/) | 📔 | for Melange and Apko |
+| [melange-forge](https://github.com/Kazibuya/melange-forge) | 🌐 | Go binaries for distroless images |
+| [Wolfi OS](https://github.com/wolfi-dev/os) | 🌐 | Package repository |
+| [Syft](https://github.com/anchore/syft) | 🌐 | SBOM and package cataloging |
+| [Grype](https://github.com/anchore/grype) | 🌐 | CVE scanner |
 | [Automating IT with Ansible](https://www.educative.io/courses/automating-it-infrastructure-with-ansible) | 📘 | |
 | [Infra as Code using Terraform](https://www.educative.io/courses/infrastructure-as-code-using-terraform) | 📘 | |
 | [Stephane Robert](https://blog.stephane-robert.info/docs/infra-as-code/gestion-de-configuration/ansible/) | 📘 | Excellent tutorials |

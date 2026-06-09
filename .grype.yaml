@@ -1,0 +1,7 @@
+ignore:
+  - package:
+      name: phpmyadmin
+      type: npm
+  - vulnerability: GO-2026-5024
+    package:
+      location: /usr/bin/gosu
