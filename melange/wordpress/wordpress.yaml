@@ -27,6 +27,8 @@ pipeline:
       tag: ${{package.version}}
       expected-commit: 97b7f62adb5d8864c3fac554bc7182d9fd754a41
       destination: "${{targets.destdir}}/usr/src/wordpress"
+  - runs: |
+      cp wp-config-docker.php "${{targets.destdir}}/usr/src/wordpress/"
 
 subpackages:
   - name: ${{package.name}}-oci-entrypoint
@@ -38,7 +40,6 @@ subpackages:
     pipeline:
       - runs: |
           mkdir -p ${{targets.subpkgdir}}/usr/local/bin/
-          cp wp-config-docker.php "${{targets.destdir}}/usr/src/wordpress"
           cp docker-entrypoint.sh ${{targets.subpkgdir}}/usr/local/bin/
           chmod +x ${{targets.subpkgdir}}/usr/local/bin/docker-entrypoint.sh
     test:

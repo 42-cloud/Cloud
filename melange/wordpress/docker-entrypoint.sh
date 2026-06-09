@@ -7,6 +7,12 @@ set -Eeuo pipefail
 
 cd /var/www/html
 
+# ── wp-cli helper
+export WP_CLI_CACHE_DIR="${WP_CLI_CACHE_DIR:-/var/www/.wp-cli/cache}"
+export WP_CLI_CONFIG_PATH="${WP_CLI_CONFIG_PATH:-/var/www/.wp-cli/config.yml}"
+mkdir -p "$WP_CLI_CACHE_DIR"
+# ── 
+
 if [[ "$1" == apache2* ]] || [ "$1" = 'php-fpm' ]; then
 	uid="$(id -u)"
 	gid="$(id -g)"
@@ -66,6 +72,10 @@ if [[ "$1" == apache2* ]] || [ "$1" = 'php-fpm' ]; then
 		done
 		tar "${sourceTarArgs[@]}" . | tar "${targetTarArgs[@]}"
 		echo >&2 "Complete! WordPress has been successfully copied to $PWD"
+        if [ "$uid" = '0' ]; then
+			chown -R "$user:$group" /var/www/html
+		fi
+
 	fi
 
 	wpEnvs=( "${!WORDPRESS_@}" )

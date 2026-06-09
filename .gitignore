@@ -1,4 +1,4 @@
-*.tar
+**/*.tar
 pipelines/
 packages/
 .env
@@ -12,6 +12,7 @@ melange/healthcheck-http/healthcheck
 melange/healthcheck-sql/healthcheck-mysql
 melange/healthcheck-fcgi/healthcheck-fcgi
 melange/*/melange.rsa*
+
 .ansible
 *.ini
 **/.vault_pass*

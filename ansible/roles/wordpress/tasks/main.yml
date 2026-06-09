@@ -19,19 +19,25 @@
         path: "{{ wordpress_cert_dir }}"
         state: directory
         mode: "0755"
+        owner: "{{ (wordpress_become_compose | default(true) | bool) | ternary('65532', omit) }}"
+        group: "{{ (wordpress_become_compose | default(true) | bool) | ternary('65532', omit) }}"
 
     - name: Generate key
       community.crypto.openssl_privatekey:
         path: "{{ wordpress_cert_key_path }}"
         size: 2048
         type: RSA
-        mode: "0600"
+        mode: "0400"
+        owner: "{{ (wordpress_become_compose | default(true) | bool) | ternary('65532', omit) }}"
+        group: "{{ (wordpress_become_compose | default(true) | bool) | ternary('65532', omit) }}"
 
     - name: Generate CSR
       community.crypto.openssl_csr:
         path: "{{ wordpress_cert_csr_path }}"
         privatekey_path: "{{ wordpress_cert_key_path }}"
         common_name: "{{ wordpress_cert_domain }}"
+        owner: "{{ (wordpress_become_compose | default(true) | bool) | ternary('65532', omit) }}"
+        group: "{{ (wordpress_become_compose | default(true) | bool) | ternary('65532', omit) }}"
 
     - name: Generate Certificate
       community.crypto.x509_certificate:
@@ -41,6 +47,17 @@
         provider: selfsigned
         selfsigned_not_after: "+365d"
         mode: "0644"
+        owner: "{{ (wordpress_become_compose | default(true) | bool) | ternary('65532', omit) }}"
+        group: "{{ (wordpress_become_compose | default(true) | bool) | ternary('65532', omit) }}"
+    
+    - name: Force permissions on certs directory and files
+      ansible.builtin.file:
+        path: "{{ wordpress_cert_dir }}"
+        state: directory
+        recurse: true
+        owner: "{{ (wordpress_become_compose | default(true) | bool) | ternary('65532', omit) }}"
+        group: "{{ (wordpress_become_compose | default(true) | bool) | ternary('65532', omit) }}"
+        mode: "0755"
   rescue:
     - name: Fail explicitly if TLS generation fails
       ansible.builtin.fail:
@@ -69,10 +86,30 @@
   delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
   become: "{{ wordpress_become_compose | default(true) }}"
 
+- name: Copy static images assets
+  ansible.builtin.copy:
+    src: "wordpress/images/"
+    dest: "{{ wordpress_compose_src }}/wordpress/assets/"
+    # owner: "{{ wordpress_wp_uid }}"
+    # group: "{{ wordpress_wp_gid }}"
+    mode: "0755"
+  delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
+  become: "{{ wordpress_become_compose | default(true) }}"
+
+- name: Check assets
+  ansible.builtin.shell: |
+    ls "{{ wordpress_compose_src }}/wordpress/assets/"
+  register: wordpress_assets
+  delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
+
+- name: Check assets
+  ansible.builtin.debug:
+    msg: "{{ wordpress_assets }}"
+
 - name: Populate db conf
   ansible.builtin.template:
     src: mariadb.conf.j2
-    dest: "{{ wordpress_db_conf_path_host }}"
+    dest: "{{ wordpress_compose_src }}/mariadb/mariadb.conf"
     mode: "0644"
   delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
   become: "{{ wordpress_become_compose | default(true) }}"
@@ -90,7 +127,7 @@
     src: angie.conf.j2
     dest: "{{ wordpress_compose_src }}/angie/angie.conf"
     mode: "0644"
-  notify: Reload angie
+  # notify: Reload angie
   delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
   become: "{{ wordpress_become_compose | default(true) }}"
 
@@ -102,14 +139,48 @@
   delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
   become: "{{ wordpress_become_compose | default(true) }}"
 
+- name: Ensure secrets directory exists
+  ansible.builtin.file:
+    path: "{{ wordpress_compose_src }}/secrets"
+    state: directory
+    mode: '0700'
+  delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
+  become: "{{ wordpress_become_compose | default(true) }}"
+
+- name: Deploy db passwords and secrets"
+  ansible.builtin.copy:
+    content: "{{ item.value | trim }}"
+    dest: "{{ wordpress_compose_src }}/secrets/{{ item.filename }}"
+    owner: "{{ (wordpress_become_compose | default(true) | bool) | ternary('65532', omit) }}"
+    group: "{{ (wordpress_become_compose | default(true) | bool) | ternary('65532', omit) }}"
+    mode: "{{ (wordpress_become_compose | default(true) | bool) | ternary('0400', '0644') }}"
+  loop:
+    - filename: db_password
+      value: "{{ wordpress_db_password }}"
+    - filename: db_root_password
+      value: "{{ wordpress_db_root_password }}"
+  delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
+  become: "{{ wordpress_become_compose | default(true) }}"
+
 # delegated to localhost in test
 - name: Launch docker compose
   community.docker.docker_compose_v2:
     project_src: "{{ wordpress_compose_src }}"
     state: present
-    build: policy
   delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
   become: "{{ wordpress_become_compose | default(true) }}"
+
+- name: Wait for wordpress container to be healthy
+  ansible.builtin.shell: |
+    docker inspect --format='{{ "{{.State.Health.Status}}" }}' {{ wordpress_wp_container_name }}
+  register: __wordpress_health
+  until: __wordpress_health.stdout == "healthy"
+  retries: 5
+  delay: 10
+  changed_when: false
+  delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
+  become: "{{ wordpress_become_compose | default(true) }}"
+
 
 # --- WORDPRESS install and customization ---
 
@@ -127,6 +198,13 @@
   failed_when: false
   changed_when: false
   delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
+
+# - name: Wait for MariaDB port to be accessible from the host perspective
+#   ansible.builtin.wait_for:
+#     host: "127.0.0.1"
+#     port: 3306
+#     timeout: 30
+#   delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
 
 - name: Run Wordpress automated configuration
   when: __wordpress_wp_core_is_configured.rc != 0

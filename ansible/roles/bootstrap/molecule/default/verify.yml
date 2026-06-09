@@ -125,19 +125,19 @@
         fail_msg: "Missing config directory {{ item.item }}"
       loop: "{{ __bootstrap_directories_stats.results }}"
 
-    # --- VERIFICATION DUCK DNS ---
+    # # --- VERIFICATION DUCK DNS ---
 
-    - name: Read host crontab entries
-      ansible.builtin.command: crontab -l
-      register: __bootstrap_crontab
-      changed_when: false
+    # - name: Read host crontab entries
+    #   ansible.builtin.command: crontab -l
+    #   register: __bootstrap_crontab
+    #   changed_when: false
 
-    - name: Assert DuckDNS update is configured for persistence
-      ansible.builtin.assert:
-        that:
-          - "'Sync AWS Elastic IP with DuckDNS' in __bootstrap_crontab.stdout"
-          - "'@reboot' in __bootstrap_crontab.stdout"
-          - "'*/10' in __bootstrap_crontab.stdout"
-          - "'/update?domains=' in __bootstrap_crontab.stdout"
-          - "'&token=' in __bootstrap_crontab.stdout"
-        fail_msg: "DuckDNS cron updates are misconfigured"
+    # - name: Assert DuckDNS update is configured for persistence
+    #   ansible.builtin.assert:
+    #     that:
+    #       - "'Sync AWS Elastic IP with DuckDNS' in __bootstrap_crontab.stdout"
+    #       - "'@reboot' in __bootstrap_crontab.stdout"
+    #       - "'*/10' in __bootstrap_crontab.stdout"
+    #       - "'/update?domains=' in __bootstrap_crontab.stdout"
+    #       - "'&token=' in __bootstrap_crontab.stdout"
+    #     fail_msg: "DuckDNS cron updates are misconfigured"

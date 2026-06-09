@@ -1,6 +1,9 @@
 ---
 # wordpress - defaults/main.yml
 
+wordpress_apko_uid: "{{ global_apko_uid | default(65532) }}"
+wordpress_apko_gid: "{{ global_apko_gid | default(65532) }}"
+
 wordpress_project_name: "cloudone"
 wordpress_domain_name: "{{ global_domain_name | default('cloud1.duckdns.org') }}"
 wordpress_project_path: "{{ global_project_path | default('/opt/cloud-1') }}"
@@ -18,21 +21,21 @@ wordpress_expose_https: "443"
 
 # Host and Container paths
 wordpress_db_conf_path_host: "{{ wordpress_compose_src }}/mariadb/mariadb.conf"
-wordpress_db_conf_path_dest: "/etc/mysql/mariadb.conf.d/mariadb.conf"
+wordpress_db_conf_path_dest: "/etc/mariadb.conf"
 wordpress_db_sql_template_path_host: "{{ wordpress_compose_src }}/mariadb/init.sql"
 wordpress_db_sql_template_path_dest: "/docker-entrypoint-initdb.d/init.sql"
-wordpress_db_dir_path_dest: "{{ global_db_dir | default('/var/lib/mysql_data') }}"
+wordpress_db_dir_path_dest: "{{ global_db_dir | default('/var/lib/mysql') }}"
 wordpress_db_error_log_path: "{{ wordpress_db_dir_path_dest }}/mariadb.err"
 wordpress_db_socket: "/run/mysqld/mysqld.sock"
 
 # MariaDB
 wordpress_db_port: 3306
 wordpress_db_innodb_buffer_pool_size: "128M"
-wordpress_db_user: "mysql"
+wordpress_db_user: "wp_user"
 wordpress_db_root_password: "{{ global_db_root_password | default('dev_db_admin_pass_fallback') }}"
 wordpress_db_admin_default_password: "{{ global_db_admin_default_password | default('dev_db_admin_pass_fallback') }}"
-wordpress_db_group: "mysql"
 wordpress_db_password: "{{ global_db_password | default('dev_db_pass_fallback') }}"
+wordpress_db_group: "mysql"
 wordpress_db_mem_limit: "512m"
 wordpress_db_mem_res_limit: "256m"
 wordpress_db_validate_cmd: ""
@@ -40,8 +43,8 @@ wordpress_db_name: "wordpress"
 wordpress_db_container_name: "mariadb"
 
 # Wordpress
-wordpress_wp_uid: "33"
-wordpress_wp_gid: "33"
+wordpress_wp_uid: "{{ wordpress_apko_uid }}"
+wordpress_wp_gid: "{{ wordpress_apko_gid }}"
 wordpress_wp_dir_path_dest: "{{ global_wp_dir | default('/var/www/html') }}"
 wordpress_wp_admin_user: "wp-admin"
 wordpress_wp_admin_default_password: "{{ global_wp_admin_default_password | default('dev_wp_admin_pass_fallback') }}"
@@ -49,13 +52,16 @@ wordpress_wp_admin_email: "admin@cloud.one"
 wordpress_wp_mem_limit: "256m"
 wordpress_wp_mem_res_limit: "128m"
 wordpress_wp_container_name: "wordpress"
-wordpress_wp_cli_exec: "{{ wordpress_docker_cmd }} exec --user www-data {{ wordpress_wp_container_name }}"
+wordpress_wp_cli_exec: "{{ wordpress_docker_cmd }} exec --user {{ wordpress_apko_uid | int }} --workdir {{ wordpress_wp_dir_path_dest }} {{ wordpress_wp_container_name }}"
 wordpress_wp_site_title: "{{ inventory_hostname }}"
 
 # Angie
 wordpress_angie_conf_path_host: "{{ wordpress_compose_src }}/angie/angie.conf"
 wordpress_angie_conf_path_dest: "/etc/angie/angie.conf"
+wordpress_angie_wp_root: "{{ wordpress_wp_dir_path_dest }}"
 wordpress_angie_container_name: "angie"
+
+wordpress_assets_host_path: "{{ wordpress_compose_src }}/wordpress/assets"
 
 # PHP My admin
 
