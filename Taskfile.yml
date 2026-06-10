@@ -235,7 +235,7 @@ tasks:
         cgr.dev/chainguard/melange build {{.SERVICE}}.yaml 
         --arch amd64 
         --signing-key ../melange.rsa 
-        --pipeline-dir /work/{{.SERVICE}}/pipelines
+        --pipeline-dir /work/pipelines
         --out-dir /work/packages
 
   melange:angie:
@@ -288,14 +288,14 @@ tasks:
     dir: melange/{{.SERVICE}}
     vars:
       SERVICE: '{{.SERVICE}}'
-      IMAGE_TAG: '6.9.4'
+      TAG: '{{.TAG | default "latest"}}'
     cmds:
       - >
         docker run --rm 
         -v {{.USER_WORKING_DIR}}/melange:/work 
         -w /work/{{.SERVICE}} 
         cgr.dev/chainguard/apko build apko.yaml 
-        {{.SERVICE}}:{{.IMAGE_TAG}} 
+        {{.SERVICE}}:{{.TAG}} 
         {{.SERVICE}}.tar 
         --keyring-append ../melange.rsa.pub
 
