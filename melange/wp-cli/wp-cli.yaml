@@ -1,4 +1,3 @@
-# wp-cli.yaml
 package:
   name: wp-cli
   version: 2.12.0
@@ -25,13 +24,17 @@ environment:
     packages:
       - busybox
       - ca-certificates-bundle
-      - wget
 
 pipeline:
+  - uses: fetch
+    with:
+      uri: https://github.com/wp-cli/wp-cli/releases/download/v${{package.version}}/wp-cli-${{package.version}}.phar
+      expected-sha256: ce34ddd838f7351d6759068d09793f26755463b4a4610a5a5c0a97b68220d85c
+      extract: false
+
   - runs: |
       mkdir -p "${{targets.destdir}}/usr/local/bin"
-      wget -O "${{targets.destdir}}/usr/local/bin/wp" \
-        "https://github.com/wp-cli/wp-cli/releases/download/v${{package.version}}/wp-cli-${{package.version}}.phar"
+      mv wp-cli-${{package.version}}.phar "${{targets.destdir}}/usr/local/bin/wp"
       chmod +x "${{targets.destdir}}/usr/local/bin/wp"
 
 update:
@@ -39,3 +42,8 @@ update:
   github:
     identifier: wp-cli/wp-cli
     strip-prefix: v
+
+test:
+  pipeline:
+    - runs: |
+        wp --version
