@@ -1,11 +1,11 @@
 {
   "SPDXID": "SPDXRef-DOCUMENT",
-  "name": "sbom-sha256:65e22c781873ec2855f0dbc45bc13995a09bf29419f021774b6da8cba36bcd18",
+  "name": "sbom-sha256:b431c85fa17e263f60d5f1a357a12d43f29c68fd34932a257344b7c672f6ca50",
   "spdxVersion": "SPDX-2.3",
   "creationInfo": {
-    "created": "2026-06-07T09:45:26Z",
+    "created": "2026-06-10T01:15:43Z",
     "creators": [
-      "Tool: apko (v1.2.12)",
+      "Tool: apko (v1.2.16+dirty)",
       "Organization: Chainguard, Inc"
     ],
     "licenseListVersion": "3.27"
@@ -13,13 +13,13 @@
   "dataLicense": "CC0-1.0",
   "documentNamespace": "https://spdx.org/spdxdocs/apko/",
   "documentDescribes": [
-    "SPDXRef-Package-Image-sha256-dd3bd20fb58a226791c275870c39c61e7b63cd05b2ad8664426290b01eca0907"
+    "SPDXRef-Package-Image-sha256-077a56a40c584f29a743256627b939e7345cefdc325383b9a734d11e439410db"
   ],
   "packages": [
     {
-      "SPDXID": "SPDXRef-Package-Image-sha256-dd3bd20fb58a226791c275870c39c61e7b63cd05b2ad8664426290b01eca0907",
-      "name": "sha256:dd3bd20fb58a226791c275870c39c61e7b63cd05b2ad8664426290b01eca0907",
-      "versionInfo": "sha256:dd3bd20fb58a226791c275870c39c61e7b63cd05b2ad8664426290b01eca0907",
+      "SPDXID": "SPDXRef-Package-Image-sha256-077a56a40c584f29a743256627b939e7345cefdc325383b9a734d11e439410db",
+      "name": "sha256:077a56a40c584f29a743256627b939e7345cefdc325383b9a734d11e439410db",
+      "versionInfo": "sha256:077a56a40c584f29a743256627b939e7345cefdc325383b9a734d11e439410db",
       "filesAnalyzed": false,
       "description": "apko container image",
       "downloadLocation": "NOASSERTION",
@@ -28,20 +28,20 @@
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "dd3bd20fb58a226791c275870c39c61e7b63cd05b2ad8664426290b01eca0907"
+          "checksumValue": "077a56a40c584f29a743256627b939e7345cefdc325383b9a734d11e439410db"
         }
       ],
       "externalRefs": [
         {
           "referenceCategory": "PACKAGE-MANAGER",
-          "referenceLocator": "pkg:oci/mariadb@sha256:dd3bd20fb58a226791c275870c39c61e7b63cd05b2ad8664426290b01eca0907?arch=amd64\u0026mediaType=application%2Fvnd.oci.image.manifest.v1%2Bjson\u0026os=linux",
+          "referenceLocator": "pkg:oci/mariadb@sha256:077a56a40c584f29a743256627b939e7345cefdc325383b9a734d11e439410db?arch=amd64\u0026mediaType=application%2Fvnd.oci.image.manifest.v1%2Bjson\u0026os=linux",
           "referenceType": "purl"
         }
       ]
     },
     {
-      "SPDXID": "SPDXRef-Package-ImageLayer-sha256-65e22c781873ec2855f0dbc45bc13995a09bf29419f021774b6da8cba36bcd18",
-      "name": "sha256:65e22c781873ec2855f0dbc45bc13995a09bf29419f021774b6da8cba36bcd18",
+      "SPDXID": "SPDXRef-Package-ImageLayer-sha256-b431c85fa17e263f60d5f1a357a12d43f29c68fd34932a257344b7c672f6ca50",
+      "name": "sha256:b431c85fa17e263f60d5f1a357a12d43f29c68fd34932a257344b7c672f6ca50",
       "versionInfo": "20230201",
       "filesAnalyzed": false,
       "description": "apko operating system layer",
@@ -51,7 +51,7 @@
       "externalRefs": [
         {
           "referenceCategory": "PACKAGE-MANAGER",
-          "referenceLocator": "pkg:oci/mariadb@sha256:65e22c781873ec2855f0dbc45bc13995a09bf29419f021774b6da8cba36bcd18?arch=amd64\u0026mediaType=application%2Fvnd.oci.image.layer.v1.tar%2Bgzip\u0026os=linux",
+          "referenceLocator": "pkg:oci/mariadb@sha256:b431c85fa17e263f60d5f1a357a12d43f29c68fd34932a257344b7c672f6ca50?arch=amd64\u0026mediaType=application%2Fvnd.oci.image.layer.v1.tar%2Bgzip\u0026os=linux",
           "referenceType": "purl"
         }
       ]
@@ -638,9 +638,9 @@
       "primaryPackagePurpose": "FILE"
     },
     {
-      "SPDXID": "SPDXRef-Package-apk-ncurses-terminfo-base-6.6.20260607-r0",
+      "SPDXID": "SPDXRef-Package-apk-ncurses-terminfo-base-6.6.20260608-r0",
       "name": "ncurses-terminfo-base",
-      "versionInfo": "6.6.20260607-r0",
+      "versionInfo": "6.6.20260608-r0",
       "filesAnalyzed": false,
       "licenseConcluded": "NOASSERTION",
       "licenseDeclared": "MIT",
@@ -652,15 +652,15 @@
       "externalRefs": [
         {
           "referenceCategory": "PACKAGE-MANAGER",
-          "referenceLocator": "pkg:apk/wolfi/ncurses-terminfo-base@6.6.20260607-r0?arch=x86_64\u0026distro=wolfi",
+          "referenceLocator": "pkg:apk/wolfi/ncurses-terminfo-base@6.6.20260608-r0?arch=x86_64\u0026distro=wolfi",
           "referenceType": "purl"
         }
       ]
     },
     {
-      "SPDXID": "SPDXRef-Package-Melange-ncurses.yaml-d8d96dc17ea8c15e6f4f6c4706c0fa078e2c7f76",
+      "SPDXID": "SPDXRef-Package-Melange-ncurses.yaml-62585c485b72698f3ac72920080fce0c9ff23b4b",
       "name": "ncurses.yaml",
-      "versionInfo": "d8d96dc17ea8c15e6f4f6c4706c0fa078e2c7f76",
+      "versionInfo": "62585c485b72698f3ac72920080fce0c9ff23b4b",
       "filesAnalyzed": false,
       "licenseConcluded": "NOASSERTION",
       "licenseDeclared": "Apache-2.0",
@@ -671,34 +671,34 @@
       "externalRefs": [
         {
           "referenceCategory": "PACKAGE-MANAGER",
-          "referenceLocator": "pkg:github/chainguard-dev/stereo@d8d96dc17ea8c15e6f4f6c4706c0fa078e2c7f76#ncurses.yaml",
+          "referenceLocator": "pkg:github/chainguard-dev/stereo@62585c485b72698f3ac72920080fce0c9ff23b4b#ncurses.yaml",
           "referenceType": "purl"
         }
       ]
     },
     {
-      "SPDXID": "SPDXRef-Package-Source-github.com-ThomasDickey-ncurses-snapshots-v6C956C9520260607-5f40de384e639495fe8353a13e377e5288b9dfbf-0",
+      "SPDXID": "SPDXRef-Package-Source-github.com-ThomasDickey-ncurses-snapshots-v6C956C9520260608-ade9fab7697c2a108109af26cbf3ac3e5ce854e8-0",
       "name": "ncurses-snapshots",
-      "versionInfo": "v6_6_20260607",
+      "versionInfo": "v6_6_20260608",
       "filesAnalyzed": false,
       "licenseConcluded": "NOASSERTION",
       "licenseDeclared": "MIT",
-      "downloadLocation": "https://github.com/ThomasDickey/ncurses-snapshots/archive/5f40de384e639495fe8353a13e377e5288b9dfbf.tar.gz",
+      "downloadLocation": "https://github.com/ThomasDickey/ncurses-snapshots/archive/ade9fab7697c2a108109af26cbf3ac3e5ce854e8.tar.gz",
       "originator": "Organization: Thomasdickey",
       "supplier": "Organization: Thomasdickey",
       "primaryPackagePurpose": "SOURCE",
       "externalRefs": [
         {
           "referenceCategory": "PACKAGE-MANAGER",
-          "referenceLocator": "pkg:github/thomasdickey/ncurses-snapshots@v6_6_20260607",
+          "referenceLocator": "pkg:github/thomasdickey/ncurses-snapshots@v6_6_20260608",
           "referenceType": "purl"
         }
       ]
     },
     {
-      "SPDXID": "SPDXRef-Package-apk-ncurses-terminfo-base-432b802cdc50acd4",
+      "SPDXID": "SPDXRef-Package-apk-ncurses-terminfo-base-6dfefab885571a88",
       "name": "ncurses-terminfo-base",
-      "versionInfo": "6.6.20260607-r0",
+      "versionInfo": "6.6.20260608-r0",
       "filesAnalyzed": false,
       "licenseConcluded": "NOASSERTION",
       "licenseDeclared": "MIT",
@@ -711,12 +711,12 @@
       "externalRefs": [
         {
           "referenceCategory": "SECURITY",
-          "referenceLocator": "cpe:2.3:a:gnu:ncurses:6.6.20260607:*:*:*:*:*:*:*",
+          "referenceLocator": "cpe:2.3:a:gnu:ncurses:6.6.20260608:*:*:*:*:*:*:*",
           "referenceType": "cpe23Type"
         },
         {
           "referenceCategory": "PACKAGE-MANAGER",
-          "referenceLocator": "pkg:apk/wolfi/ncurses-terminfo-base@6.6.20260607-r0?arch=x86_64\u0026origin=ncurses",
+          "referenceLocator": "pkg:apk/wolfi/ncurses-terminfo-base@6.6.20260608-r0?arch=x86_64\u0026origin=ncurses",
           "referenceType": "purl"
         }
       ]
@@ -724,7 +724,7 @@
     {
       "SPDXID": "SPDXRef-DocumentRoot-Directory-ncurses-terminfo-base",
       "name": "ncurses-terminfo-base",
-      "versionInfo": "6.6.20260607-r0",
+      "versionInfo": "6.6.20260608-r0",
       "filesAnalyzed": false,
       "licenseConcluded": "NOASSERTION",
       "licenseDeclared": "NOASSERTION",
@@ -735,9 +735,9 @@
       "primaryPackagePurpose": "FILE"
     },
     {
-      "SPDXID": "SPDXRef-Package-apk-ncurses-6.6.20260607-r0",
+      "SPDXID": "SPDXRef-Package-apk-ncurses-6.6.20260608-r0",
       "name": "ncurses",
-      "versionInfo": "6.6.20260607-r0",
+      "versionInfo": "6.6.20260608-r0",
       "filesAnalyzed": false,
       "licenseConcluded": "NOASSERTION",
       "licenseDeclared": "MIT",
@@ -749,15 +749,15 @@
       "externalRefs": [
         {
           "referenceCategory": "PACKAGE-MANAGER",
-          "referenceLocator": "pkg:apk/wolfi/ncurses@6.6.20260607-r0?arch=x86_64\u0026distro=wolfi",
+          "referenceLocator": "pkg:apk/wolfi/ncurses@6.6.20260608-r0?arch=x86_64\u0026distro=wolfi",
           "referenceType": "purl"
         }
       ]
     },
     {
-      "SPDXID": "SPDXRef-Package-apk-ncurses-700a5b75d8697ca7",
+      "SPDXID": "SPDXRef-Package-apk-ncurses-b0bff332418579e2",
       "name": "ncurses",
-      "versionInfo": "6.6.20260607-r0",
+      "versionInfo": "6.6.20260608-r0",
       "filesAnalyzed": false,
       "licenseConcluded": "NOASSERTION",
       "licenseDeclared": "MIT",
@@ -770,12 +770,12 @@
       "externalRefs": [
         {
           "referenceCategory": "SECURITY",
-          "referenceLocator": "cpe:2.3:a:gnu:ncurses:6.6.20260607:*:*:*:*:*:*:*",
+          "referenceLocator": "cpe:2.3:a:gnu:ncurses:6.6.20260608:*:*:*:*:*:*:*",
           "referenceType": "cpe23Type"
         },
         {
           "referenceCategory": "PACKAGE-MANAGER",
-          "referenceLocator": "pkg:apk/wolfi/ncurses@6.6.20260607-r0?arch=x86_64\u0026origin=ncurses",
+          "referenceLocator": "pkg:apk/wolfi/ncurses@6.6.20260608-r0?arch=x86_64\u0026origin=ncurses",
           "referenceType": "purl"
         }
       ]
@@ -783,7 +783,7 @@
     {
       "SPDXID": "SPDXRef-DocumentRoot-Directory-ncurses",
       "name": "ncurses",
-      "versionInfo": "6.6.20260607-r0",
+      "versionInfo": "6.6.20260608-r0",
       "filesAnalyzed": false,
       "licenseConcluded": "NOASSERTION",
       "licenseDeclared": "NOASSERTION",
@@ -1052,9 +1052,9 @@
       "primaryPackagePurpose": "FILE"
     },
     {
-      "SPDXID": "SPDXRef-Package-apk-busybox-1.37.0-r59",
+      "SPDXID": "SPDXRef-Package-apk-busybox-1.37.0-r60",
       "name": "busybox",
-      "versionInfo": "1.37.0-r59",
+      "versionInfo": "1.37.0-r60",
       "filesAnalyzed": false,
       "licenseConcluded": "NOASSERTION",
       "licenseDeclared": "GPL-2.0-only",
@@ -1066,15 +1066,15 @@
       "externalRefs": [
         {
           "referenceCategory": "PACKAGE-MANAGER",
-          "referenceLocator": "pkg:apk/wolfi/busybox@1.37.0-r59?arch=x86_64\u0026distro=wolfi",
+          "referenceLocator": "pkg:apk/wolfi/busybox@1.37.0-r60?arch=x86_64\u0026distro=wolfi",
           "referenceType": "purl"
         }
       ]
     },
     {
-      "SPDXID": "SPDXRef-Package-Melange-busybox.yaml-972c014a682e8c213a23b0fe33fb44bd32608047",
+      "SPDXID": "SPDXRef-Package-Melange-busybox.yaml-829acb7bdcec826a7f549762e5ed4193b0fe8bfa",
       "name": "busybox.yaml",
-      "versionInfo": "972c014a682e8c213a23b0fe33fb44bd32608047",
+      "versionInfo": "829acb7bdcec826a7f549762e5ed4193b0fe8bfa",
       "filesAnalyzed": false,
       "licenseConcluded": "NOASSERTION",
       "licenseDeclared": "Apache-2.0",
@@ -1085,34 +1085,34 @@
       "externalRefs": [
         {
           "referenceCategory": "PACKAGE-MANAGER",
-          "referenceLocator": "pkg:github/chainguard-dev/stereo@972c014a682e8c213a23b0fe33fb44bd32608047#busybox.yaml",
+          "referenceLocator": "pkg:github/chainguard-dev/stereo@829acb7bdcec826a7f549762e5ed4193b0fe8bfa#busybox.yaml",
           "referenceType": "purl"
         }
       ]
     },
     {
-      "SPDXID": "SPDXRef-Package-Source-git.busybox.net-busybox-1C9537C950-be7d1b7b1701d225379bc1665487ed0871b592a5-0",
-      "name": "busybox",
+      "SPDXID": "SPDXRef-Package-Source-github.com-vda-linux-busyboxC95mirror-1C9537C950-be7d1b7b1701d225379bc1665487ed0871b592a5-0",
+      "name": "busybox_mirror",
       "versionInfo": "1_37_0",
       "filesAnalyzed": false,
       "licenseConcluded": "NOASSERTION",
       "licenseDeclared": "GPL-2.0-only",
-      "downloadLocation": "https://tarballs.cgr.dev/b/9d75f0d7c398df565d7ac04c6819b62d6d8f9560f5eb4672596ecd8f7e96ae91-be7d1b7b1701d225379bc1665487ed0871b592a5.tar.gz",
-      "originator": "Organization: Wolfi",
-      "supplier": "Organization: Wolfi",
+      "downloadLocation": "https://github.com/vda-linux/busybox_mirror/archive/be7d1b7b1701d225379bc1665487ed0871b592a5.tar.gz",
+      "originator": "Organization: Vda-Linux",
+      "supplier": "Organization: Vda-Linux",
       "primaryPackagePurpose": "SOURCE",
       "externalRefs": [
         {
           "referenceCategory": "PACKAGE-MANAGER",
-          "referenceLocator": "pkg:generic/busybox@1_37_0?vcs_url=git%2Bhttps:%2F%2Fgit.busybox.net%2Fbusybox%40be7d1b7b1701d225379bc1665487ed0871b592a5",
+          "referenceLocator": "pkg:github/vda-linux/busybox_mirror@1_37_0",
           "referenceType": "purl"
         }
       ]
     },
     {
-      "SPDXID": "SPDXRef-Package-apk-busybox-5f4043c5d6e5e23c",
+      "SPDXID": "SPDXRef-Package-apk-busybox-cbbc099375b3ad2a",
       "name": "busybox",
-      "versionInfo": "1.37.0-r59",
+      "versionInfo": "1.37.0-r60",
       "filesAnalyzed": false,
       "licenseConcluded": "NOASSERTION",
       "licenseDeclared": "GPL-2.0-only",
@@ -1125,7 +1125,7 @@
       "externalRefs": [
         {
           "referenceCategory": "PACKAGE-MANAGER",
-          "referenceLocator": "pkg:apk/wolfi/busybox@1.37.0-r59?arch=x86_64\u0026origin=busybox",
+          "referenceLocator": "pkg:apk/wolfi/busybox@1.37.0-r60?arch=x86_64\u0026origin=busybox",
           "referenceType": "purl"
         }
       ]
@@ -1133,7 +1133,7 @@
     {
       "SPDXID": "SPDXRef-DocumentRoot-Directory-busybox",
       "name": "busybox",
-      "versionInfo": "1.37.0-r59",
+      "versionInfo": "1.37.0-r60",
       "filesAnalyzed": false,
       "licenseConcluded": "NOASSERTION",
       "licenseDeclared": "NOASSERTION",
@@ -1348,9 +1348,9 @@
       ]
     },
     {
-      "SPDXID": "SPDXRef-Package-Melange-healthcheck-sql.yaml-55957a619b8c63ff4910a474c520befaea36ce51",
+      "SPDXID": "SPDXRef-Package-Melange-healthcheck-sql.yaml-42c70583072a49172fdd094ffbb31208b0be0377",
       "name": "healthcheck-sql.yaml",
-      "versionInfo": "55957a619b8c63ff4910a474c520befaea36ce51",
+      "versionInfo": "42c70583072a49172fdd094ffbb31208b0be0377",
       "filesAnalyzed": false,
       "licenseConcluded": "NOASSERTION",
       "licenseDeclared": "NOASSERTION",
@@ -1361,7 +1361,7 @@
       "externalRefs": [
         {
           "referenceCategory": "PACKAGE-MANAGER",
-          "referenceLocator": "pkg:github/https:/%2Funknown%2Funknown%2Funknown@55957a619b8c63ff4910a474c520befaea36ce51#healthcheck-sql.yaml",
+          "referenceLocator": "pkg:github/https:/%2Funknown%2Funknown%2Funknown@42c70583072a49172fdd094ffbb31208b0be0377#healthcheck-sql.yaml",
           "referenceType": "purl"
         }
       ]
@@ -1598,9 +1598,9 @@
       "primaryPackagePurpose": "FILE"
     },
     {
-      "SPDXID": "SPDXRef-Package-apk-libcrypto3-3.6.2-r5",
+      "SPDXID": "SPDXRef-Package-apk-libcrypto3-3.6.3-r0",
       "name": "libcrypto3",
-      "versionInfo": "3.6.2-r5",
+      "versionInfo": "3.6.3-r0",
       "filesAnalyzed": false,
       "licenseConcluded": "NOASSERTION",
       "licenseDeclared": "Apache-2.0",
@@ -1612,15 +1612,15 @@
       "externalRefs": [
         {
           "referenceCategory": "PACKAGE-MANAGER",
-          "referenceLocator": "pkg:apk/wolfi/libcrypto3@3.6.2-r5?arch=x86_64\u0026distro=wolfi",
+          "referenceLocator": "pkg:apk/wolfi/libcrypto3@3.6.3-r0?arch=x86_64\u0026distro=wolfi",
           "referenceType": "purl"
         }
       ]
     },
     {
-      "SPDXID": "SPDXRef-Package-Melange-openssl.yaml-cf51e5d1c19fb10942a30b95d276324a4adbcf57",
+      "SPDXID": "SPDXRef-Package-Melange-openssl.yaml-e39b4a3254fb3bbd9505b2889584e6ffc4a2e65d",
       "name": "openssl.yaml",
-      "versionInfo": "cf51e5d1c19fb10942a30b95d276324a4adbcf57",
+      "versionInfo": "e39b4a3254fb3bbd9505b2889584e6ffc4a2e65d",
       "filesAnalyzed": false,
       "licenseConcluded": "NOASSERTION",
       "licenseDeclared": "Apache-2.0",
@@ -1631,34 +1631,34 @@
       "externalRefs": [
         {
           "referenceCategory": "PACKAGE-MANAGER",
-          "referenceLocator": "pkg:github/chainguard-dev/stereo@cf51e5d1c19fb10942a30b95d276324a4adbcf57#openssl.yaml",
+          "referenceLocator": "pkg:github/chainguard-dev/stereo@e39b4a3254fb3bbd9505b2889584e6ffc4a2e65d#openssl.yaml",
           "referenceType": "purl"
         }
       ]
     },
     {
-      "SPDXID": "SPDXRef-Package-Source-github.com-openssl-openssl-openssl-3.6.2-fe686e15d84334b284f883118ed92f64b409b3aa-0",
+      "SPDXID": "SPDXRef-Package-Source-github.com-openssl-openssl-openssl-3.6.3-aae016bfd52fcad2bc9657c2c782cfdf73b1ed5f-0",
       "name": "openssl",
-      "versionInfo": "openssl-3.6.2",
+      "versionInfo": "openssl-3.6.3",
       "filesAnalyzed": false,
       "licenseConcluded": "NOASSERTION",
       "licenseDeclared": "Apache-2.0",
-      "downloadLocation": "https://github.com/openssl/openssl/archive/fe686e15d84334b284f883118ed92f64b409b3aa.tar.gz",
+      "downloadLocation": "https://github.com/openssl/openssl/archive/aae016bfd52fcad2bc9657c2c782cfdf73b1ed5f.tar.gz",
       "originator": "Organization: Openssl",
       "supplier": "Organization: Openssl",
       "primaryPackagePurpose": "SOURCE",
       "externalRefs": [
         {
           "referenceCategory": "PACKAGE-MANAGER",
-          "referenceLocator": "pkg:github/openssl/openssl@openssl-3.6.2",
+          "referenceLocator": "pkg:github/openssl/openssl@openssl-3.6.3",
           "referenceType": "purl"
         }
       ]
     },
     {
-      "SPDXID": "SPDXRef-Package-apk-libcrypto3-301f020ad924a4fc",
+      "SPDXID": "SPDXRef-Package-apk-libcrypto3-a872017065764e3d",
       "name": "libcrypto3",
-      "versionInfo": "3.6.2-r5",
+      "versionInfo": "3.6.3-r0",
       "filesAnalyzed": false,
       "licenseConcluded": "NOASSERTION",
       "licenseDeclared": "Apache-2.0",
@@ -1670,28 +1670,8 @@
       "copyrightText": "NOASSERTION",
       "externalRefs": [
         {
-          "referenceCategory": "SECURITY",
-          "referenceLocator": "cpe:2.3:a:libcrypto3:libcrypto3:3.6.2-r5:*:*:*:*:*:*:*",
-          "referenceType": "cpe23Type"
-        },
-        {
-          "referenceCategory": "SECURITY",
-          "referenceLocator": "cpe:2.3:a:libcrypto3:libcrypto:3.6.2-r5:*:*:*:*:*:*:*",
-          "referenceType": "cpe23Type"
-        },
-        {
-          "referenceCategory": "SECURITY",
-          "referenceLocator": "cpe:2.3:a:libcrypto:libcrypto3:3.6.2-r5:*:*:*:*:*:*:*",
-          "referenceType": "cpe23Type"
-        },
-        {
-          "referenceCategory": "SECURITY",
-          "referenceLocator": "cpe:2.3:a:libcrypto:libcrypto:3.6.2-r5:*:*:*:*:*:*:*",
-          "referenceType": "cpe23Type"
-        },
-        {
           "referenceCategory": "PACKAGE-MANAGER",
-          "referenceLocator": "pkg:apk/wolfi/libcrypto3@3.6.2-r5?arch=x86_64\u0026origin=openssl",
+          "referenceLocator": "pkg:apk/wolfi/libcrypto3@3.6.3-r0?arch=x86_64\u0026origin=openssl",
           "referenceType": "purl"
         }
       ]
@@ -1699,7 +1679,7 @@
     {
       "SPDXID": "SPDXRef-DocumentRoot-Directory-libcrypto3",
       "name": "libcrypto3",
-      "versionInfo": "3.6.2-r5",
+      "versionInfo": "3.6.3-r0",
       "filesAnalyzed": false,
       "licenseConcluded": "NOASSERTION",
       "licenseDeclared": "NOASSERTION",
@@ -1975,9 +1955,9 @@
       "primaryPackagePurpose": "FILE"
     },
     {
-      "SPDXID": "SPDXRef-Package-apk-libssl3-3.6.2-r5",
+      "SPDXID": "SPDXRef-Package-apk-libssl3-3.6.3-r0",
       "name": "libssl3",
-      "versionInfo": "3.6.2-r5",
+      "versionInfo": "3.6.3-r0",
       "filesAnalyzed": false,
       "licenseConcluded": "NOASSERTION",
       "licenseDeclared": "Apache-2.0",
@@ -1989,15 +1969,15 @@
       "externalRefs": [
         {
           "referenceCategory": "PACKAGE-MANAGER",
-          "referenceLocator": "pkg:apk/wolfi/libssl3@3.6.2-r5?arch=x86_64\u0026distro=wolfi",
+          "referenceLocator": "pkg:apk/wolfi/libssl3@3.6.3-r0?arch=x86_64\u0026distro=wolfi",
           "referenceType": "purl"
         }
       ]
     },
     {
-      "SPDXID": "SPDXRef-Package-apk-libssl3-0cbbad07bbefee74",
+      "SPDXID": "SPDXRef-Package-apk-libssl3-8bd427ed1501fe8e",
       "name": "libssl3",
-      "versionInfo": "3.6.2-r5",
+      "versionInfo": "3.6.3-r0",
       "filesAnalyzed": false,
       "licenseConcluded": "NOASSERTION",
       "licenseDeclared": "Apache-2.0",
@@ -2009,28 +1989,8 @@
       "copyrightText": "NOASSERTION",
       "externalRefs": [
         {
-          "referenceCategory": "SECURITY",
-          "referenceLocator": "cpe:2.3:a:libssl3:libssl3:3.6.2-r5:*:*:*:*:*:*:*",
-          "referenceType": "cpe23Type"
-        },
-        {
-          "referenceCategory": "SECURITY",
-          "referenceLocator": "cpe:2.3:a:libssl3:libssl:3.6.2-r5:*:*:*:*:*:*:*",
-          "referenceType": "cpe23Type"
-        },
-        {
-          "referenceCategory": "SECURITY",
-          "referenceLocator": "cpe:2.3:a:libssl:libssl3:3.6.2-r5:*:*:*:*:*:*:*",
-          "referenceType": "cpe23Type"
-        },
-        {
-          "referenceCategory": "SECURITY",
-          "referenceLocator": "cpe:2.3:a:libssl:libssl:3.6.2-r5:*:*:*:*:*:*:*",
-          "referenceType": "cpe23Type"
-        },
-        {
           "referenceCategory": "PACKAGE-MANAGER",
-          "referenceLocator": "pkg:apk/wolfi/libssl3@3.6.2-r5?arch=x86_64\u0026origin=openssl",
+          "referenceLocator": "pkg:apk/wolfi/libssl3@3.6.3-r0?arch=x86_64\u0026origin=openssl",
           "referenceType": "purl"
         }
       ]
@@ -2038,7 +1998,7 @@
     {
       "SPDXID": "SPDXRef-DocumentRoot-Directory-libssl3",
       "name": "libssl3",
-      "versionInfo": "3.6.2-r5",
+      "versionInfo": "3.6.3-r0",
       "filesAnalyzed": false,
       "licenseConcluded": "NOASSERTION",
       "licenseDeclared": "NOASSERTION",
@@ -2316,9 +2276,9 @@
       ]
     },
     {
-      "SPDXID": "SPDXRef-Package-Melange-mariadb.yaml-5d204edcf8eee7c42daf31ddcc83a26b8e5d5270",
+      "SPDXID": "SPDXRef-Package-Melange-mariadb.yaml-unknown",
       "name": "mariadb.yaml",
-      "versionInfo": "5d204edcf8eee7c42daf31ddcc83a26b8e5d5270",
+      "versionInfo": "unknown",
       "filesAnalyzed": false,
       "licenseConcluded": "NOASSERTION",
       "licenseDeclared": "NOASSERTION",
@@ -2329,7 +2289,7 @@
       "externalRefs": [
         {
           "referenceCategory": "PACKAGE-MANAGER",
-          "referenceLocator": "pkg:github/https:/%2Funknown%2Funknown%2Funknown@5d204edcf8eee7c42daf31ddcc83a26b8e5d5270#mariadb.yaml",
+          "referenceLocator": "pkg:github/https:/%2Funknown%2Funknown%2Funknown@unknown#mariadb.yaml",
           "referenceType": "purl"
         }
       ]
@@ -2799,9 +2759,9 @@
   ],
   "relationships": [
     {
-      "spdxElementId": "SPDXRef-Package-Image-sha256-dd3bd20fb58a226791c275870c39c61e7b63cd05b2ad8664426290b01eca0907",
+      "spdxElementId": "SPDXRef-Package-Image-sha256-077a56a40c584f29a743256627b939e7345cefdc325383b9a734d11e439410db",
       "relationshipType": "CONTAINS",
-      "relatedSpdxElement": "SPDXRef-Package-ImageLayer-sha256-65e22c781873ec2855f0dbc45bc13995a09bf29419f021774b6da8cba36bcd18"
+      "relatedSpdxElement": "SPDXRef-Package-ImageLayer-sha256-b431c85fa17e263f60d5f1a357a12d43f29c68fd34932a257344b7c672f6ca50"
     },
     {
       "spdxElementId": "SPDXRef-Package-apk-wolfi-baselayout-20230201-r29",
@@ -2819,7 +2779,7 @@
       "relatedSpdxElement": "SPDXRef-DocumentRoot-Directory-wolfi-baselayout"
     },
     {
-      "spdxElementId": "SPDXRef-Package-Image-sha256-dd3bd20fb58a226791c275870c39c61e7b63cd05b2ad8664426290b01eca0907",
+      "spdxElementId": "SPDXRef-Package-Image-sha256-077a56a40c584f29a743256627b939e7345cefdc325383b9a734d11e439410db",
       "relationshipType": "CONTAINS",
       "relatedSpdxElement": "SPDXRef-Package-apk-wolfi-baselayout-20230201-r29"
     },
@@ -2844,7 +2804,7 @@
       "relatedSpdxElement": "SPDXRef-DocumentRoot-Directory-ca-certificates-bundle"
     },
     {
-      "spdxElementId": "SPDXRef-Package-Image-sha256-dd3bd20fb58a226791c275870c39c61e7b63cd05b2ad8664426290b01eca0907",
+      "spdxElementId": "SPDXRef-Package-Image-sha256-077a56a40c584f29a743256627b939e7345cefdc325383b9a734d11e439410db",
       "relationshipType": "CONTAINS",
       "relatedSpdxElement": "SPDXRef-Package-apk-ca-certificates-bundle-20260413-r0"
     },
@@ -2869,7 +2829,7 @@
       "relatedSpdxElement": "SPDXRef-DocumentRoot-Directory-glibc-locale-posix"
     },
     {
-      "spdxElementId": "SPDXRef-Package-Image-sha256-dd3bd20fb58a226791c275870c39c61e7b63cd05b2ad8664426290b01eca0907",
+      "spdxElementId": "SPDXRef-Package-Image-sha256-077a56a40c584f29a743256627b939e7345cefdc325383b9a734d11e439410db",
       "relationshipType": "CONTAINS",
       "relatedSpdxElement": "SPDXRef-Package-apk-glibc-locale-posix-2.43-r8"
     },
@@ -2894,7 +2854,7 @@
       "relatedSpdxElement": "SPDXRef-DocumentRoot-Directory-libgcc"
     },
     {
-      "spdxElementId": "SPDXRef-Package-Image-sha256-dd3bd20fb58a226791c275870c39c61e7b63cd05b2ad8664426290b01eca0907",
+      "spdxElementId": "SPDXRef-Package-Image-sha256-077a56a40c584f29a743256627b939e7345cefdc325383b9a734d11e439410db",
       "relationshipType": "CONTAINS",
       "relatedSpdxElement": "SPDXRef-Package-apk-libgcc-16.1.0-r2"
     },
@@ -2919,7 +2879,7 @@
       "relatedSpdxElement": "SPDXRef-DocumentRoot-Directory-glibc"
     },
     {
-      "spdxElementId": "SPDXRef-Package-Image-sha256-dd3bd20fb58a226791c275870c39c61e7b63cd05b2ad8664426290b01eca0907",
+      "spdxElementId": "SPDXRef-Package-Image-sha256-077a56a40c584f29a743256627b939e7345cefdc325383b9a734d11e439410db",
       "relationshipType": "CONTAINS",
       "relatedSpdxElement": "SPDXRef-Package-apk-glibc-2.43-r8"
     },
@@ -2944,59 +2904,59 @@
       "relatedSpdxElement": "SPDXRef-DocumentRoot-Directory-ld-linux"
     },
     {
-      "spdxElementId": "SPDXRef-Package-Image-sha256-dd3bd20fb58a226791c275870c39c61e7b63cd05b2ad8664426290b01eca0907",
+      "spdxElementId": "SPDXRef-Package-Image-sha256-077a56a40c584f29a743256627b939e7345cefdc325383b9a734d11e439410db",
       "relationshipType": "CONTAINS",
       "relatedSpdxElement": "SPDXRef-Package-apk-ld-linux-2.43-r8"
     },
     {
-      "spdxElementId": "SPDXRef-Package-apk-ncurses-terminfo-base-6.6.20260607-r0",
+      "spdxElementId": "SPDXRef-Package-apk-ncurses-terminfo-base-6.6.20260608-r0",
       "relationshipType": "DESCRIBED_BY",
-      "relatedSpdxElement": "SPDXRef-Package-Melange-ncurses.yaml-d8d96dc17ea8c15e6f4f6c4706c0fa078e2c7f76"
+      "relatedSpdxElement": "SPDXRef-Package-Melange-ncurses.yaml-62585c485b72698f3ac72920080fce0c9ff23b4b"
     },
     {
-      "spdxElementId": "SPDXRef-Package-apk-ncurses-terminfo-base-6.6.20260607-r0",
+      "spdxElementId": "SPDXRef-Package-apk-ncurses-terminfo-base-6.6.20260608-r0",
       "relationshipType": "GENERATED_FROM",
-      "relatedSpdxElement": "SPDXRef-Package-Source-github.com-ThomasDickey-ncurses-snapshots-v6C956C9520260607-5f40de384e639495fe8353a13e377e5288b9dfbf-0"
+      "relatedSpdxElement": "SPDXRef-Package-Source-github.com-ThomasDickey-ncurses-snapshots-v6C956C9520260608-ade9fab7697c2a108109af26cbf3ac3e5ce854e8-0"
     },
     {
       "spdxElementId": "SPDXRef-DocumentRoot-Directory-ncurses-terminfo-base",
       "relationshipType": "CONTAINS",
-      "relatedSpdxElement": "SPDXRef-Package-apk-ncurses-terminfo-base-432b802cdc50acd4"
+      "relatedSpdxElement": "SPDXRef-Package-apk-ncurses-terminfo-base-6dfefab885571a88"
     },
     {
-      "spdxElementId": "SPDXRef-Package-apk-ncurses-terminfo-base-6.6.20260607-r0",
+      "spdxElementId": "SPDXRef-Package-apk-ncurses-terminfo-base-6.6.20260608-r0",
       "relationshipType": "CONTAINS",
       "relatedSpdxElement": "SPDXRef-DocumentRoot-Directory-ncurses-terminfo-base"
     },
     {
-      "spdxElementId": "SPDXRef-Package-Image-sha256-dd3bd20fb58a226791c275870c39c61e7b63cd05b2ad8664426290b01eca0907",
+      "spdxElementId": "SPDXRef-Package-Image-sha256-077a56a40c584f29a743256627b939e7345cefdc325383b9a734d11e439410db",
       "relationshipType": "CONTAINS",
-      "relatedSpdxElement": "SPDXRef-Package-apk-ncurses-terminfo-base-6.6.20260607-r0"
+      "relatedSpdxElement": "SPDXRef-Package-apk-ncurses-terminfo-base-6.6.20260608-r0"
     },
     {
-      "spdxElementId": "SPDXRef-Package-apk-ncurses-6.6.20260607-r0",
+      "spdxElementId": "SPDXRef-Package-apk-ncurses-6.6.20260608-r0",
       "relationshipType": "DESCRIBED_BY",
-      "relatedSpdxElement": "SPDXRef-Package-Melange-ncurses.yaml-d8d96dc17ea8c15e6f4f6c4706c0fa078e2c7f76"
+      "relatedSpdxElement": "SPDXRef-Package-Melange-ncurses.yaml-62585c485b72698f3ac72920080fce0c9ff23b4b"
     },
     {
-      "spdxElementId": "SPDXRef-Package-apk-ncurses-6.6.20260607-r0",
+      "spdxElementId": "SPDXRef-Package-apk-ncurses-6.6.20260608-r0",
       "relationshipType": "GENERATED_FROM",
-      "relatedSpdxElement": "SPDXRef-Package-Source-github.com-ThomasDickey-ncurses-snapshots-v6C956C9520260607-5f40de384e639495fe8353a13e377e5288b9dfbf-0"
+      "relatedSpdxElement": "SPDXRef-Package-Source-github.com-ThomasDickey-ncurses-snapshots-v6C956C9520260608-ade9fab7697c2a108109af26cbf3ac3e5ce854e8-0"
     },
     {
       "spdxElementId": "SPDXRef-DocumentRoot-Directory-ncurses",
       "relationshipType": "CONTAINS",
-      "relatedSpdxElement": "SPDXRef-Package-apk-ncurses-700a5b75d8697ca7"
+      "relatedSpdxElement": "SPDXRef-Package-apk-ncurses-b0bff332418579e2"
     },
     {
-      "spdxElementId": "SPDXRef-Package-apk-ncurses-6.6.20260607-r0",
+      "spdxElementId": "SPDXRef-Package-apk-ncurses-6.6.20260608-r0",
       "relationshipType": "CONTAINS",
       "relatedSpdxElement": "SPDXRef-DocumentRoot-Directory-ncurses"
     },
     {
-      "spdxElementId": "SPDXRef-Package-Image-sha256-dd3bd20fb58a226791c275870c39c61e7b63cd05b2ad8664426290b01eca0907",
+      "spdxElementId": "SPDXRef-Package-Image-sha256-077a56a40c584f29a743256627b939e7345cefdc325383b9a734d11e439410db",
       "relationshipType": "CONTAINS",
-      "relatedSpdxElement": "SPDXRef-Package-apk-ncurses-6.6.20260607-r0"
+      "relatedSpdxElement": "SPDXRef-Package-apk-ncurses-6.6.20260608-r0"
     },
     {
       "spdxElementId": "SPDXRef-Package-apk-bash-5.3-r12",
@@ -3014,12 +2974,12 @@
       "relatedSpdxElement": "SPDXRef-Package-apk-bash-59086cc4557d029d"
     },
     {
-      "spdxElementId": "SPDXRef-Package-Image-sha256-dd3bd20fb58a226791c275870c39c61e7b63cd05b2ad8664426290b01eca0907",
+      "spdxElementId": "SPDXRef-Package-Image-sha256-077a56a40c584f29a743256627b939e7345cefdc325383b9a734d11e439410db",
       "relationshipType": "CONTAINS",
       "relatedSpdxElement": "SPDXRef-DocumentRoot-Directory-bash"
     },
     {
-      "spdxElementId": "SPDXRef-Package-Image-sha256-dd3bd20fb58a226791c275870c39c61e7b63cd05b2ad8664426290b01eca0907",
+      "spdxElementId": "SPDXRef-Package-Image-sha256-077a56a40c584f29a743256627b939e7345cefdc325383b9a734d11e439410db",
       "relationshipType": "CONTAINS",
       "relatedSpdxElement": "SPDXRef-Package-apk-bash-5.3-r12"
     },
@@ -3044,7 +3004,7 @@
       "relatedSpdxElement": "SPDXRef-DocumentRoot-Directory-libxcrypt"
     },
     {
-      "spdxElementId": "SPDXRef-Package-Image-sha256-dd3bd20fb58a226791c275870c39c61e7b63cd05b2ad8664426290b01eca0907",
+      "spdxElementId": "SPDXRef-Package-Image-sha256-077a56a40c584f29a743256627b939e7345cefdc325383b9a734d11e439410db",
       "relationshipType": "CONTAINS",
       "relatedSpdxElement": "SPDXRef-Package-apk-libxcrypt-4.5.2-r3"
     },
@@ -3069,34 +3029,34 @@
       "relatedSpdxElement": "SPDXRef-DocumentRoot-Directory-libcrypt1"
     },
     {
-      "spdxElementId": "SPDXRef-Package-Image-sha256-dd3bd20fb58a226791c275870c39c61e7b63cd05b2ad8664426290b01eca0907",
+      "spdxElementId": "SPDXRef-Package-Image-sha256-077a56a40c584f29a743256627b939e7345cefdc325383b9a734d11e439410db",
       "relationshipType": "CONTAINS",
       "relatedSpdxElement": "SPDXRef-Package-apk-libcrypt1-2.43-r8"
     },
     {
-      "spdxElementId": "SPDXRef-Package-apk-busybox-1.37.0-r59",
+      "spdxElementId": "SPDXRef-Package-apk-busybox-1.37.0-r60",
       "relationshipType": "DESCRIBED_BY",
-      "relatedSpdxElement": "SPDXRef-Package-Melange-busybox.yaml-972c014a682e8c213a23b0fe33fb44bd32608047"
+      "relatedSpdxElement": "SPDXRef-Package-Melange-busybox.yaml-829acb7bdcec826a7f549762e5ed4193b0fe8bfa"
     },
     {
-      "spdxElementId": "SPDXRef-Package-apk-busybox-1.37.0-r59",
+      "spdxElementId": "SPDXRef-Package-apk-busybox-1.37.0-r60",
       "relationshipType": "GENERATED_FROM",
-      "relatedSpdxElement": "SPDXRef-Package-Source-git.busybox.net-busybox-1C9537C950-be7d1b7b1701d225379bc1665487ed0871b592a5-0"
+      "relatedSpdxElement": "SPDXRef-Package-Source-github.com-vda-linux-busyboxC95mirror-1C9537C950-be7d1b7b1701d225379bc1665487ed0871b592a5-0"
     },
     {
       "spdxElementId": "SPDXRef-DocumentRoot-Directory-busybox",
       "relationshipType": "CONTAINS",
-      "relatedSpdxElement": "SPDXRef-Package-apk-busybox-5f4043c5d6e5e23c"
+      "relatedSpdxElement": "SPDXRef-Package-apk-busybox-cbbc099375b3ad2a"
     },
     {
-      "spdxElementId": "SPDXRef-Package-apk-busybox-1.37.0-r59",
+      "spdxElementId": "SPDXRef-Package-apk-busybox-1.37.0-r60",
       "relationshipType": "CONTAINS",
       "relatedSpdxElement": "SPDXRef-DocumentRoot-Directory-busybox"
     },
     {
-      "spdxElementId": "SPDXRef-Package-Image-sha256-dd3bd20fb58a226791c275870c39c61e7b63cd05b2ad8664426290b01eca0907",
+      "spdxElementId": "SPDXRef-Package-Image-sha256-077a56a40c584f29a743256627b939e7345cefdc325383b9a734d11e439410db",
       "relationshipType": "CONTAINS",
-      "relatedSpdxElement": "SPDXRef-Package-apk-busybox-1.37.0-r59"
+      "relatedSpdxElement": "SPDXRef-Package-apk-busybox-1.37.0-r60"
     },
     {
       "spdxElementId": "SPDXRef-Package-apk-gosu-1.19-r11",
@@ -3159,17 +3119,17 @@
       "relatedSpdxElement": "SPDXRef-DocumentRoot-Directory-gosu"
     },
     {
-      "spdxElementId": "SPDXRef-Package-Image-sha256-dd3bd20fb58a226791c275870c39c61e7b63cd05b2ad8664426290b01eca0907",
+      "spdxElementId": "SPDXRef-Package-Image-sha256-077a56a40c584f29a743256627b939e7345cefdc325383b9a734d11e439410db",
       "relationshipType": "CONTAINS",
       "relatedSpdxElement": "SPDXRef-Package-apk-gosu-1.19-r11"
     },
     {
       "spdxElementId": "SPDXRef-Package-apk-healthcheck-sql-1.0.0-r0",
       "relationshipType": "DESCRIBED_BY",
-      "relatedSpdxElement": "SPDXRef-Package-Melange-healthcheck-sql.yaml-55957a619b8c63ff4910a474c520befaea36ce51"
+      "relatedSpdxElement": "SPDXRef-Package-Melange-healthcheck-sql.yaml-42c70583072a49172fdd094ffbb31208b0be0377"
     },
     {
-      "spdxElementId": "SPDXRef-Package-Image-sha256-dd3bd20fb58a226791c275870c39c61e7b63cd05b2ad8664426290b01eca0907",
+      "spdxElementId": "SPDXRef-Package-Image-sha256-077a56a40c584f29a743256627b939e7345cefdc325383b9a734d11e439410db",
       "relationshipType": "CONTAINS",
       "relatedSpdxElement": "SPDXRef-Package-apk-healthcheck-sql-1.0.0-r0"
     },
@@ -3189,12 +3149,12 @@
       "relatedSpdxElement": "SPDXRef-Package-apk-libaio-c1cf71af3eeabb46"
     },
     {
-      "spdxElementId": "SPDXRef-Package-Image-sha256-dd3bd20fb58a226791c275870c39c61e7b63cd05b2ad8664426290b01eca0907",
+      "spdxElementId": "SPDXRef-Package-Image-sha256-077a56a40c584f29a743256627b939e7345cefdc325383b9a734d11e439410db",
       "relationshipType": "CONTAINS",
       "relatedSpdxElement": "SPDXRef-Package-libaio-0.3.113-r7"
     },
     {
-      "spdxElementId": "SPDXRef-Package-Image-sha256-dd3bd20fb58a226791c275870c39c61e7b63cd05b2ad8664426290b01eca0907",
+      "spdxElementId": "SPDXRef-Package-Image-sha256-077a56a40c584f29a743256627b939e7345cefdc325383b9a734d11e439410db",
       "relationshipType": "CONTAINS",
       "relatedSpdxElement": "SPDXRef-DocumentRoot-Directory-libaio"
     },
@@ -3214,39 +3174,39 @@
       "relatedSpdxElement": "SPDXRef-Package-apk-libbz2-1-94348eebb73c4733"
     },
     {
-      "spdxElementId": "SPDXRef-Package-Image-sha256-dd3bd20fb58a226791c275870c39c61e7b63cd05b2ad8664426290b01eca0907",
+      "spdxElementId": "SPDXRef-Package-Image-sha256-077a56a40c584f29a743256627b939e7345cefdc325383b9a734d11e439410db",
       "relationshipType": "CONTAINS",
       "relatedSpdxElement": "SPDXRef-Package-apk-libbz2-1-1.0.8-r23"
     },
     {
-      "spdxElementId": "SPDXRef-Package-Image-sha256-dd3bd20fb58a226791c275870c39c61e7b63cd05b2ad8664426290b01eca0907",
+      "spdxElementId": "SPDXRef-Package-Image-sha256-077a56a40c584f29a743256627b939e7345cefdc325383b9a734d11e439410db",
       "relationshipType": "CONTAINS",
       "relatedSpdxElement": "SPDXRef-DocumentRoot-Directory-libbz2-1"
     },
     {
-      "spdxElementId": "SPDXRef-Package-apk-libcrypto3-3.6.2-r5",
+      "spdxElementId": "SPDXRef-Package-apk-libcrypto3-3.6.3-r0",
       "relationshipType": "DESCRIBED_BY",
-      "relatedSpdxElement": "SPDXRef-Package-Melange-openssl.yaml-cf51e5d1c19fb10942a30b95d276324a4adbcf57"
+      "relatedSpdxElement": "SPDXRef-Package-Melange-openssl.yaml-e39b4a3254fb3bbd9505b2889584e6ffc4a2e65d"
     },
     {
-      "spdxElementId": "SPDXRef-Package-apk-libcrypto3-3.6.2-r5",
+      "spdxElementId": "SPDXRef-Package-apk-libcrypto3-3.6.3-r0",
       "relationshipType": "GENERATED_FROM",
-      "relatedSpdxElement": "SPDXRef-Package-Source-github.com-openssl-openssl-openssl-3.6.2-fe686e15d84334b284f883118ed92f64b409b3aa-0"
+      "relatedSpdxElement": "SPDXRef-Package-Source-github.com-openssl-openssl-openssl-3.6.3-aae016bfd52fcad2bc9657c2c782cfdf73b1ed5f-0"
     },
     {
       "spdxElementId": "SPDXRef-DocumentRoot-Directory-libcrypto3",
       "relationshipType": "CONTAINS",
-      "relatedSpdxElement": "SPDXRef-Package-apk-libcrypto3-301f020ad924a4fc"
+      "relatedSpdxElement": "SPDXRef-Package-apk-libcrypto3-a872017065764e3d"
     },
     {
-      "spdxElementId": "SPDXRef-Package-apk-libcrypto3-3.6.2-r5",
+      "spdxElementId": "SPDXRef-Package-apk-libcrypto3-3.6.3-r0",
       "relationshipType": "CONTAINS",
       "relatedSpdxElement": "SPDXRef-DocumentRoot-Directory-libcrypto3"
     },
     {
-      "spdxElementId": "SPDXRef-Package-Image-sha256-dd3bd20fb58a226791c275870c39c61e7b63cd05b2ad8664426290b01eca0907",
+      "spdxElementId": "SPDXRef-Package-Image-sha256-077a56a40c584f29a743256627b939e7345cefdc325383b9a734d11e439410db",
       "relationshipType": "CONTAINS",
-      "relatedSpdxElement": "SPDXRef-Package-apk-libcrypto3-3.6.2-r5"
+      "relatedSpdxElement": "SPDXRef-Package-apk-libcrypto3-3.6.3-r0"
     },
     {
       "spdxElementId": "SPDXRef-Package-libpcre2-8-0-10.47-r0",
@@ -3259,7 +3219,7 @@
       "relatedSpdxElement": "SPDXRef-Package-github.com-PCRE2Project-pcre2.git-pcre2-10.47-f454e231fe5006dd7ff8f4693fd2b8eb94333429-0"
     },
     {
-      "spdxElementId": "SPDXRef-Package-Image-sha256-dd3bd20fb58a226791c275870c39c61e7b63cd05b2ad8664426290b01eca0907",
+      "spdxElementId": "SPDXRef-Package-Image-sha256-077a56a40c584f29a743256627b939e7345cefdc325383b9a734d11e439410db",
       "relationshipType": "CONTAINS",
       "relatedSpdxElement": "SPDXRef-Package-libpcre2-8-0-10.47-r0"
     },
@@ -3274,7 +3234,7 @@
       "relatedSpdxElement": "SPDXRef-Package-github.com-PCRE2Project-pcre2.git-pcre2-10.47-f454e231fe5006dd7ff8f4693fd2b8eb94333429-0"
     },
     {
-      "spdxElementId": "SPDXRef-Package-Image-sha256-dd3bd20fb58a226791c275870c39c61e7b63cd05b2ad8664426290b01eca0907",
+      "spdxElementId": "SPDXRef-Package-Image-sha256-077a56a40c584f29a743256627b939e7345cefdc325383b9a734d11e439410db",
       "relationshipType": "CONTAINS",
       "relatedSpdxElement": "SPDXRef-Package-libpcre2-posix-3-10.47-r0"
     },
@@ -3294,12 +3254,12 @@
       "relatedSpdxElement": "SPDXRef-Package-apk-libsepol-4ec252ab24971a32"
     },
     {
-      "spdxElementId": "SPDXRef-Package-Image-sha256-dd3bd20fb58a226791c275870c39c61e7b63cd05b2ad8664426290b01eca0907",
+      "spdxElementId": "SPDXRef-Package-Image-sha256-077a56a40c584f29a743256627b939e7345cefdc325383b9a734d11e439410db",
       "relationshipType": "CONTAINS",
       "relatedSpdxElement": "SPDXRef-Package-apk-libsepol-3.10-r2"
     },
     {
-      "spdxElementId": "SPDXRef-Package-Image-sha256-dd3bd20fb58a226791c275870c39c61e7b63cd05b2ad8664426290b01eca0907",
+      "spdxElementId": "SPDXRef-Package-Image-sha256-077a56a40c584f29a743256627b939e7345cefdc325383b9a734d11e439410db",
       "relationshipType": "CONTAINS",
       "relatedSpdxElement": "SPDXRef-DocumentRoot-Directory-libsepol"
     },
@@ -3319,39 +3279,39 @@
       "relatedSpdxElement": "SPDXRef-Package-apk-libselinux-cc4683348d59b7ec"
     },
     {
-      "spdxElementId": "SPDXRef-Package-Image-sha256-dd3bd20fb58a226791c275870c39c61e7b63cd05b2ad8664426290b01eca0907",
+      "spdxElementId": "SPDXRef-Package-Image-sha256-077a56a40c584f29a743256627b939e7345cefdc325383b9a734d11e439410db",
       "relationshipType": "CONTAINS",
       "relatedSpdxElement": "SPDXRef-Package-libselinux-3.10-r0"
     },
     {
-      "spdxElementId": "SPDXRef-Package-Image-sha256-dd3bd20fb58a226791c275870c39c61e7b63cd05b2ad8664426290b01eca0907",
+      "spdxElementId": "SPDXRef-Package-Image-sha256-077a56a40c584f29a743256627b939e7345cefdc325383b9a734d11e439410db",
       "relationshipType": "CONTAINS",
       "relatedSpdxElement": "SPDXRef-DocumentRoot-Directory-libselinux"
     },
     {
-      "spdxElementId": "SPDXRef-Package-apk-libssl3-3.6.2-r5",
+      "spdxElementId": "SPDXRef-Package-apk-libssl3-3.6.3-r0",
       "relationshipType": "DESCRIBED_BY",
-      "relatedSpdxElement": "SPDXRef-Package-Melange-openssl.yaml-cf51e5d1c19fb10942a30b95d276324a4adbcf57"
+      "relatedSpdxElement": "SPDXRef-Package-Melange-openssl.yaml-e39b4a3254fb3bbd9505b2889584e6ffc4a2e65d"
     },
     {
-      "spdxElementId": "SPDXRef-Package-apk-libssl3-3.6.2-r5",
+      "spdxElementId": "SPDXRef-Package-apk-libssl3-3.6.3-r0",
       "relationshipType": "GENERATED_FROM",
-      "relatedSpdxElement": "SPDXRef-Package-Source-github.com-openssl-openssl-openssl-3.6.2-fe686e15d84334b284f883118ed92f64b409b3aa-0"
+      "relatedSpdxElement": "SPDXRef-Package-Source-github.com-openssl-openssl-openssl-3.6.3-aae016bfd52fcad2bc9657c2c782cfdf73b1ed5f-0"
     },
     {
       "spdxElementId": "SPDXRef-DocumentRoot-Directory-libssl3",
       "relationshipType": "CONTAINS",
-      "relatedSpdxElement": "SPDXRef-Package-apk-libssl3-0cbbad07bbefee74"
+      "relatedSpdxElement": "SPDXRef-Package-apk-libssl3-8bd427ed1501fe8e"
     },
     {
-      "spdxElementId": "SPDXRef-Package-apk-libssl3-3.6.2-r5",
+      "spdxElementId": "SPDXRef-Package-apk-libssl3-3.6.3-r0",
       "relationshipType": "CONTAINS",
       "relatedSpdxElement": "SPDXRef-DocumentRoot-Directory-libssl3"
     },
     {
-      "spdxElementId": "SPDXRef-Package-Image-sha256-dd3bd20fb58a226791c275870c39c61e7b63cd05b2ad8664426290b01eca0907",
+      "spdxElementId": "SPDXRef-Package-Image-sha256-077a56a40c584f29a743256627b939e7345cefdc325383b9a734d11e439410db",
       "relationshipType": "CONTAINS",
-      "relatedSpdxElement": "SPDXRef-Package-apk-libssl3-3.6.2-r5"
+      "relatedSpdxElement": "SPDXRef-Package-apk-libssl3-3.6.3-r0"
     },
     {
       "spdxElementId": "SPDXRef-Package-apk-libstdcC43C43-16.1.0-r2",
@@ -3374,7 +3334,7 @@
       "relatedSpdxElement": "SPDXRef-DocumentRoot-Directory-libstdc--"
     },
     {
-      "spdxElementId": "SPDXRef-Package-Image-sha256-dd3bd20fb58a226791c275870c39c61e7b63cd05b2ad8664426290b01eca0907",
+      "spdxElementId": "SPDXRef-Package-Image-sha256-077a56a40c584f29a743256627b939e7345cefdc325383b9a734d11e439410db",
       "relationshipType": "CONTAINS",
       "relatedSpdxElement": "SPDXRef-Package-apk-libstdcC43C43-16.1.0-r2"
     },
@@ -3399,7 +3359,7 @@
       "relatedSpdxElement": "SPDXRef-DocumentRoot-Directory-linux-pam"
     },
     {
-      "spdxElementId": "SPDXRef-Package-Image-sha256-dd3bd20fb58a226791c275870c39c61e7b63cd05b2ad8664426290b01eca0907",
+      "spdxElementId": "SPDXRef-Package-Image-sha256-077a56a40c584f29a743256627b939e7345cefdc325383b9a734d11e439410db",
       "relationshipType": "CONTAINS",
       "relatedSpdxElement": "SPDXRef-Package-apk-linux-pam-1.7.2-r4"
     },
@@ -3424,14 +3384,14 @@
       "relatedSpdxElement": "SPDXRef-DocumentRoot-Directory-zlib"
     },
     {
-      "spdxElementId": "SPDXRef-Package-Image-sha256-dd3bd20fb58a226791c275870c39c61e7b63cd05b2ad8664426290b01eca0907",
+      "spdxElementId": "SPDXRef-Package-Image-sha256-077a56a40c584f29a743256627b939e7345cefdc325383b9a734d11e439410db",
       "relationshipType": "CONTAINS",
       "relatedSpdxElement": "SPDXRef-Package-apk-zlib-1.3.2-r3"
     },
     {
       "spdxElementId": "SPDXRef-Package-apk-mariadb-12.2-client-12.2.2-r2",
       "relationshipType": "DESCRIBED_BY",
-      "relatedSpdxElement": "SPDXRef-Package-Melange-mariadb.yaml-5d204edcf8eee7c42daf31ddcc83a26b8e5d5270"
+      "relatedSpdxElement": "SPDXRef-Package-Melange-mariadb.yaml-unknown"
     },
     {
       "spdxElementId": "SPDXRef-Package-apk-mariadb-12.2-client-12.2.2-r2",
@@ -3439,7 +3399,7 @@
       "relatedSpdxElement": "SPDXRef-Package-Source-github.com-MariaDB-server.git-mariadb-12.2.2-d26a6f44c1f2119377e79a9540886c6d8c01472f-0"
     },
     {
-      "spdxElementId": "SPDXRef-Package-Image-sha256-dd3bd20fb58a226791c275870c39c61e7b63cd05b2ad8664426290b01eca0907",
+      "spdxElementId": "SPDXRef-Package-Image-sha256-077a56a40c584f29a743256627b939e7345cefdc325383b9a734d11e439410db",
       "relationshipType": "CONTAINS",
       "relatedSpdxElement": "SPDXRef-Package-apk-mariadb-12.2-client-12.2.2-r2"
     },
@@ -3464,14 +3424,14 @@
       "relatedSpdxElement": "SPDXRef-DocumentRoot-Directory-perl"
     },
     {
-      "spdxElementId": "SPDXRef-Package-Image-sha256-dd3bd20fb58a226791c275870c39c61e7b63cd05b2ad8664426290b01eca0907",
+      "spdxElementId": "SPDXRef-Package-Image-sha256-077a56a40c584f29a743256627b939e7345cefdc325383b9a734d11e439410db",
       "relationshipType": "CONTAINS",
       "relatedSpdxElement": "SPDXRef-Package-apk-perl-5.42.2-r3"
     },
     {
       "spdxElementId": "SPDXRef-Package-apk-mariadb-12.2-dump-12.2.2-r2",
       "relationshipType": "DESCRIBED_BY",
-      "relatedSpdxElement": "SPDXRef-Package-Melange-mariadb.yaml-5d204edcf8eee7c42daf31ddcc83a26b8e5d5270"
+      "relatedSpdxElement": "SPDXRef-Package-Melange-mariadb.yaml-unknown"
     },
     {
       "spdxElementId": "SPDXRef-Package-apk-mariadb-12.2-dump-12.2.2-r2",
@@ -3479,14 +3439,14 @@
       "relatedSpdxElement": "SPDXRef-Package-Source-github.com-MariaDB-server.git-mariadb-12.2.2-d26a6f44c1f2119377e79a9540886c6d8c01472f-0"
     },
     {
-      "spdxElementId": "SPDXRef-Package-Image-sha256-dd3bd20fb58a226791c275870c39c61e7b63cd05b2ad8664426290b01eca0907",
+      "spdxElementId": "SPDXRef-Package-Image-sha256-077a56a40c584f29a743256627b939e7345cefdc325383b9a734d11e439410db",
       "relationshipType": "CONTAINS",
       "relatedSpdxElement": "SPDXRef-Package-apk-mariadb-12.2-dump-12.2.2-r2"
     },
     {
       "spdxElementId": "SPDXRef-Package-apk-mariadb-12.2-oci-entrypoint-12.2.2-r2",
       "relationshipType": "DESCRIBED_BY",
-      "relatedSpdxElement": "SPDXRef-Package-Melange-mariadb.yaml-5d204edcf8eee7c42daf31ddcc83a26b8e5d5270"
+      "relatedSpdxElement": "SPDXRef-Package-Melange-mariadb.yaml-unknown"
     },
     {
       "spdxElementId": "SPDXRef-Package-apk-mariadb-12.2-oci-entrypoint-12.2.2-r2",
@@ -3494,7 +3454,7 @@
       "relatedSpdxElement": "SPDXRef-Package-Source-github.com-MariaDB-server.git-mariadb-12.2.2-d26a6f44c1f2119377e79a9540886c6d8c01472f-0"
     },
     {
-      "spdxElementId": "SPDXRef-Package-Image-sha256-dd3bd20fb58a226791c275870c39c61e7b63cd05b2ad8664426290b01eca0907",
+      "spdxElementId": "SPDXRef-Package-Image-sha256-077a56a40c584f29a743256627b939e7345cefdc325383b9a734d11e439410db",
       "relationshipType": "CONTAINS",
       "relatedSpdxElement": "SPDXRef-Package-apk-mariadb-12.2-oci-entrypoint-12.2.2-r2"
     },
@@ -3514,12 +3474,12 @@
       "relatedSpdxElement": "SPDXRef-Package-apk-pwgen-11a4930cbe8f8fd7"
     },
     {
-      "spdxElementId": "SPDXRef-Package-Image-sha256-dd3bd20fb58a226791c275870c39c61e7b63cd05b2ad8664426290b01eca0907",
+      "spdxElementId": "SPDXRef-Package-Image-sha256-077a56a40c584f29a743256627b939e7345cefdc325383b9a734d11e439410db",
       "relationshipType": "CONTAINS",
       "relatedSpdxElement": "SPDXRef-Package-apk-pwgen-2.08-r8"
     },
     {
-      "spdxElementId": "SPDXRef-Package-Image-sha256-dd3bd20fb58a226791c275870c39c61e7b63cd05b2ad8664426290b01eca0907",
+      "spdxElementId": "SPDXRef-Package-Image-sha256-077a56a40c584f29a743256627b939e7345cefdc325383b9a734d11e439410db",
       "relationshipType": "CONTAINS",
       "relatedSpdxElement": "SPDXRef-DocumentRoot-Directory-pwgen"
     },
@@ -3539,19 +3499,19 @@
       "relatedSpdxElement": "SPDXRef-Package-apk-xz-c3f1930c4136c8f8"
     },
     {
-      "spdxElementId": "SPDXRef-Package-Image-sha256-dd3bd20fb58a226791c275870c39c61e7b63cd05b2ad8664426290b01eca0907",
+      "spdxElementId": "SPDXRef-Package-Image-sha256-077a56a40c584f29a743256627b939e7345cefdc325383b9a734d11e439410db",
       "relationshipType": "CONTAINS",
       "relatedSpdxElement": "SPDXRef-Package-apk-xz-5.8.3-r1"
     },
     {
-      "spdxElementId": "SPDXRef-Package-Image-sha256-dd3bd20fb58a226791c275870c39c61e7b63cd05b2ad8664426290b01eca0907",
+      "spdxElementId": "SPDXRef-Package-Image-sha256-077a56a40c584f29a743256627b939e7345cefdc325383b9a734d11e439410db",
       "relationshipType": "CONTAINS",
       "relatedSpdxElement": "SPDXRef-DocumentRoot-Directory-xz"
     },
     {
       "spdxElementId": "SPDXRef-Package-apk-mariadb-12.2-12.2.2-r2",
       "relationshipType": "DESCRIBED_BY",
-      "relatedSpdxElement": "SPDXRef-Package-Melange-mariadb.yaml-5d204edcf8eee7c42daf31ddcc83a26b8e5d5270"
+      "relatedSpdxElement": "SPDXRef-Package-Melange-mariadb.yaml-unknown"
     },
     {
       "spdxElementId": "SPDXRef-Package-apk-mariadb-12.2-12.2.2-r2",
@@ -3559,7 +3519,7 @@
       "relatedSpdxElement": "SPDXRef-Package-Source-github.com-MariaDB-server.git-mariadb-12.2.2-d26a6f44c1f2119377e79a9540886c6d8c01472f-0"
     },
     {
-      "spdxElementId": "SPDXRef-Package-Image-sha256-dd3bd20fb58a226791c275870c39c61e7b63cd05b2ad8664426290b01eca0907",
+      "spdxElementId": "SPDXRef-Package-Image-sha256-077a56a40c584f29a743256627b939e7345cefdc325383b9a734d11e439410db",
       "relationshipType": "CONTAINS",
       "relatedSpdxElement": "SPDXRef-Package-apk-mariadb-12.2-12.2.2-r2"
     },
@@ -3584,7 +3544,7 @@
       "relatedSpdxElement": "SPDXRef-DocumentRoot-Directory-tzdata"
     },
     {
-      "spdxElementId": "SPDXRef-Package-Image-sha256-dd3bd20fb58a226791c275870c39c61e7b63cd05b2ad8664426290b01eca0907",
+      "spdxElementId": "SPDXRef-Package-Image-sha256-077a56a40c584f29a743256627b939e7345cefdc325383b9a734d11e439410db",
       "relationshipType": "CONTAINS",
       "relatedSpdxElement": "SPDXRef-Package-apk-tzdata-2026b-r0"
     }

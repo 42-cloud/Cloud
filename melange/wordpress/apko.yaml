@@ -1,11 +1,12 @@
 contents:
   keyring:
     - https://packages.wolfi.dev/os/wolfi-signing.rsa.pub
+    - https://Kazibuya.github.io/melange-forge/melange-ci.rsa.pub
     - ../melange.rsa.pub
   repositories:
     - https://packages.wolfi.dev/os
-    - ./packages
-    - ../healthcheck-fcgi/packages
+    - https://Kazibuya.github.io/melange-forge
+    - ../packages
   packages:
     - wolfi-baselayout
     - wordpress
@@ -14,6 +15,10 @@ contents:
     - php-fpm
     - php-8.5-mysqlnd
     - php-8.5-mysqli
+    - wp-cli
+    - mariadb-12.2-client
+    - php-8.5-gd
+    - php-8.5-exif
 
 entrypoint:
   command: /usr/local/bin/docker-entrypoint.sh php-fpm
@@ -25,7 +30,6 @@ accounts:
   groups:
     - groupname: nonroot
       gid: 65532
-  run-as: "65532"
 
 paths:
   - path: /var/www/html
@@ -34,6 +38,11 @@ paths:
     gid: 65532
     permissions: 0o755
   - path: /usr/src/wordpress
+    type: directory
+    uid: 65532
+    gid: 65532
+    permissions: 0o755
+  - path: /var/www/.wp-cli
     type: directory
     uid: 65532
     gid: 65532

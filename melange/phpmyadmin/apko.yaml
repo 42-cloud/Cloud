@@ -1,11 +1,12 @@
 contents:
   keyring:
     - https://packages.wolfi.dev/os/wolfi-signing.rsa.pub
+    - https://Kazibuya.github.io/melange-forge/melange-ci.rsa.pub
     - ../melange.rsa.pub
   repositories:
     - https://packages.wolfi.dev/os
-    - ./packages
-    - ../healthcheck-http/packages
+    - https://Kazibuya.github.io/melange-forge
+    - ../packages
   packages:
     - wolfi-baselayout
     - busybox

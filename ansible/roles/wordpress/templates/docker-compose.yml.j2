@@ -17,17 +17,21 @@ name: "{{ wordpress_project_name }}"
 services:
   mariadb:
     <<: *config
-    image: mariadb:11.8
+    image: namichel/mariadb:12.2.2-amd64
     container_name: {{ wordpress_db_container_name }}
     environment:
-      MYSQL_RANDOM_ROOT_PASSWORD: '1'
       MYSQL_DATABASE: "{{ wordpress_db_name }}"
       MYSQL_USER: "{{ wordpress_db_user }}"
-      MYSQL_PASSWORD: "{{ wordpress_db_password }}"
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/db_root_password
+      MYSQL_PASSWORD_FILE: /run/secrets/db_password
+    secrets:
+      - db_root_password
+      - db_password
     volumes:
       - db_data:{{ wordpress_db_dir_path_dest | string | replace('"', '') | replace("'", "") }}:rw
       - "{{ wordpress_db_conf_path_host }}:{{ wordpress_db_conf_path_dest }}:ro"
       - "{{ wordpress_db_sql_template_path_host }}:{{ wordpress_db_sql_template_path_dest }}:ro"
+    command: ["--defaults-file={{ wordpress_db_conf_path_dest }}"]
     deploy:
       resources:
         limits:
@@ -35,27 +39,30 @@ services:
         reservations:
           memory: "{{ wordpress_db_mem_res_limit }}"
     healthcheck:
-      test: ["CMD-SHELL", "mariadb-admin ping -u {{ wordpress_db_user | default('wp_user') }} -p'{{ wordpress_db_password }}'"]
+      test: ["CMD", "healthcheck-sql", "--host=localhost", "--user={{wordpress_db_user}}", "--secret=/run/secrets/db_password"]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 30s
     networks:
       - cloudone-back
 
   wordpress:
     <<: *config
-    build:
-        context: ./wordpress
-        dockerfile: Dockerfile
+    image: frape/wordpress:6.9.4-amd64
     container_name: {{ wordpress_wp_container_name }}
     environment:
       WORDPRESS_DB_HOST: mariadb
       WORDPRESS_DB_USER: "{{ wordpress_db_user }}"
-      WORDPRESS_DB_PASSWORD: "{{ wordpress_db_password }}"
       WORDPRESS_DB_NAME: "{{ wordpress_db_name }}"
+      WORDPRESS_DB_PASSWORD: "{{ wordpress_db_password }}"
+    secrets:
+      - source: db_password
+        target: db_password
     volumes:
-        - wordpress_data:/var/www/html:rw
-        - "{{ wordpress_compose_src }}/wordpress/mu-plugins:/var/www/html/wp-content/mu-plugins:ro"
+      - wordpress_data:{{ wordpress_wp_dir_path_dest }}:rw
+      - "{{ wordpress_compose_src }}/wordpress/mu-plugins:{{ wordpress_wp_dir_path_dest }}/wp-content/mu-plugins:ro"
+      - "{{ wordpress_compose_src }}/wordpress/assets:/tmp/wp-assets:ro"
     deploy:
       resources:
         limits:
@@ -66,21 +73,24 @@ services:
       mariadb:
         condition: service_healthy
     healthcheck:
+      test: ["CMD", "healthcheck-fcgi", "--addr=127.0.0.1:9000"]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 30s
     networks:
       - cloudone-front
       - cloudone-back
 
   angie:
     <<: *config
-    image: docker.angie.software/angie:1.11.5
+    image: namichel/angie:1.11.6-amd64
     container_name: {{ wordpress_angie_container_name }}
     ports:
       - "{{ wordpress_expose_http | default('80') | int }}:80"
       - "{{ wordpress_expose_https | default('443') | int }}:443"
     volumes:
+      - wordpress_data:{{ wordpress_angie_wp_root }}:rw
       - "{{ wordpress_angie_conf_path_host }}:{{ wordpress_angie_conf_path_dest }}:ro"
       - "{{ wordpress_cert_dir }}:/etc/angie/certs:ro"
     depends_on:
@@ -89,10 +99,11 @@ services:
       phpmyadmin:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "curl -q http://localhost/ || exit 1"]
+      test: ["CMD", "healthcheck-http", "--url=http://localhost:80/status/"]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -105,7 +116,7 @@ services:
 
   phpmyadmin:
     <<: *config
-    image: phpmyadmin:5.2-apache
+    image: namichel/phpmyadmin:5.2.2-amd64
     container_name: phpmyadmin
     environment:
       PMA_HOST: mariadb
@@ -119,7 +130,7 @@ services:
         reservations:
           memory: 64m
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost/ || exit 1"]
+      test: ["CMD", "healthcheck-http", "--url=http://localhost/"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -193,3 +204,9 @@ volumes:
   wordpress_data:
   prometheus_data:
   grafana_data:
+
+secrets:
+  db_password:
+    file: ./secrets/db_password
+  db_root_password:
+    file: ./secrets/db_root_password

@@ -131,16 +131,16 @@
           - "'Error establishing a database connection' not in __wordpress_page_content.stdout"
         fail_msg: "wordpress container cannot communicate with DB"
 
-    - name: Get Wordpress installation status
+    - name: Get Wordpress site url
       ansible.builtin.shell: |
-        docker exec --user www-data {{ wordpress_wp_container_name }} wp core is-installed
-      register: __wordpress_cli_installed
+        docker exec --user {{ wordpress_wp_uid }} --workdir {{ wordpress_wp_dir_path_dest }} {{ wordpress_wp_container_name }} wp option get siteurl
+      register: __wordpress_site_url
       failed_when: false
       changed_when: false
       delegate_to: localhost
 
-    - name: Check Wordpress installation status
+    - name: Check Wordpress url
       ansible.builtin.assert:
         that:
-          - __wordpress_cli_installed.rc == 0
-        fail_msg: "Wordpress core is not configured or installed!"
+          - __wordpress_site_url.rc == 0
+        fail_msg: "Wordpress has not accessible url"

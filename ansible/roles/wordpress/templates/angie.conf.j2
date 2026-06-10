@@ -11,15 +11,6 @@ http {
             root /usr/share/angie/html;
         }
 
-		location / {
-			status_zone wordpress;
-			proxy_pass http://wordpress:80;
-			proxy_set_header Host $host;
-			proxy_set_header X-Real-IP $remote_addr;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Proto $scheme;
-		}
-
 		location /phpmyadmin/ {
 			status_zone phpmyadmin;
 			proxy_pass http://phpmyadmin:80/;
@@ -34,14 +25,18 @@ http {
 		location /metrics/ {
 			prometheus all;
 		}
+
+        location / {
+            return 301 https://$host$request_uri;
+        }
 	}
 
     server {
         listen                      443 ssl default_server;
         listen                      [::]:443 ssl default_server;
-        # http2                       on;
         server_name                 {{ wordpress_cert_domain | default('localhost') }} localhost 127.0.0.1;
 
+        root                        {{ wordpress_angie_wp_root | default('/var/www/html') }};
         ssl_certificate             /etc/angie/certs/{{ wordpress_cert_domain | default('localhost') }}.crt;
         ssl_certificate_key         /etc/angie/certs/{{ wordpress_cert_domain | default('localhost') }}.key;
         ssl_protocols               TLSv1.2 TLSv1.3;
@@ -72,15 +67,20 @@ http {
         }
 
         location / {
-            status_zone             wordpress_https;
-            proxy_pass              http://wordpress:80;
-            proxy_read_timeout      300;
+            status_zone                 wordpress_https;
+            try_files                   $uri $uri/ /index.php?$args;
+            add_header X-Debug-Loc      "wp_catchall" always;
 
-            proxy_set_header            Host $host;
-            proxy_set_header            X-Real-IP $remote_addr;
-            proxy_set_header            X-Forwarded-For $proxy_add_x_forwarded_for;
-            proxy_set_header            X-Forwarded-Proto https;
-            proxy_set_header            X-Forwarded-Port $server_port;
+        }
+
+        location ~ \.php$ {
+            try_files               $uri =404;
+            include                 fastcgi_params;
+			fastcgi_index			index.php;
+            fastcgi_param           SCRIPT_FILENAME $document_root$fastcgi_script_name;
+            fastcgi_param           PATH_INFO $fastcgi_path_info;
+            fastcgi_pass            wordpress:9000;
+            fastcgi_param           HTTPS on;
         }
 
         location = /favicon.ico {

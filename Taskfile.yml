@@ -227,27 +227,26 @@ tasks:
       SERVICE: '{{.SERVICE}}'
     cmds:
       - rm -rf packages
-      - melange build {{.SERVICE}}.yaml --arch amd64 --signing-key ../melange.rsa --pipeline-dir ../pipelines
+      - >
+        docker run --rm 
+        -v {{.USER_WORKING_DIR}}/melange:/work 
+        -w /work/{{.SERVICE}} 
+        --privileged 
+        cgr.dev/chainguard/melange build {{.SERVICE}}.yaml 
+        --arch amd64 
+        --signing-key ../melange.rsa 
+        --pipeline-dir /work/pipelines
+        --out-dir /work/packages
 
   melange:angie:
     cmds:
       - task: melange
         vars: { SERVICE: angie }
 
-  melange:healthcheck-http:
+  melange:wp-cli:
     cmds:
       - task: melange
-        vars: { SERVICE: healthcheck-http }
-
-  melange:healthcheck-sql:
-    cmds:
-      - task: melange
-        vars: { SERVICE: healthcheck-sql }
-
-  melange:healthcheck-fcgi:
-    cmds:
-      - task: melange
-        vars: { SERVICE: healthcheck-fcgi }
+        vars: { SERVICE: wp-cli }
 
   melange:phpmyadmin:
     cmds:
@@ -273,10 +272,18 @@ tasks:
     internal: true
     dir: melange/{{.SERVICE}}
     vars:
+      SERVICE: '{{.SERVICE}}'
       TAG: '{{.TAG | default "latest"}}'
     cmds:
-      - apko build apko.yaml {{.DOCKER_USER}}/{{.SERVICE}}:{{.TAG}} {{.SERVICE}}.tar
-      - docker load < {{.SERVICE}}.tar
+      - >
+        docker run --rm 
+        -v {{.USER_WORKING_DIR}}/melange:/work 
+        -w /work/{{.SERVICE}} 
+        cgr.dev/chainguard/apko build apko.yaml 
+        {{.SERVICE}}:{{.TAG}} 
+        {{.SERVICE}}.tar 
+        --keyring-append ../melange.rsa.pub
+      - docker load < {{.USER_WORKING_DIR}}/melange/{{.SERVICE}}/{{.SERVICE}}.tar
 
   apko:angie:
     cmds:
@@ -309,6 +316,7 @@ tasks:
   push:
     internal: true
     cmds:
+      - docker tag {{.SERVICE}}:{{.TAG}}-amd64 {{.DOCKER_USER}}/{{.SERVICE}}:{{.TAG}}-amd64
       - docker push {{.DOCKER_USER}}/{{.SERVICE}}:{{.TAG}}-amd64
 
   push:angie:
