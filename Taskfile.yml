@@ -10,7 +10,7 @@ vars:
   NC: "\\033[0m"
   VOLUME: ""
   PROFILE: ""
-  DOCKER_USER: frape
+  DOCKER_USER: namichel
 
 tasks:
   default:
@@ -243,21 +243,6 @@ tasks:
       - task: melange
         vars: { SERVICE: angie }
 
-  melange:healthcheck-http:
-    cmds:
-      - task: melange
-        vars: { SERVICE: healthcheck-http }
-
-  melange:healthcheck-sql:
-    cmds:
-      - task: melange
-        vars: { SERVICE: healthcheck-sql }
-
-  melange:healthcheck-fcgi:
-    cmds:
-      - task: melange
-        vars: { SERVICE: healthcheck-fcgi }
-
   melange:wp-cli:
     cmds:
       - task: melange
@@ -298,6 +283,7 @@ tasks:
         {{.SERVICE}}:{{.TAG}} 
         {{.SERVICE}}.tar 
         --keyring-append ../melange.rsa.pub
+      - docker load < {{.USER_WORKING_DIR}}/melange/{{.SERVICE}}/{{.SERVICE}}.tar
 
   apko:angie:
     cmds:
