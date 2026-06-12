@@ -199,18 +199,23 @@ resource "aws_lb" "cloudone_alb" {
 
 resource "aws_lb_target_group" "cloudone_tg" {
     name                = "${var.project_name}-tg"
-    port                = 443
-    protocol            = "HTTPS"
+    port                = 80
+    protocol            = "HTTP"
     vpc_id              = aws_vpc.cloudone.id
 
     health_check {
-        path                = "/wp-login.php"
-        protocol            = "HTTPS"
-        matcher             = "200, 301, 302"
+        port                = "80"
+        protocol            = "HTTP"
+        matcher             = "200,301,302"
+        path                = "/status/"
         interval            = 15
         timeout             = 5
         healthy_threshold   = 2
         unhealthy_threshold = 3
+    }
+
+    lifecycle {
+      create_before_destroy = true
     }
 }
 
@@ -225,6 +230,10 @@ resource "aws_lb_listener" "https_frontend" {
     default_action {
         type                = "forward"
         target_group_arn    = aws_lb_target_group.cloudone_tg.arn
+    }
+
+    lifecycle {
+      create_before_destroy = true
     }
 
     depends_on = [aws_lb.cloudone_alb]

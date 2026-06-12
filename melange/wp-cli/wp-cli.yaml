@@ -8,10 +8,10 @@ package:
   dependencies:
     runtime:
       - php
-      - php-phar
-      - php-curl
-      - php-zip
-      - php-xml
+      - php-8.4-phar
+      - php-8.4-curl
+      - php-8.4-zip
+      - php-8.4-xml
       - php-mbstring
       - bash
 

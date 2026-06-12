@@ -84,7 +84,7 @@ resource "aws_lb_target_group_attachment" "cloudone_attachment" {
     for_each                = toset(var.instance_names)
     target_group_arn        = aws_lb_target_group.cloudone_tg.arn
     target_id               = aws_instance.cloudone[each.key].id
-    port                    = 443
+    port                    = 80
 }
 
 # ==========================================

@@ -10,7 +10,7 @@ vars:
   NC: "\\033[0m"
   VOLUME: ""
   PROFILE: ""
-  DOCKER_USER: namichel
+  DOCKER_USER: frape
 
 tasks:
   default:
@@ -235,7 +235,7 @@ tasks:
         cgr.dev/chainguard/melange build {{.SERVICE}}.yaml 
         --arch amd64 
         --signing-key ../melange.rsa 
-        --pipeline-dir /work/pipelines
+        --pipeline-dir /work/{{.SERVICE}}/pipelines
         --out-dir /work/packages
 
   melange:angie:
@@ -316,6 +316,7 @@ tasks:
   push:
     internal: true
     cmds:
+      - docker tag {{.SERVICE}}:latest-amd64 {{.SERVICE}}:{{.TAG}}-amd64
       - docker tag {{.SERVICE}}:{{.TAG}}-amd64 {{.DOCKER_USER}}/{{.SERVICE}}:{{.TAG}}-amd64
       - docker push {{.DOCKER_USER}}/{{.SERVICE}}:{{.TAG}}-amd64
 
