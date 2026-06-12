@@ -52,7 +52,12 @@ wordpress_wp_admin_email: "admin@cloud.one"
 wordpress_wp_mem_limit: "256m"
 wordpress_wp_mem_res_limit: "128m"
 wordpress_wp_container_name: "wordpress"
-wordpress_wp_cli_exec: "{{ wordpress_docker_cmd }} exec --user {{ wordpress_apko_uid | int }} --workdir {{ wordpress_wp_dir_path_dest }} {{ wordpress_wp_container_name }}"
+  # --workdir {{ wordpress_wp_dir_path_dest }}
+wordpress_wp_cli_exec: >-
+  {{ wordpress_docker_cmd | default('docker') }} exec
+  --user {{ wordpress_apko_uid | int }}
+  {{ wordpress_wp_container_name }}
+  wp --path={{ wordpress_wp_dir_path_dest }}
 wordpress_wp_site_title: "{{ inventory_hostname }}"
 
 # Angie

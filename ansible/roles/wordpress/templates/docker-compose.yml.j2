@@ -19,14 +19,16 @@ services:
     <<: *config
     image: namichel/mariadb:12.2.2-amd64
     container_name: {{ wordpress_db_container_name }}
+    cap_add:
+      - IPC_LOCK
     environment:
       MYSQL_DATABASE: "{{ wordpress_db_name }}"
       MYSQL_USER: "{{ wordpress_db_user }}"
       MYSQL_ROOT_PASSWORD_FILE: /run/secrets/db_root_password
       MYSQL_PASSWORD_FILE: /run/secrets/db_password
     secrets:
-      - db_root_password
       - db_password
+      - db_root_password
     volumes:
       - db_data:{{ wordpress_db_dir_path_dest | string | replace('"', '') | replace("'", "") }}:rw
       - "{{ wordpress_db_conf_path_host }}:{{ wordpress_db_conf_path_dest }}:ro"
@@ -39,7 +41,11 @@ services:
         reservations:
           memory: "{{ wordpress_db_mem_res_limit }}"
     healthcheck:
-      test: ["CMD", "healthcheck-sql", "--host=localhost", "--user={{wordpress_db_user}}", "--secret=/run/secrets/db_password"]
+      test:
+        - "CMD"
+        - "sh"
+        - "-c"
+        - "mariadb --host=localhost --user={{ wordpress_db_user }} --password=$(cat /run/secrets/db_password) -e 'SELECT 1;' 2>/dev/null"
       interval: 10s
       timeout: 5s
       retries: 5
@@ -55,14 +61,19 @@ services:
       WORDPRESS_DB_HOST: mariadb
       WORDPRESS_DB_USER: "{{ wordpress_db_user }}"
       WORDPRESS_DB_NAME: "{{ wordpress_db_name }}"
-      WORDPRESS_DB_PASSWORD: "{{ wordpress_db_password }}"
+      WORDPRESS_DB_PASSWORD_FILE: /run/secrets/db_password
+      WORDPRESS_HOME: https://youpi-cloud.duckdns.org
+      WORDPRESS_SITEURL: https://youpi-cloud.duckdns.org
     secrets:
       - source: db_password
         target: db_password
+      - source: wp_admin_password
+        target: wp_admin_password
     volumes:
       - wordpress_data:{{ wordpress_wp_dir_path_dest }}:rw
       - "{{ wordpress_compose_src }}/wordpress/mu-plugins:{{ wordpress_wp_dir_path_dest }}/wp-content/mu-plugins:ro"
       - "{{ wordpress_compose_src }}/wordpress/assets:/tmp/wp-assets:ro"
+      - "{{ wordpress_compose_src }}/wordpress/wp-config.php:/var/www/html/wp-config.php:rw"
     deploy:
       resources:
         limits:
@@ -138,7 +149,7 @@ services:
       - cloudone-front
       - cloudone-back
 
-  grafana:
+  {# grafana:
     <<: *config
     image: grafana/grafana:13.0.1
     container_name: grafana
@@ -188,7 +199,7 @@ services:
         reservations:
           memory: 256m
     networks:
-      - monitoring
+      - monitoring #}
 
 
 networks:
@@ -210,3 +221,5 @@ secrets:
     file: ./secrets/db_password
   db_root_password:
     file: ./secrets/db_root_password
+  wp_admin_password:
+    file: ./secrets/wp_admin_password
