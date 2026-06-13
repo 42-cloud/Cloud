@@ -1,10 +1,6 @@
 {
   "SPDXID": "SPDXRef-DOCUMENT",
-<<<<<<< HEAD
-  "name": "sbom-sha256:a01cdccacdf4e10b806f77cdfefa871b90a498da0fc1e53d30d2a637018a9199",
-=======
-  "name": "sbom-sha256:f95f5ac5b9b58fa076e60caa94a8f22a4e82584f7af63339bcd5611ccf2a6684",
->>>>>>> 2d0058c (chore(deps): upgrade to php 8.3 and update service configuration)
+  "name": "sbom-sha256:14e0a168748286eed8223c3a8343bda846031e5a0816d62144749c00968a4f5b",
   "spdxVersion": "SPDX-2.3",
   "creationInfo": {
     "created": "2026-06-11T15:24:09Z",
@@ -17,23 +13,13 @@
   "dataLicense": "CC0-1.0",
   "documentNamespace": "https://spdx.org/spdxdocs/apko/",
   "documentDescribes": [
-<<<<<<< HEAD
-    "SPDXRef-Package-sha256-a01cdccacdf4e10b806f77cdfefa871b90a498da0fc1e53d30d2a637018a9199"
+    "SPDXRef-Package-sha256-14e0a168748286eed8223c3a8343bda846031e5a0816d62144749c00968a4f5b"
   ],
   "packages": [
     {
-      "SPDXID": "SPDXRef-Package-sha256-a01cdccacdf4e10b806f77cdfefa871b90a498da0fc1e53d30d2a637018a9199",
-      "name": "sha256:a01cdccacdf4e10b806f77cdfefa871b90a498da0fc1e53d30d2a637018a9199",
-      "versionInfo": "sha256:a01cdccacdf4e10b806f77cdfefa871b90a498da0fc1e53d30d2a637018a9199",
-=======
-    "SPDXRef-Package-sha256-f95f5ac5b9b58fa076e60caa94a8f22a4e82584f7af63339bcd5611ccf2a6684"
-  ],
-  "packages": [
-    {
-      "SPDXID": "SPDXRef-Package-sha256-f95f5ac5b9b58fa076e60caa94a8f22a4e82584f7af63339bcd5611ccf2a6684",
-      "name": "sha256:f95f5ac5b9b58fa076e60caa94a8f22a4e82584f7af63339bcd5611ccf2a6684",
-      "versionInfo": "sha256:f95f5ac5b9b58fa076e60caa94a8f22a4e82584f7af63339bcd5611ccf2a6684",
->>>>>>> 2d0058c (chore(deps): upgrade to php 8.3 and update service configuration)
+      "SPDXID": "SPDXRef-Package-sha256-14e0a168748286eed8223c3a8343bda846031e5a0816d62144749c00968a4f5b",
+      "name": "sha256:14e0a168748286eed8223c3a8343bda846031e5a0816d62144749c00968a4f5b",
+      "versionInfo": "sha256:14e0a168748286eed8223c3a8343bda846031e5a0816d62144749c00968a4f5b",
       "filesAnalyzed": false,
       "description": "Multi-arch image index",
       "downloadLocation": "NOASSERTION",
@@ -43,35 +29,21 @@
       "checksums": [
         {
           "algorithm": "SHA256",
-<<<<<<< HEAD
-          "checksumValue": "a01cdccacdf4e10b806f77cdfefa871b90a498da0fc1e53d30d2a637018a9199"
-=======
-          "checksumValue": "f95f5ac5b9b58fa076e60caa94a8f22a4e82584f7af63339bcd5611ccf2a6684"
->>>>>>> 2d0058c (chore(deps): upgrade to php 8.3 and update service configuration)
+          "checksumValue": "14e0a168748286eed8223c3a8343bda846031e5a0816d62144749c00968a4f5b"
         }
       ],
       "externalRefs": [
         {
           "referenceCategory": "PACKAGE-MANAGER",
-<<<<<<< HEAD
-          "referenceLocator": "pkg:oci/wordpress@sha256:a01cdccacdf4e10b806f77cdfefa871b90a498da0fc1e53d30d2a637018a9199?mediaType=application%2Fvnd.oci.image.index.v1%2Bjson",
-=======
-          "referenceLocator": "pkg:oci/wordpress@sha256:f95f5ac5b9b58fa076e60caa94a8f22a4e82584f7af63339bcd5611ccf2a6684?mediaType=application%2Fvnd.oci.image.index.v1%2Bjson",
->>>>>>> 2d0058c (chore(deps): upgrade to php 8.3 and update service configuration)
+          "referenceLocator": "pkg:oci/wordpress@sha256:14e0a168748286eed8223c3a8343bda846031e5a0816d62144749c00968a4f5b?mediaType=application%2Fvnd.oci.image.index.v1%2Bjson",
           "referenceType": "purl"
         }
       ]
     },
     {
-<<<<<<< HEAD
-      "SPDXID": "SPDXRef-Package-sha256-4520d4f672ca43a0ca9faaf95fdf42760c40cb1ecdd6413c6fb72ad35d381d41",
-      "name": "sha256:4520d4f672ca43a0ca9faaf95fdf42760c40cb1ecdd6413c6fb72ad35d381d41",
-      "versionInfo": "sha256:4520d4f672ca43a0ca9faaf95fdf42760c40cb1ecdd6413c6fb72ad35d381d41",
-=======
-      "SPDXID": "SPDXRef-Package-sha256-16bb41b9948bdd2f7f58512f1f63353ae419654c9105843f55c3f1a70b6cf267",
-      "name": "sha256:16bb41b9948bdd2f7f58512f1f63353ae419654c9105843f55c3f1a70b6cf267",
-      "versionInfo": "sha256:16bb41b9948bdd2f7f58512f1f63353ae419654c9105843f55c3f1a70b6cf267",
->>>>>>> 2d0058c (chore(deps): upgrade to php 8.3 and update service configuration)
+      "SPDXID": "SPDXRef-Package-sha256-7e0cfedaecd2eb2ada06e390634fd08d287c7ee05d895d74e09efa6fcf3f0c37",
+      "name": "sha256:7e0cfedaecd2eb2ada06e390634fd08d287c7ee05d895d74e09efa6fcf3f0c37",
+      "versionInfo": "sha256:7e0cfedaecd2eb2ada06e390634fd08d287c7ee05d895d74e09efa6fcf3f0c37",
       "filesAnalyzed": false,
       "downloadLocation": "NOASSERTION",
       "supplier": "Organization: Chainguard, Inc.",
@@ -79,21 +51,13 @@
       "checksums": [
         {
           "algorithm": "SHA256",
-<<<<<<< HEAD
-          "checksumValue": "4520d4f672ca43a0ca9faaf95fdf42760c40cb1ecdd6413c6fb72ad35d381d41"
-=======
-          "checksumValue": "16bb41b9948bdd2f7f58512f1f63353ae419654c9105843f55c3f1a70b6cf267"
->>>>>>> 2d0058c (chore(deps): upgrade to php 8.3 and update service configuration)
+          "checksumValue": "7e0cfedaecd2eb2ada06e390634fd08d287c7ee05d895d74e09efa6fcf3f0c37"
         }
       ],
       "externalRefs": [
         {
           "referenceCategory": "PACKAGE-MANAGER",
-<<<<<<< HEAD
-          "referenceLocator": "pkg:oci/wordpress@sha256:4520d4f672ca43a0ca9faaf95fdf42760c40cb1ecdd6413c6fb72ad35d381d41?arch=amd64\u0026mediaType=application%2Fvnd.oci.image.manifest.v1%2Bjson\u0026os=linux",
-=======
-          "referenceLocator": "pkg:oci/wordpress@sha256:16bb41b9948bdd2f7f58512f1f63353ae419654c9105843f55c3f1a70b6cf267?arch=amd64\u0026mediaType=application%2Fvnd.oci.image.manifest.v1%2Bjson\u0026os=linux",
->>>>>>> 2d0058c (chore(deps): upgrade to php 8.3 and update service configuration)
+          "referenceLocator": "pkg:oci/wordpress@sha256:7e0cfedaecd2eb2ada06e390634fd08d287c7ee05d895d74e09efa6fcf3f0c37?arch=amd64\u0026mediaType=application%2Fvnd.oci.image.manifest.v1%2Bjson\u0026os=linux",
           "referenceType": "purl"
         }
       ]
@@ -101,15 +65,9 @@
   ],
   "relationships": [
     {
-<<<<<<< HEAD
-      "spdxElementId": "SPDXRef-Package-sha256-a01cdccacdf4e10b806f77cdfefa871b90a498da0fc1e53d30d2a637018a9199",
+      "spdxElementId": "SPDXRef-Package-sha256-14e0a168748286eed8223c3a8343bda846031e5a0816d62144749c00968a4f5b",
       "relationshipType": "VARIANT_OF",
-      "relatedSpdxElement": "SPDXRef-Package-sha256-4520d4f672ca43a0ca9faaf95fdf42760c40cb1ecdd6413c6fb72ad35d381d41"
-=======
-      "spdxElementId": "SPDXRef-Package-sha256-f95f5ac5b9b58fa076e60caa94a8f22a4e82584f7af63339bcd5611ccf2a6684",
-      "relationshipType": "VARIANT_OF",
-      "relatedSpdxElement": "SPDXRef-Package-sha256-16bb41b9948bdd2f7f58512f1f63353ae419654c9105843f55c3f1a70b6cf267"
->>>>>>> 2d0058c (chore(deps): upgrade to php 8.3 and update service configuration)
+      "relatedSpdxElement": "SPDXRef-Package-sha256-7e0cfedaecd2eb2ada06e390634fd08d287c7ee05d895d74e09efa6fcf3f0c37"
     }
   ]
 }

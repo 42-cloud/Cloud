@@ -10,7 +10,7 @@ vars:
   NC: "\\033[0m"
   VOLUME: ""
   PROFILE: ""
-  DOCKER_USER: frape
+  DOCKER_USER: namichel
 
 tasks:
   default:
@@ -316,7 +316,7 @@ tasks:
   push:
     internal: true
     cmds:
-      - docker tag {{.SERVICE}}:latest-amd64 {{.SERVICE}}:{{.TAG}}-amd64
+      # - docker tag {{.SERVICE}}:latest-amd64 {{.SERVICE}}:{{.TAG}}-amd64
       - docker tag {{.SERVICE}}:{{.TAG}}-amd64 {{.DOCKER_USER}}/{{.SERVICE}}:{{.TAG}}-amd64
       - docker push {{.DOCKER_USER}}/{{.SERVICE}}:{{.TAG}}-amd64
 
