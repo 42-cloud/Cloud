@@ -7,7 +7,7 @@ package:
     - license: GPL-2.0-only
   dependencies:
     runtime:
-      - php
+      - php-8.3
 
 environment:
   contents:

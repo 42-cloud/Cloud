@@ -78,8 +78,7 @@ services:
     image: namichel/angie:1.11.6-amd64
     container_name: angie
     ports:
-      - "{{ wordpress_expose_http | default('80') }}:80"
-      - "{{ wordpress_expose_https | default('443') }}:443"
+      - "8080:8080"
     volumes:
       - ./angie.conf:/etc/angie/angie.conf:ro
     depends_on:
