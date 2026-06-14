@@ -1,0 +1,49 @@
+name: Ansible Molecule Test
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+  checks: write
+
+jobs:
+  discover:
+    runs-on: ubuntu-22.04
+    outputs:
+      roles: ${{ steps.set-matrix.outputs.roles }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Find roles with Molecule tests
+        id: set-matrix
+        run: |
+          ROLES_JSON=$(find ansible/roles -type d -name "default" | grep "molecule/default" | awk -F'/' '{print $(NF-2)}' | jq -R . | jq -s -c .)
+          echo "Found roles : $ROLES_JSON"
+          echo "roles=${ROLES_JSON}" >> $GITHUB_OUTPUT
+
+  molecules:
+    needs: discover
+    if: ${{ needs.discover.outputs.roles != '[]' && needs.discover.outputs.roles != '' }}
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        role: ${{ fromJson(needs.discover.outputs.roles) }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run Molecule Test via Official Action
+        uses: ansible/molecule-action@v1
+        with:
+          molecule_working_dir: ansible/roles/${{ matrix.role }}
+        env:
+          ANSIBLE_CONFIG: ".ansible.ci.cfg"
+          ANSIBLE_VAULT_PASSWORD_LIST: "cloudone=${{ secrets.VAULT_PASS_CLOUDONE }}"

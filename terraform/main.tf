@@ -102,7 +102,7 @@ resource "local_file" "dynamic_inventory" {
         "ansible_user=ubuntu",
         "ansible_ssh_private_key_file=${replace(var.public_key_path, ".pub", "")}",
         "global_duckdns_domain=${trimspace(element(var.duck_domains, index(keys(aws_instance.cloudone), name)))}",
-        "global_wp_siteurl=https://${aws_lb.main.dns_name}"
+        "global_wp_siteurl=https://${aws_lb.cloudone_alb.dns_name}"
       ])
     ]
   ))
