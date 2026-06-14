@@ -1,6 +1,7 @@
 events {}
 
 http {
+	resolver 127.0.0.11 valid=10s;
 	include /etc/angie/prometheus_all.conf;
 
     map $http_x_forwarded_proto $fastcgi_https {
@@ -54,6 +55,8 @@ http {
         }
 
         location / {
+            add_header X-Debug-Proto $http_x_forwarded_proto always;
+            add_header X-Debug-Scheme $scheme always;
             status_zone wordpress_http;
             try_files $uri $uri/ /index.php?$args;
             add_header X-Debug-Loc "wp_catchall" always;
