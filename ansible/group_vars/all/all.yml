@@ -10,7 +10,8 @@ global_admin_users_list:
 
 
 global_domain_name: "{{ global_duckdns_domain }}"
-global_wp_siteurl: "https://{{ global_domain_name }}"
+global_free_domain: "devops-tribute.moo.com"
+# global_wp_siteurl: "https://{{ global_free_domain }}"
 
 global_duckdns_token: !vault |
   $ANSIBLE_VAULT;1.2;AES256;cloudone

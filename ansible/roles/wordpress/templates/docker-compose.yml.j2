@@ -55,7 +55,7 @@ services:
 
   wordpress:
     <<: *config
-    image: frape/wordpress:6.9.4-amd64
+    image: frape/wordpress:latest-amd64
     container_name: {{ wordpress_wp_container_name }}
     environment:
       WORDPRESS_DB_HOST: mariadb
@@ -71,7 +71,7 @@ services:
         target: wp_admin_password
     volumes:
       - wordpress_data:{{ wordpress_wp_dir_path_dest }}:rw
-      - "{{ wordpress_compose_src }}/wordpress/mu-plugins:{{ wordpress_wp_dir_path_dest }}/wp-content/mu-plugins:ro"
+      - "{{ wordpress_compose_src }}/wordpress/wp-content/mu-plugins:{{ wordpress_wp_dir_path_dest }}/wp-content/mu-plugins:ro"
       - "{{ wordpress_compose_src }}/wordpress/assets:/tmp/wp-assets:ro"
       - "{{ wordpress_compose_src }}/wordpress/wp-config.php:/var/www/html/wp-config.php:rw"
     deploy:

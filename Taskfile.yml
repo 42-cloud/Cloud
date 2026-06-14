@@ -169,6 +169,14 @@ tasks:
       - ansible-playbook -i inventory/inventory.ini site.yml --vault-id cloudone@{{.TASKFILE_DIR}}/.vault_pass_cloudone
         --tags docker --diff
 
+  ansible:tag:
+    desc: "Run a specific tag"
+    dir: "{{.TASKFILE_DIR}}/ansible"
+    vars:
+      TAG: '{{.TAG | default "wordpress_setup"}}'
+    cmds:
+      - ansible-playbook -i inventory/inventory.ini site.yml --vault-id cloudone@{{.TASKFILE_DIR}}/.vault_pass_cloudone -e wordpress_force_setup=true --tags {{.TAG}}
+
   # ──────────────────────────────────────────
   # DOCKER COMPOSE
   # ──────────────────────────────────────────
@@ -279,7 +287,7 @@ tasks:
         docker run --rm 
         -v {{.USER_WORKING_DIR}}/melange:/work 
         -w /work/{{.SERVICE}} 
-        cgr.dev/chainguard/apko build apko.yaml 
+        cgr.dev/chainguard/apko build --no-cache apko.yaml 
         {{.SERVICE}}:{{.TAG}} 
         {{.SERVICE}}.tar 
         --keyring-append ../melange.rsa.pub

@@ -1,0 +1,127 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=Oswald:wght@700&display=swap');
+
+  /* ── Base page ── */
+  body {
+    background: #0d1117;
+    font-family: 'Inter', sans-serif;
+    color: #e6edf3;
+    padding: 2rem;
+    margin: 0;
+  }
+
+  /* ── Card container ── */
+  .wp-devsecops-card {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 12px;
+    padding: 1.8rem;
+    color: #e6edf3;
+    max-width: 720px;
+    margin: 0 auto;
+    position: relative; /* Fix jersey-number absolute */
+  }
+
+  /* Bordure colorée gauche selon le poste */
+  .wp-devsecops-card.pos-milieu   { border-left: 4px solid #58a6ff; }
+  .wp-devsecops-card.pos-gardien  { border-left: 4px solid #ff7b54; }
+  .wp-devsecops-card.pos-attaquant{ border-left: 4px solid #c3e88d; }
+
+  /* ── Gutenberg columns fix (hors WordPress) ── */
+  .wp-block-columns {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  .wp-block-column { flex: 1; min-width: 0; }
+  .wp-block-column.devsecops-jersey {
+    flex: 0 0 30%;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+  }
+
+  /* ── Titres ── */
+  .wp-devsecops-card h2 {
+    font-family: 'Oswald', sans-serif;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 0 0 0.4rem;
+    line-height: 1.2;
+  }
+
+  /* ── Typographie paragraphes ── */
+  .wp-devsecops-card p {
+    font-size: 0.92rem;
+    line-height: 1.8;
+    color: #c9d1d9;
+    margin: 0 0 1rem;
+  }
+
+  .wp-devsecops-card strong { color: #e6edf3; font-weight: 700; }
+  .wp-devsecops-card em     { color: #58a6ff; font-style: normal; font-weight: 600; }
+
+  /* em dans pos-gardien → couleur poste */
+  .pos-gardien  .wp-devsecops-card em,
+  .wp-devsecops-card.pos-gardien  em { color: #ff7b54; }
+  .wp-devsecops-card.pos-attaquant em { color: #c3e88d; }
+
+  /* ── Séparateur ── */
+  hr.wp-block-separator {
+    border: none;
+    border-top: 1px solid #30363d;
+    margin: 1rem 0 1.2rem;
+  }
+
+  /* ── Citation ── */
+  .wp-devsecops-card blockquote.wp-block-quote {
+    border-left: 3px solid #00c853;
+    background: rgba(0, 200, 83, 0.06);
+    padding: 0.8rem 1.1rem;
+    margin: 0 0 1rem;
+    border-radius: 0 6px 6px 0;
+  }
+  .wp-devsecops-card blockquote p {
+    color: #8b949e;
+    font-style: italic;
+    margin: 0;
+    font-size: 0.88rem;
+  }
+  .wp-devsecops-card blockquote strong { color: #00c853; }
+
+  /* Citation couleur selon le poste */
+  .wp-devsecops-card.pos-milieu    blockquote { border-left-color: #58a6ff; background: rgba(88,166,255,0.06); }
+  .wp-devsecops-card.pos-gardien   blockquote { border-left-color: #ff7b54; background: rgba(255,123,84,0.06); }
+  .wp-devsecops-card.pos-attaquant blockquote { border-left-color: #c3e88d; background: rgba(195,232,141,0.06); }
+
+  /* ── Tags ── */
+  .devsecops-tags {
+    display: flex !important;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-top: 0.4rem !important;
+  }
+  .devsecops-tags code {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid #30363d;
+    border-radius: 20px;
+    padding: 0.2rem 0.65rem;
+    font-size: 0.75rem;
+    color: #8b949e;
+    font-family: 'Inter', monospace;
+    white-space: nowrap;
+  }
+
+  /* ── Numéro de maillot ── */
+  .jersey-number {
+    font-family: 'Oswald', sans-serif;
+    font-size: 4rem !important;
+    color: rgba(255,255,255,0.05);
+    font-weight: 700;
+    line-height: 1;
+    user-select: none;
+    margin: 0;
+    text-align: right;
+    letter-spacing: -2px;
+  }

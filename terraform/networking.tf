@@ -286,11 +286,12 @@ resource "aws_default_security_group" "default" {
 
 # --- instance SG
 
+# --- instance SG
 resource "aws_security_group" "cloudone" {
 # checkov:skip=CKV_AWS_277: attached to EC2 in main.tf
-  name          = "${var.project_name}-sg"
-  description   = "Security group for Wordpress and Angie proxy"
-  vpc_id        = aws_vpc.cloudone.id
+  name        = "${var.project_name}-sg"
+  description = "Security group for Wordpress and Angie proxy"
+  vpc_id      = aws_vpc.cloudone.id
 
   ingress {
     description = "SSH access for Ansible"
@@ -300,9 +301,8 @@ resource "aws_security_group" "cloudone" {
     cidr_blocks = [var.ip_host]
   }
 
-  # --- OUTGOING (EGRESS) ---
   egress {
-    description = "External HTTP requests + update"
+    description = "External HTTP"
     from_port   = 80
     to_port     = 80
     protocol    = "tcp"
@@ -310,7 +310,7 @@ resource "aws_security_group" "cloudone" {
   }
 
   egress {
-    description = "External HTTPS requests + update"
+    description = "External HTTPS"
     from_port   = 443
     to_port     = 443
     protocol    = "tcp"
@@ -318,34 +318,31 @@ resource "aws_security_group" "cloudone" {
   }
 
   egress {
-    description = "DNS resolving"
+    description = "DNS UDP"
     from_port   = 53
     to_port     = 53
     protocol    = "udp"
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  # can be necessary for some ansible tasks (apt install, docker pull)
   egress {
-    description = "DNS resolving via TCP"
+    description = "DNS TCP"
     from_port   = 53
     to_port     = 53
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
-
 }
 
 # --- ALB SG (public)
-
 resource "aws_security_group" "alb_sg" {
-  name          = "${var.project_name}-alb-sg"
-  description   = "Security group for Wordpress and Load Balancer"
-  vpc_id        = aws_vpc.cloudone.id
+  name        = "${var.project_name}-alb-sg"
+  description = "Security group for Wordpress and Load Balancer"
+  vpc_id      = aws_vpc.cloudone.id
 
   # checkov:skip=CKV_AWS_260:80 should remain open
   ingress {
-    description = "HTTP access from anywhere"
+    description = "HTTP from anywhere"
     from_port   = 80
     to_port     = 80
     protocol    = "tcp"
@@ -353,53 +350,34 @@ resource "aws_security_group" "alb_sg" {
   }
 
   ingress {
-    description = "HTTPS access from anywhere"
+    description = "HTTPS from anywhere"
     from_port   = 443
     to_port     = 443
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
-
 }
-
 
 # --- inter SG rules
-resource "aws_security_group_rule" "alb_to_instances" {
+
+# ALB → instances (HTTP)
+resource "aws_security_group_rule" "alb_to_instances_egress" {
   type                     = "egress"
   from_port                = 80
   to_port                  = 80
   protocol                 = "tcp"
   security_group_id        = aws_security_group.alb_sg.id
   source_security_group_id = aws_security_group.cloudone.id
-  description              = "Forward traffic to internal instances"
+  description              = "ALB forward to instances HTTP"
 }
 
-resource "aws_security_group_rule" "instances_from_alb_http" {
-  type                     = "ingress"
-  from_port                = 80
-  to_port                  = 80
-  protocol                 = "tcp"
-  security_group_id        = aws_security_group.cloudone.id
-  source_security_group_id = aws_security_group.alb_sg.id
-  description              = "HTTP access from ALB"
-}
-
-resource "aws_security_group_rule" "instances_from_alb_https" {
-  type                     = "ingress"
-  from_port                = 443
-  to_port                  = 443
-  protocol                 = "tcp"
-  security_group_id        = aws_security_group.cloudone.id
-  source_security_group_id = aws_security_group.alb_sg.id
-  description              = "HTTPS access from ALB"
-}
-
-resource "aws_security_group_rule" "alb_to_instances_https" {
-  type                     = "egress"
-  from_port                = 443
-  to_port                  = 443
-  protocol                 = "tcp"
-  security_group_id        = aws_security_group.alb_sg.id
-  source_security_group_id = aws_security_group.cloudone.id
-  description              = "ALB output to instances via HTTPS"
+# Instances ← ALB (HTTP) — via CIDR VPC (plus fiable que SG source pour ALB)
+resource "aws_security_group_rule" "instances_from_vpc_http" {
+  type              = "ingress"
+  from_port         = 80
+  to_port           = 80
+  protocol          = "tcp"
+  cidr_blocks       = [aws_vpc.cloudone.cidr_block]
+  security_group_id = aws_security_group.cloudone.id
+  description       = "HTTP from VPC (ALB ENIs + internal)"
 }

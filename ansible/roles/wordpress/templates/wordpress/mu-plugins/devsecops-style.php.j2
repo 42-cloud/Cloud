@@ -1,0 +1,14 @@
+<?php
+/**
+ * Plugin Name: DevSecOps Style Loader
+ * Description: Custom heroes cards CSS.
+ */
+
+add_action('wp_enqueue_scripts', function() {
+    wp_enqueue_style(
+        'devsecops-cards',
+        content_url('mu-plugins/devsecops-cards.css'),
+        array(),
+        '1.1'
+    );
+});

@@ -5,5 +5,12 @@
  */
 
 add_filter('option_blogname', function($value) {
-    return "Welcome to {{ inventory_hostname }}";
+    return "{{ inventory_hostname }}";
 });
+
+add_filter('bloginfo', function($output, $show) {
+    if ($show === 'name') {
+        return "{{ inventory_hostname }}";
+    }
+    return $output;
+}, 10, 2);
