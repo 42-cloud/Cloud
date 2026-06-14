@@ -1,6 +1,6 @@
 {
   "SPDXID": "SPDXRef-DOCUMENT",
-  "name": "sbom-sha256:a01cdccacdf4e10b806f77cdfefa871b90a498da0fc1e53d30d2a637018a9199",
+  "name": "sbom-sha256:856ed4979f7afa3506f51b8790cffc2b6713d475d735d8f215d8609c4e826e8f",
   "spdxVersion": "SPDX-2.3",
   "creationInfo": {
     "created": "2026-06-11T15:24:09Z",
@@ -13,13 +13,13 @@
   "dataLicense": "CC0-1.0",
   "documentNamespace": "https://spdx.org/spdxdocs/apko/",
   "documentDescribes": [
-    "SPDXRef-Package-sha256-a01cdccacdf4e10b806f77cdfefa871b90a498da0fc1e53d30d2a637018a9199"
+    "SPDXRef-Package-sha256-856ed4979f7afa3506f51b8790cffc2b6713d475d735d8f215d8609c4e826e8f"
   ],
   "packages": [
     {
-      "SPDXID": "SPDXRef-Package-sha256-a01cdccacdf4e10b806f77cdfefa871b90a498da0fc1e53d30d2a637018a9199",
-      "name": "sha256:a01cdccacdf4e10b806f77cdfefa871b90a498da0fc1e53d30d2a637018a9199",
-      "versionInfo": "sha256:a01cdccacdf4e10b806f77cdfefa871b90a498da0fc1e53d30d2a637018a9199",
+      "SPDXID": "SPDXRef-Package-sha256-856ed4979f7afa3506f51b8790cffc2b6713d475d735d8f215d8609c4e826e8f",
+      "name": "sha256:856ed4979f7afa3506f51b8790cffc2b6713d475d735d8f215d8609c4e826e8f",
+      "versionInfo": "sha256:856ed4979f7afa3506f51b8790cffc2b6713d475d735d8f215d8609c4e826e8f",
       "filesAnalyzed": false,
       "description": "Multi-arch image index",
       "downloadLocation": "NOASSERTION",
@@ -29,21 +29,21 @@
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "a01cdccacdf4e10b806f77cdfefa871b90a498da0fc1e53d30d2a637018a9199"
+          "checksumValue": "856ed4979f7afa3506f51b8790cffc2b6713d475d735d8f215d8609c4e826e8f"
         }
       ],
       "externalRefs": [
         {
           "referenceCategory": "PACKAGE-MANAGER",
-          "referenceLocator": "pkg:oci/wordpress@sha256:a01cdccacdf4e10b806f77cdfefa871b90a498da0fc1e53d30d2a637018a9199?mediaType=application%2Fvnd.oci.image.index.v1%2Bjson",
+          "referenceLocator": "pkg:oci/wordpress@sha256:856ed4979f7afa3506f51b8790cffc2b6713d475d735d8f215d8609c4e826e8f?mediaType=application%2Fvnd.oci.image.index.v1%2Bjson",
           "referenceType": "purl"
         }
       ]
     },
     {
-      "SPDXID": "SPDXRef-Package-sha256-4520d4f672ca43a0ca9faaf95fdf42760c40cb1ecdd6413c6fb72ad35d381d41",
-      "name": "sha256:4520d4f672ca43a0ca9faaf95fdf42760c40cb1ecdd6413c6fb72ad35d381d41",
-      "versionInfo": "sha256:4520d4f672ca43a0ca9faaf95fdf42760c40cb1ecdd6413c6fb72ad35d381d41",
+      "SPDXID": "SPDXRef-Package-sha256-2a48ae63de536523f0f29afbbf4ce08905133854fb26da71b7c3c04848cbfffd",
+      "name": "sha256:2a48ae63de536523f0f29afbbf4ce08905133854fb26da71b7c3c04848cbfffd",
+      "versionInfo": "sha256:2a48ae63de536523f0f29afbbf4ce08905133854fb26da71b7c3c04848cbfffd",
       "filesAnalyzed": false,
       "downloadLocation": "NOASSERTION",
       "supplier": "Organization: Chainguard, Inc.",
@@ -51,13 +51,13 @@
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "4520d4f672ca43a0ca9faaf95fdf42760c40cb1ecdd6413c6fb72ad35d381d41"
+          "checksumValue": "2a48ae63de536523f0f29afbbf4ce08905133854fb26da71b7c3c04848cbfffd"
         }
       ],
       "externalRefs": [
         {
           "referenceCategory": "PACKAGE-MANAGER",
-          "referenceLocator": "pkg:oci/wordpress@sha256:4520d4f672ca43a0ca9faaf95fdf42760c40cb1ecdd6413c6fb72ad35d381d41?arch=amd64\u0026mediaType=application%2Fvnd.oci.image.manifest.v1%2Bjson\u0026os=linux",
+          "referenceLocator": "pkg:oci/wordpress@sha256:2a48ae63de536523f0f29afbbf4ce08905133854fb26da71b7c3c04848cbfffd?arch=amd64\u0026mediaType=application%2Fvnd.oci.image.manifest.v1%2Bjson\u0026os=linux",
           "referenceType": "purl"
         }
       ]
@@ -65,9 +65,9 @@
   ],
   "relationships": [
     {
-      "spdxElementId": "SPDXRef-Package-sha256-a01cdccacdf4e10b806f77cdfefa871b90a498da0fc1e53d30d2a637018a9199",
+      "spdxElementId": "SPDXRef-Package-sha256-856ed4979f7afa3506f51b8790cffc2b6713d475d735d8f215d8609c4e826e8f",
       "relationshipType": "VARIANT_OF",
-      "relatedSpdxElement": "SPDXRef-Package-sha256-4520d4f672ca43a0ca9faaf95fdf42760c40cb1ecdd6413c6fb72ad35d381d41"
+      "relatedSpdxElement": "SPDXRef-Package-sha256-2a48ae63de536523f0f29afbbf4ce08905133854fb26da71b7c3c04848cbfffd"
     }
   ]
 }

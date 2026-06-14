@@ -8,6 +8,9 @@ package:
   dependencies:
     runtime:
       - php
+      - php-8.4-dom
+      - php-8.4-xml
+      - php-8.4-xmlreader
 
 environment:
   contents:

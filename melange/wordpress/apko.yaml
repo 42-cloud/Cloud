@@ -17,6 +17,9 @@ contents:
     - php-8.4-mysqli
     - php-8.4-gd
     - php-8.4-exif
+    - php-8.4-dom
+    - php-8.4-xml
+    - php-8.4-xmlreader
     - wp-cli
     - mariadb-12.2-client
 
