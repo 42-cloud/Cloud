@@ -169,6 +169,13 @@ tasks:
       - ansible-playbook -i inventory/inventory.ini site.yml --vault-id cloudone@{{.TASKFILE_DIR}}/.vault_pass_cloudone
         --tags docker --diff
 
+  ansible:angie_lb:
+    desc: "Run ONLY the angie_lb role tasks"
+    dir: "{{.TASKFILE_DIR}}/ansible"
+    cmds:
+      - ansible-playbook -i inventory/inventory.ini site.yml --vault-id cloudone@{{.TASKFILE_DIR}}/.vault_pass_cloudone
+        --tags angie_lb --diff
+
   # ──────────────────────────────────────────
   # DOCKER COMPOSE
   # ──────────────────────────────────────────
@@ -235,7 +242,7 @@ tasks:
         cgr.dev/chainguard/melange build {{.SERVICE}}.yaml 
         --arch amd64 
         --signing-key ../melange.rsa 
-        --pipeline-dir /work/{{.SERVICE}}/pipelines
+        --pipeline-dir /work/pipelines
         --out-dir /work/packages
 
   melange:angie:

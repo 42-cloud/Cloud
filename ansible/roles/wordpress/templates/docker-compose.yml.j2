@@ -55,15 +55,15 @@ services:
 
   wordpress:
     <<: *config
-    image: frape/wordpress:6.9.4-amd64
+    image: namichel/wordpress:6.9.4-amd64
     container_name: {{ wordpress_wp_container_name }}
     environment:
       WORDPRESS_DB_HOST: mariadb
       WORDPRESS_DB_USER: "{{ wordpress_db_user }}"
       WORDPRESS_DB_NAME: "{{ wordpress_db_name }}"
       WORDPRESS_DB_PASSWORD_FILE: /run/secrets/db_password
-      WORDPRESS_HOME: https://youpi-cloud.duckdns.org
-      WORDPRESS_SITEURL: https://youpi-cloud.duckdns.org
+      WORDPRESS_HOME: https://maisstop.duckdns.org
+      WORDPRESS_SITEURL: https://maisstop.duckdns.org
     secrets:
       - source: db_password
         target: db_password
@@ -104,6 +104,7 @@ services:
       - wordpress_data:{{ wordpress_angie_wp_root }}:rw
       - "{{ wordpress_angie_conf_path_host }}:{{ wordpress_angie_conf_path_dest }}:ro"
       - "{{ wordpress_cert_dir }}:/etc/angie/certs:ro"
+      - "{{ wordpress_compose_src }}/angie/tmp:/var/lib/angie/tmp"
     depends_on:
       wordpress:
         condition: service_healthy

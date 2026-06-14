@@ -1,0 +1,32 @@
+events {}
+
+http {
+    resolver 8.8.8.8 ipv6=off;
+    acme_client letsencrypt https://acme-v02.api.letsencrypt.org/directory;
+
+    upstream wordpress_backends {
+        {{ angie_lb_method }};
+        {% for backend_ip in angie_lb_backends %}
+        server {{ backend_ip }}:{{ angie_lb_backend_port }};
+        {% endfor %}
+    }
+
+    server {
+        listen 80;
+        listen 443 ssl;
+        server_name {{ angie_lb_domain }};
+
+        acme letsencrypt;
+        ssl_certificate $acme_cert_letsencrypt;
+        ssl_certificate_key $acme_cert_key_letsencrypt;
+
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        location / {
+            proxy_pass http://wordpress_backends;
+        }
+    }
+}

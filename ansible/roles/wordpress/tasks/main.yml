@@ -70,10 +70,13 @@
     path: "{{ wordpress_compose_src }}/{{ item }}"
     state: directory
     mode: "0775"
+    owner: "{{ wordpress_apko_uid }}"
+    group: "{{ wordpress_apko_gid }}"
   loop:
     - ""
     - mariadb
     - angie
+    - angie/tmp
     - wordpress
   delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
   become: "{{ wordpress_become_compose | default(true) }}"
@@ -136,6 +139,8 @@
     src: wordpress/wp-config-docker.php.j2
     dest: "{{ wordpress_compose_src }}/wordpress/wp-config.php"
     mode: "0644"
+    owner: "{{ wordpress_apko_uid }}"
+    group: "{{ wordpress_apko_uid }}"
   delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
   become: "{{ wordpress_become_compose | default(true) }}"
 
