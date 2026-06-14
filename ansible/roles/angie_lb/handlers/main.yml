@@ -1,7 +1,7 @@
 ---
 # angie_lb - handlers/main.yml
 - name: Reload angie lb
-  community.docker.docker_container_exec:
+  community.docker.docker_container:
     container: "{{ angie_lb_container_name }}"
-    command: "/usr/bin/angie -s reload"
-    user: "65532"
+    state: started
+    restart: true
