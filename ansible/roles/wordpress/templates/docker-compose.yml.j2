@@ -55,15 +55,15 @@ services:
 
   wordpress:
     <<: *config
-    image: namichel/wordpress:6.9.4-amd64
+    image: frape/wordpress:latest-amd64
     container_name: {{ wordpress_wp_container_name }}
     environment:
       WORDPRESS_DB_HOST: mariadb
       WORDPRESS_DB_USER: "{{ wordpress_db_user }}"
       WORDPRESS_DB_NAME: "{{ wordpress_db_name }}"
       WORDPRESS_DB_PASSWORD_FILE: /run/secrets/db_password
-      WORDPRESS_HOME: https://maisstop.duckdns.org
-      WORDPRESS_SITEURL: https://maisstop.duckdns.org
+      WORDPRESS_HOME: "https://{{ wordpress_duckdns_domain }}.duckdns.org"
+      WORDPRESS_SITEURL: "https://{{ wordpress_duckdns_domain }}.duckdns.org"
     secrets:
       - source: db_password
         target: db_password
@@ -71,7 +71,7 @@ services:
         target: wp_admin_password
     volumes:
       - wordpress_data:{{ wordpress_wp_dir_path_dest }}:rw
-      - "{{ wordpress_compose_src }}/wordpress/mu-plugins:{{ wordpress_wp_dir_path_dest }}/wp-content/mu-plugins:ro"
+      - "{{ wordpress_compose_src }}/wordpress/wp-content/mu-plugins:{{ wordpress_wp_dir_path_dest }}/wp-content/mu-plugins:ro"
       - "{{ wordpress_compose_src }}/wordpress/assets:/tmp/wp-assets:ro"
       - "{{ wordpress_compose_src }}/wordpress/wp-config.php:/var/www/html/wp-config.php:rw"
     deploy:
@@ -95,13 +95,14 @@ services:
 
   angie:
     <<: *config
-    image: namichel/angie:1.11.6-amd64
+    image: frape/angie:1.11.6-amd64
     container_name: {{ wordpress_angie_container_name }}
     ports:
       - "{{ wordpress_expose_http | default('80') | int }}:80"
       - "{{ wordpress_expose_https | default('443') | int }}:443"
     volumes:
       - wordpress_data:{{ wordpress_angie_wp_root }}:rw
+      - "{{ wordpress_compose_src }}/wordpress/wp-content/mu-plugins:/var/www/html/wp-content/mu-plugins:ro"
       - "{{ wordpress_angie_conf_path_host }}:{{ wordpress_angie_conf_path_dest }}:ro"
       - "{{ wordpress_cert_dir }}:/etc/angie/certs:ro"
       - "{{ wordpress_compose_src }}/angie/tmp:/var/lib/angie/tmp"

@@ -1,6 +1,6 @@
 ---
 # angie_lb - defaults/main.yml
-angie_lb_image: "namichel/angie:1.11.6-amd64"
+angie_lb_image: "frape/angie:1.11.6-amd64"
 
 angie_lb_container_name: "angie-lb"
 

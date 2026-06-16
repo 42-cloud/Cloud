@@ -1,7 +1,19 @@
 ---
 # angie_lb - handlers/main.yml
+
+- name: Wait for angie lb container to be running
+  listen: "Reload angie lb"
+  community.docker.docker_container_info:
+    name: "{{ angie_lb_container_name }}"
+  register: __angie_lb_info
+  until: __angie_lb_info.container.State.Status == "running"
+  retries: 10
+  delay: 3
+
 - name: Reload angie lb
-  community.docker.docker_container:
-    container: "{{ angie_lb_container_name }}"
-    state: started
-    restart: true
+  listen: "Reload angie lb"
+  ansible.builtin.shell: |
+    docker exec angie-lb angie -t && \
+    docker exec angie-lb angie -s reload || \
+    docker restart angie-lb
+  changed_when: true

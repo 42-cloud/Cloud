@@ -1,8 +1,13 @@
+user angie;
+
 events {}
 
 http {
     resolver 8.8.8.8 ipv6=off;
     acme_client letsencrypt https://acme-v02.api.letsencrypt.org/directory;
+
+    include /etc/angie/mime.types;
+    default_type application/octet-stream;
 
     upstream wordpress_backends {
         {{ angie_lb_method }};
@@ -11,26 +16,36 @@ http {
         {% endfor %}
     }
 
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+
     server {
         listen 80;
+        server_name {{ angie_lb_domain }};
+
+        location / {
+            return 301 https://$host$request_uri;
+        }
+
+    }
+
+    server {
         listen 443 ssl;
         server_name {{ angie_lb_domain }};
 
         acme letsencrypt;
         ssl_certificate $acme_cert_letsencrypt;
         ssl_certificate_key $acme_cert_key_letsencrypt;
-
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
+        ssl_protocols TLSv1.2 TLSv1.3;
+        ssl_ciphers HIGH:!aNULL:!MD5;
 
         location / {
           proxy_pass http://wordpress_backends;
-          proxy_set_header Host $host;
-          proxy_set_header X-Real-IP $remote_addr;
-          proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-          proxy_set_header X-Forwarded-Proto $scheme;
+          proxy_set_header X-Forwarded-Proto https;
+          proxy_buffers 16 16k;
+          proxy_buffer_size 32k;
+          proxy_pass_header Content-Type;
         }
     }
 }

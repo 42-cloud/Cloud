@@ -7,3 +7,15 @@
 add_filter('option_blogname', function($value) {
     return "Welcome to {{ inventory_hostname }}";
 });
+
+
+add_filter('gettext_with_context', function($translation, $text, $context, $domain) {
+    if (
+        $domain === 'twentytwentythree' &&
+        $context === 'Main heading for homepage' &&
+        $text   === 'Mindblown: a blog about philosophy.'
+    ) {
+        return 'Devops heroes';
+    }
+    return $translation;
+}, 10, 4);

@@ -1,0 +1,28 @@
+<?php
+/**
+ * Plugin Name: DevSecOps Style Loader
+ * Description: Custom heroes cards CSS.
+ */
+
+add_action('wp_enqueue_scripts', function() {
+    wp_enqueue_style(
+        'google-fonts-devsecops',
+        'https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=Oswald:wght@700&display=swap',
+        [],
+        null
+    );
+
+    wp_enqueue_style(
+        'devsecops-cards',
+        plugins_url('devsecops-cards.css', __FILE__),
+        ['wp-block-library'],
+        '1.1'
+    );
+}, 99);
+
+
+add_action('wp_footer', function() {
+    echo '<style id="devsecops-overrides">';
+    readfile(plugin_dir_path(__FILE__) . 'devsecops-cards.css');
+    echo '</style>';
+}, 1);
