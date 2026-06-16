@@ -107,7 +107,6 @@
       - '{{ angie_lb_conf_dir }}/acme_client:/etc/angie/acme_client'
       - '{{ angie_lb_conf_dir }}/tmp:/var/lib/angie/tmp'
     ports:
-      # - "{{ angie_lb_http_port }}:80"
-      # - "{{ angie_lb_https_port }}:443"
-[80:80, 443:443]
+      - "{{ angie_lb_http_port }}:80"
+      - "{{ angie_lb_https_port }}:443"
     tmpfs: ['/run/angie:uid=0,gid=0']

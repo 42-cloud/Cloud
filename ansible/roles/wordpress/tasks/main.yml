@@ -294,25 +294,33 @@
       block:
         - name: Idempotent - Force sync siteurl and home variables
           ansible.builtin.shell: |
-            docker exec --user {{ global_apko_uid | default('65532') }} wordpress wp --path={{ global_wp_dir | default('/var/www/html') }} option update siteurl "{{ global_wp_siteurl }}"
-            docker exec --user {{ global_apko_uid | default('65532') }} wordpress wp --path={{ global_wp_dir | default('/var/www/html') }} option update home "{{ global_wp_siteurl }}"
+            docker exec --user {{ global_apko_uid | default('65532') }} \
+              wordpress wp --path={{ global_wp_dir | default('/var/www/html') }} \
+              option update siteurl "{{ global_wp_siteurl }}"
+            docker exec --user {{ global_apko_uid | default('65532') }} \
+              wordpress wp --path={{ global_wp_dir | default('/var/www/html') }} \
+              option update home "{{ global_wp_siteurl }}"
           changed_when: true
           tags: [wordpress_url]
         - name: Purge default posts and pages
           ansible.builtin.shell: |
-            {{ wordpress_wp_cli_exec }} post delete $({{ wordpress_wp_cli_exec }} post list --post_type=post --format=ids) --force
-            {{ wordpress_wp_cli_exec }} post delete $({{ wordpress_wp_cli_exec }} post list --post_type=page --format=ids) --force
+            {{ wordpress_wp_cli_exec }} post delete \
+              $({{ wordpress_wp_cli_exec }} post list --post_type=post --format=ids) --force
+            {{ wordpress_wp_cli_exec }} post delete \
+              $({{ wordpress_wp_cli_exec }} post list --post_type=page --format=ids) --force
           failed_when: false
           changed_when: true
         - name: Clean up default navigation menus and unwanted elements
           ansible.builtin.shell: |
-            {{ wordpress_wp_cli_exec }} menu delete $({{ wordpress_wp_cli_exec }} menu list --format=ids) 2>/dev/null || true          
+            {{ wordpress_wp_cli_exec }} menu delete \
+              $({{ wordpress_wp_cli_exec }} menu list --format=ids) 2>/dev/null || true
             {{ wordpress_wp_cli_exec }} widget reset --all
           failed_when: false
           changed_when: true
         - name: DEBUG Check assets are visible inside container
           ansible.builtin.shell: |
-            docker exec {{ wordpress_wp_container_name }} sh -lc 'ls -la /tmp/wp-assets && test -f /tmp/wp-assets/{{ item.filename }}'
+            docker exec {{ wordpress_wp_container_name }} sh -lc \
+              'ls -la /tmp/wp-assets && test -f /tmp/wp-assets/{{ item.filename }}'
           loop:
             - {filename: dan-lorenc.jpeg}
             - {filename: solomon-hykes.png}
