@@ -132,8 +132,12 @@
         fail_msg: "wordpress container cannot communicate with DB"
 
     - name: Get Wordpress site url
-      ansible.builtin.shell: |
-        docker exec --user {{ wordpress_wp_uid }} --workdir {{ wordpress_wp_dir_path_dest }} {{ wordpress_wp_container_name }} wp option get siteurl
+      ansible.builtin.shell: >-
+        docker exec
+        --user {{ wordpress_wp_uid }}
+        --workdir {{ wordpress_wp_dir_path_dest }}
+        {{ wordpress_wp_container_name }}
+        wp option get siteurl
       register: __wordpress_site_url
       failed_when: false
       changed_when: false
@@ -144,3 +148,4 @@
         that:
           - __wordpress_site_url.rc == 0
         fail_msg: "Wordpress has not accessible url"
+

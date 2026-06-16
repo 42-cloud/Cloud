@@ -94,90 +94,90 @@
   become: "{{ wordpress_become_compose | default(true) }}"
   tags: [wp_host_db]
   block:
-  - name: Populate db conf
-    ansible.builtin.template:
-      src: mariadb.conf.j2
-      dest: "{{ wordpress_compose_src }}/mariadb/mariadb.conf"
-      mode: "0644"
-  - name: Populate init sql
-    ansible.builtin.template:
-      src: init.sql.j2
-      dest: "{{ wordpress_compose_src }}/mariadb/init.sql"
-      mode: "0644"
+    - name: Populate db conf
+      ansible.builtin.template:
+        src: mariadb.conf.j2
+        dest: "{{ wordpress_compose_src }}/mariadb/mariadb.conf"
+        mode: "0644"
+    - name: Populate init sql
+      ansible.builtin.template:
+        src: init.sql.j2
+        dest: "{{ wordpress_compose_src }}/mariadb/init.sql"
+        mode: "0644"
   rescue:
-  - name: Fail explicitly if db host configuration fails
-    ansible.builtin.fail:
-      msg: "host configuration for db service failed"
+    - name: Fail explicitly if db host configuration fails
+      ansible.builtin.fail:
+        msg: "host configuration for db service failed"
 
 - name: wordpress pre-launch host configuration
   delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
   become: "{{ wordpress_become_compose | default(true) }}"
   tags: [wp_host_wp]
   block:
-  - name: Copy WordPress Docker build context
-    ansible.builtin.copy:
-      src: "wordpress/"
-      dest: "{{ wordpress_compose_src }}/wordpress/"
-      mode: "0755"
-  - name: Copy static images assets
-    ansible.builtin.copy:
-      src: "wordpress/images/"
-      dest: "{{ wordpress_compose_src }}/wordpress/assets/"
-      mode: "0755"
-  - name: Get assets
-    ansible.builtin.shell: |
-      ls "{{ wordpress_compose_src }}/wordpress/assets/"
-    register: wordpress_assets
-    changed_when: false
-  - name: Check assets
-    ansible.builtin.debug:
-      msg: "{{ wordpress_assets }}"
-  - name: Deploy wp-config.php
-    ansible.builtin.template:
-      src: wordpress/wp-config-docker.php.j2
-      dest: "{{ wordpress_compose_src }}/wordpress/wp-config.php"
-      mode: "0644"
-  - name: Ensure mu-plugins directory exists
-    ansible.builtin.file:
-      path: "{{ wordpress_compose_src }}/wordpress/wp-content/mu-plugins"
-      state: directory
-      mode: "0755"
-  - name: Deploy must use plugin for dynamic title
-    ansible.builtin.template:
-      src: wordpress/mu-plugins/instance-title.php.j2
-      dest: "{{ wordpress_compose_src }}/wordpress/wp-content/mu-plugins/instance-title.php"
-      mode: "0644"
-  - name: Deploy must use plugin for devsecops styles
-    ansible.builtin.template:
-      src: "wordpress/mu-plugins/devsecops-style.php.j2"
-      dest: "{{ wordpress_compose_src }}/wordpress/wp-content/mu-plugins/devsecops-style.php"
-      mode: "0644"
-  - name: Deploy devsecops card styles
-    ansible.builtin.copy:
-      src: "wordpress/devsecops-cards.css"
-      dest: "{{ wordpress_compose_src }}/wordpress/wp-content/mu-plugins/devsecops-cards.css"
-      mode: "0644"
+    - name: Copy WordPress Docker build context
+      ansible.builtin.copy:
+        src: "wordpress/"
+        dest: "{{ wordpress_compose_src }}/wordpress/"
+        mode: "0755"
+    - name: Copy static images assets
+      ansible.builtin.copy:
+        src: "wordpress/images/"
+        dest: "{{ wordpress_compose_src }}/wordpress/assets/"
+        mode: "0755"
+    - name: Get assets
+      ansible.builtin.shell: |
+        ls "{{ wordpress_compose_src }}/wordpress/assets/"
+      register: wordpress_assets
+      changed_when: false
+    - name: Check assets
+      ansible.builtin.debug:
+        msg: "{{ wordpress_assets }}"
+    - name: Deploy wp-config.php
+      ansible.builtin.template:
+        src: wordpress/wp-config-docker.php.j2
+        dest: "{{ wordpress_compose_src }}/wordpress/wp-config.php"
+        mode: "0644"
+    - name: Ensure mu-plugins directory exists
+      ansible.builtin.file:
+        path: "{{ wordpress_compose_src }}/wordpress/wp-content/mu-plugins"
+        state: directory
+        mode: "0755"
+    - name: Deploy must use plugin for dynamic title
+      ansible.builtin.template:
+        src: wordpress/mu-plugins/instance-title.php.j2
+        dest: "{{ wordpress_compose_src }}/wordpress/wp-content/mu-plugins/instance-title.php"
+        mode: "0644"
+    - name: Deploy must use plugin for devsecops styles
+      ansible.builtin.template:
+        src: "wordpress/mu-plugins/devsecops-style.php.j2"
+        dest: "{{ wordpress_compose_src }}/wordpress/wp-content/mu-plugins/devsecops-style.php"
+        mode: "0644"
+    - name: Deploy devsecops card styles
+      ansible.builtin.copy:
+        src: "wordpress/devsecops-cards.css"
+        dest: "{{ wordpress_compose_src }}/wordpress/wp-content/mu-plugins/devsecops-cards.css"
+        mode: "0644"
 
   rescue:
-  - name: Fail explicitly if worpress host configuration fails
-    ansible.builtin.fail:
-      msg: "host configuration for wordpress service failed"
+    - name: Fail explicitly if worpress host configuration fails
+      ansible.builtin.fail:
+        msg: "host configuration for wordpress service failed"
 
 - name: angie pre-launch host configuration
   delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
   become: "{{ wordpress_become_compose | default(true) }}"
   tags: [wp_host_angie]
   block:
-  - name: Deploy Angie configuration file
-    ansible.builtin.template:
-      src: angie.conf.j2
-      dest: "{{ wordpress_compose_src }}/angie/angie.conf"
-      mode: "0644"
-    notify: Reload angie
+    - name: Deploy Angie configuration file
+      ansible.builtin.template:
+        src: angie.conf.j2
+        dest: "{{ wordpress_compose_src }}/angie/angie.conf"
+        mode: "0644"
+      notify: Reload angie
   rescue:
-  - name: Fail explicitly if angie host configuration fails
-    ansible.builtin.fail:
-      msg: "host configuration for angie service failed"
+    - name: Fail explicitly if angie host configuration fails
+      ansible.builtin.fail:
+        msg: "host configuration for angie service failed"
 
 # ==============================================================================
 # SECRETS AND DOCKER

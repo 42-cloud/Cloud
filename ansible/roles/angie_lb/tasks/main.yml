@@ -12,7 +12,8 @@
     state: reloaded
 
 # les prochain roles sont technique je vais faire steps par steps:
-# ici: dire au kernel de ne pas drop les paquets qui ne lui sont pas destine on veut que les instances backends ai acces a internet source_dest_check=false n'est pas suffisant cote AWS
+# ici: dire au kernel de ne pas drop les paquets qui ne lui sont pas destine on veut que
+# les instances backends ai acces a internet source_dest_check=false n'est pas suffisant cote AWS
 - name: Enable IP forwarding
   ansible.posix.sysctl:
     name: net.ipv4.ip_forward
@@ -37,7 +38,7 @@
     source: "10.0.0.0/16"
     jump: ACCEPT
 
-#meme regle que celle du dessus mais dans l'autre sens donc j'accepte que les connexions que j'ai moi meme init
+# meme regle que celle du dessus mais dans l'autre sens donc j'accepte que les connexions que j'ai moi meme init
 - name: Allow FORWARD for established connections inbound
   ansible.builtin.iptables:
     chain: FORWARD
@@ -121,8 +122,8 @@
       - "{{ angie_lb_conf_dir }}/acme_client:/etc/angie/acme_client"
       - "{{ angie_lb_conf_dir }}/tmp:/var/lib/angie/tmp"
     ports:
-      #- "{{ angie_lb_http_port }}:80"
-      #- "{{ angie_lb_https_port }}:443"
+      # - "{{ angie_lb_http_port }}:80"
+      # - "{{ angie_lb_https_port }}:443"
       - "80:80"
       - "443:443"
     tmpfs:
