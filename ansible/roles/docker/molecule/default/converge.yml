@@ -3,6 +3,6 @@
   hosts: all
   gather_facts: true
   tasks:
-    - name: "Include docker role"
+    - name: Include docker role
       ansible.builtin.include_role:
-        name: "docker"
+        name: docker

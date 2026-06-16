@@ -1,82 +1,68 @@
-# bootstrap role - main
 ---
 - name: Install UFW
   ansible.builtin.apt:
     name: ufw
     state: present
     update_cache: true
-
 - name: Allow all traffic on loopback interface
   community.general.ufw:
     rule: allow
     direction: in
     interface: lo
-
 - name: Configure UFW defaults
   community.general.ufw:
     policy: deny
     direction: incoming
-
 - name: Allow SSH, HTTP and HTTPS traffic
   community.general.ufw:
     rule: allow
-    port: "{{ item }}"
+    port: '{{ item }}'
     proto: tcp
-  loop:
-    - "22"
-    - "80"
-    - "443"
-
+  loop: ['22', '80', '443']
 - name: Enable and reload UFW
   community.general.ufw:
     state: enabled
-
 - name: Create admin group
   ansible.builtin.group:
     name: admins
     state: present
-
 - name: Create admin users
   ansible.builtin.user:
-    name: "{{ item.name }}"
+    name: '{{ item.name }}'
     groups: admins
     append: true
     state: present
-  loop: "{{ bootstrap_admin_users_list }}"
-
+  loop: '{{ bootstrap_admin_users_list }}'
 - name: Configure sudoers for admin group
   ansible.builtin.copy:
-    content: "%admins ALL=(ALL) NOPASSWD:ALL"
+    content: '%admins ALL=(ALL) NOPASSWD:ALL'
     dest: /etc/sudoers.d/admins-group
-    mode: "0440"
+    mode: '0440'
     validate: /usr/sbin/visudo -cf %s
-
 - name: Create persistent directories for db with mysql permission
   ansible.builtin.file:
-    path: "{{ bootstrap_db_dir }}"
+    path: '{{ bootstrap_db_dir }}'
     state: directory
-    owner: "{{ bootstrap_db_uid | int }}"
-    group: "{{ bootstrap_db_gid | int }}"
-    mode: "0700"
-
+    owner: '{{ bootstrap_db_uid | int }}'
+    group: '{{ bootstrap_db_gid | int }}'
+    mode: '0700'
 - name: Create persistent directories for wordpress with www-data permission
   ansible.builtin.file:
-    path: "{{ bootstrap_wp_dir }}"
+    path: '{{ bootstrap_wp_dir }}'
     state: directory
-    owner: "{{ bootstrap_wp_uid | int }}"
-    group: "{{ bootstrap_wp_gid | int }}"
-    mode: "0755"
-
+    owner: '{{ bootstrap_wp_uid | int }}'
+    group: '{{ bootstrap_wp_gid | int }}'
+    mode: '0755'
 - name: Create configuration directories
   ansible.builtin.file:
-    path: "{{ item }}"
+    path: '{{ item }}'
     state: directory
     owner: root
     group: admins
-    mode: "0775"
+    mode: '0775'
   loop:
-    - "{{ bootstrap_project_path }}"
-    - "{{ bootstrap_project_path }}/mariadb"
-    - "{{ bootstrap_project_path }}/wordpress"
-    - "{{ bootstrap_project_path }}/angie"
+    - '{{ bootstrap_project_path }}'
+    - '{{ bootstrap_project_path }}/mariadb'
+    - '{{ bootstrap_project_path }}/wordpress'
+    - '{{ bootstrap_project_path }}/angie'
   become: true

@@ -8,6 +8,6 @@
     wordpress_delegate_host: localhost
     wordpress_become_compose: false
   tasks:
-    - name: "Include wordpress role"
+    - name: Include wordpress role
       ansible.builtin.include_role:
-        name: "wordpress"
+        name: wordpress

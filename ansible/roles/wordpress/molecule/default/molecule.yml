@@ -4,10 +4,8 @@ dependency:
   name: galaxy
   options:
     requirements-file: ../../../requirements.yml
-
 driver:
   name: docker
-
 platforms:
   - name: docker-ubuntu-test
     image: geerlingguy/docker-ubuntu2204-ansible:latest
@@ -16,9 +14,8 @@ platforms:
     user: root
     volumes:
       - /lib/modules:/lib/modules:ro
-      - "${XDG_RUNTIME_DIR:-/var}/run/docker.sock:/var/run/docker.sock"
+      - ${XDG_RUNTIME_DIR:-/var}/run/docker.sock:/var/run/docker.sock
       - /tmp/molecule_shared:/tmp/molecule_shared
-
 provisioner:
   name: ansible
   config_options:
@@ -30,8 +27,8 @@ provisioner:
     ssh_connection:
       pipelining: false
   ansible_args:
-    - "--diff"
-    - "-vvv"
+    - --diff
+    - -vvv
     - --extra-vars
     - >
       wordpress_compose_src=/tmp/molecule_shared/wordpress_stack
@@ -41,7 +38,7 @@ provisioner:
       wordpress_duckdns_domain="test-domain"
       global_duckdns_domain=test-domain
   env:
-    ANSIBLE_ROLES_PATH: "../../../"
+    ANSIBLE_ROLES_PATH: ../../../
     ANSIBLE_STDOUT_CALLBACK: default
     ANSIBLE_CALLBACK_RESULT_FORMAT: yaml
   group_vars: ../../../../../group_vars
@@ -49,10 +46,8 @@ provisioner:
     prepare: prepare.yml
     converge: converge.yml
     verify: verify.yml
-
 verifier:
   name: ansible
-
 scenario:
   name: default
   test_sequence:

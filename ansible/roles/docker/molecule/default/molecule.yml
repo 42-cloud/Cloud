@@ -3,19 +3,15 @@ dependency:
   name: galaxy
   options:
     requirements-file: ../../../requirements.yml
-
 driver:
   name: docker
-
 platforms:
   - name: docker-ubuntu-test
     image: geerlingguy/docker-ubuntu2204-ansible:latest
     privileged: true
     pre_build_image: true
     user: root
-    volumes:
-      - /lib/modules:/lib/modules:ro
-
+    volumes: [/lib/modules:/lib/modules:ro]
 provisioner:
   name: ansible
   config_options:
@@ -26,21 +22,17 @@ provisioner:
       stdout_callback: yaml
     ssh_connection:
       pipelining: false
-  ansible_args:
-    - "--diff"
-    - "-v"
+  ansible_args: [--diff, -v]
   env:
-    ANSIBLE_ROLES_PATH: "../../../"
+    ANSIBLE_ROLES_PATH: ../../../
     ANSIBLE_STDOUT_CALLBACK: default
     ANSIBLE_CALLBACK_RESULT_FORMAT: yaml
   group_vars: ../../../../../group_vars
   playbooks:
     converge: converge.yml
     verify: verify.yml
-
 verifier:
   name: ansible
-
 scenario:
   name: default
   test_sequence:
