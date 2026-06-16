@@ -10,28 +10,36 @@ Automated deployment of Wordpress related services using Terraform and Ansible
 
 __network and security__
 - [ ] only `80` and `443` should be accessible (replace 8080 and 8443)
-- [ ] usage of TLS
+- [ ] usage of TLS between load balancer and instances ?
 - [x] network isolation of DB from the internet
 
 __roles__
-- [ ] Add `observability` role
-- [ ] Wordpress role
-  - [ ] Readme for `wordpress` role
+- [ ] Bootstrap role
+  - [x] Readme
   - [x] Molecule tests
+- [ ] LB role
+  - [ ] Readme
+  - [ ] Molecule tests
+- [x] Docker role
+  - [x] Readme
+  - [x] Molecule tests
+- [ ] Wordpress role
+  - [x] Readme for `wordpress` role
+  - [x] Molecule tests
+  - [x] handler to reload angie
   - [ ] PHP My Admin configuration
-  - [ ] handler to reload angie
-  - [ ] handler to reload wordpress apache
 
 __resilience__
-- [ ] dynamic DNS
+- [ ] dynamic DNS : call DuckDNS GET API to attach LB IP to subdomain
 - [ ] auto-restart if server is rebooted with data preserved
 
 __scalability__
-- [ ] parallel deploy to multiple servers
+- [x] parallel deploy to multiple servers
 
 __flexibility__
-- [ ] provider-agnostic configuration
-- [ ] can create various users with admin rights on EC2, app admin rights on wordpress
+- [-] provider-agnostic configuration
+  - [x] provider-independant load balancer 
+- [-] can create various users with admin rights on EC2, app admin rights on wordpress
 
 __security__
 - [x] distroless OCI images via apko/melange
@@ -42,6 +50,14 @@ __security__
 - [x] non-root containers
 - [ ] GHA release for melange-forge binaries
 - [ ] matrix refactor for CVE scan workflow
+- [ ] pinpoint images in docker compose (no `latest`)
+
+__styling__
+
+- [ ] yaml lint
+- [ ] ansible lint
+
+---
 
 # Setup
 
@@ -66,10 +82,16 @@ rm /tmp/terraform.zip
 python3 -m venv $HOME/.ansible_venv
 source $HOME/.ansible_venv/bin/activate
 pip install --upgrade pip
-pip install ansible-core checkov argcomplete
+pip install ansible-core
 ln -sf $HOME/.ansible_venv/bin/ansible $HOME/bin/ansible
 ln -sf $HOME/.ansible_venv/bin/ansible-playbook $HOME/bin/ansible-playbook
 deactivate
+
+# generate ansible vault password
+openssl rand -base64 32  > .vault_pass_cloudone
+
+# add other local analysis and linting dependencies
+pip install checkov argcomplete
 
 # add AWS CLI
 curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
@@ -87,28 +109,52 @@ aws configure
 
 ## Tasks
 
+### domain and terraform vars
+
+Go on `duckdns.org`, choose an available custom subdomain (ex: `cloud1`).
+Encrypt your duckdns token : 
+
+```bash
+ansible-vault encrypt_string \
+  --vault-id=cloudone \
+  --name 'global_duckdns_token' <DUCKDNS_TOKEN>
+```
+
+and replace the corresponding value in `ansible/group_vars/all/all.yml`
+
 ```bash
 # create terraform/terraform.tfvars
-task tfvars
+task tf:tfvars
+```
 
+fill required inputs
+
+### provisionning and configuration
+
+```bash
 # download providers
-task init
+task tf:init
 
 # check terraform project correctness
-task plan
+task tf:plan
 
 # deploy infrastructure
-task apply
+task tf:apply
 
 # deploy configuration
 task ansible:play
 
 ```
 
-## Usage
+Access the app on `https://cloud1.duckdns.org` (supposing you chose `cloud1`)
 
-Access the app on `https://cloud1.duckdns.org`
+### replay a role or a group of tasks
 
+```bash
+task ansible:tag TAG=angie-lb
+```
+
+---
 
 # Stack
 
@@ -133,7 +179,6 @@ Access the app on `https://cloud1.duckdns.org`
 ### Bash script
 
 `tfvars.sh` to check variables and generate `terraform.tfvars`
-
 
 ## Containerization
 
@@ -201,26 +246,36 @@ __Best practices__
 
 > An infrastructure as code tool that defines cloud resources
 
-#### Architecture proposal
+## Architecture evolution
 
-_monoserver_
+We didn't have a definite idea of the target architecture when starting the project. It served as a sandbox to experiment with different approaches.
 
- - `aws_eip` Elastic IP
+The architecture went through different phases:
 
-=> We choose a monoserver architecture for the sake of simplicity
+```bash
+[Internet] ---> [Elastic IP] ---> [EC2 Instance: Angie + WP + MariaDB]
+```
 
-_multi-tier_ (possible evolution)
+- _instances_ : each computing instance is directly accessible. Security is ensured by rootless containerization, and by splitting docker networks between a web-accessible one, and another. We went on adding an elastic IP for each instance and mapping it to a DuckDNS domain. It seemed a good choice, but didn't allow to scale easily if we wanted to maintain the DuckDNS mapping, as there is a max limit of 5 subdomains per account.
 
- - **load balancer** ALB with public IP
- - private subnet EC2 Wordpress with private IP
- - private subnet RDS Database with private IP
+```bash
+[Internet] ---> [AWS ALB] ---> [Private Subnet: EC2 Instances (WP)]
+                                      |---> [AWS KMS / CloudWatch Logs]
+```
 
-NB : Ansible gets access to remote machine
- - with a bastion instance in a public subnet
- - or with AWS Systems Manager Session Manager
+- _instances with Amazon load balancer_ : we added an instance of Amazon Load Balancer, which was aimed at being the only public access point, while instances IP would have been private. Yet, atop of being even-more provider-dependent and costly (billed by the hour), it increased the size and complexity of terraform state declaration, as we had to declare subnets, security groups, targets groups. Meanwhile, we had also added new AWS resources (IAM policies, KMS, logging) to patch potential security flaws highlighted by Checkov. 
 
+- _instances with custom made load balancer_ : this implied having a separate instance with Angie as a load balancer. Network security is ensured at OS level by iptable configuration. Contrary to free version of Nginx, Angie handles ACME challenges, which also enabled us to get a LetsEncrypt certificate for the chosen subdomain. On the minus side, availability level is not the same as ALB, and scaling would require configuration modification through Ansible.
 
-#### Which AWS resources are we declaring ?
+Would we have had more time to explore more in-depth cloud architecture, it could have been relevant to have 
+- fully multitier instances with separate DBs (Amazon RDS)
+- shared storage for WordPress uploads (Amazon EFS)
+- duplication across availability zones
+- isolate PhPMyAdmin on its own subnet and instance
+- other services such as caching to improve performance.
+- ...
+
+### Which AWS resources are we declaring ?
 
 |_name_|_description_|_terraform_|_AWS_|
 |:--|:--|:--|:--|
@@ -285,7 +340,6 @@ In local development, passwords are stored in `compose/secrets/` (gitignored) an
 
 - compares code against security policies
 
-
 ## Services
 
 ### Angie
@@ -294,14 +348,14 @@ In local development, passwords are stored in `compose/secrets/` (gitignored) an
 
 - serves WordPress via FastCGI pass to php-fpm
 - serves phpMyAdmin at `/phpmyadmin/`
-- exposes Prometheus metrics at `/metrics/`
 - exposes status API at `/status/`
+- exposes Prometheus metrics at `/metrics/` (in local deploy)
 
 ### Wordpress
 
 > An open source CMS
 
-NB : There is no official module for Wordpress management. Partly because cli evolves too fast and should be compatible with many php versions
+NB : There is no official Ansible module for Wordpress management. Partly because cli evolves too fast and should be compatible with many php versions.
 
 ### MariaDB
 
@@ -314,6 +368,8 @@ NB : There is no official module for Wordpress management. Partly because cli ev
 ## Network
 
 ### Duck DNS
+
+> A DNS provider
 
  - we should reestabish mapping every time the infrastructure is redeployed (AWS generates a new public Elastic IP)
 
@@ -346,7 +402,24 @@ Resource type
 
 ## AI Usage
 
-- guide setup with a prompt asking to proofcheck our approach and suggest alternatives with pros and cons -> we remain in charge of choosing the next step
-- fix and improve terraform variables collection script
-- debugging help
-- PR review
+| Goal                   | Tool   |
+| :--------------------- | :----- |
+| **Senior guidance** : we submit an approach, the AI suggests alternative implementations with their tradeoffs. | LLM Chatbot (Gemini, Claude) |
+| **Documentation / Crash course** : we ask for a recap over a tools or part of its features. | LLM Chatbot (Gemini, Claude) |
+| **Boilerplate code** : we asked to generate parts of the code, that were not in the immediate scope of the project and/or once we reckoned we would have been able to do it by ourselves : useed for `tfvars.sh` script | Chatbot (Gemini, Claude) |
+| **Debugging help** : sometimes direct questions (why does this occur + console log as a context). Many times. But as we got a better mastery of the concepts and tools, we tried to prompt the AI to provide methods and heuristics instead | 
+| **PR Review** : | Github Copilot | 
+
+We didn't take time to provide a recurrent context for this project, although the quality and rapidity of AI inputs could have largely benefitted from it.
+
+We used a browser extension (PiiBlocker) to prevent leaking personal information.
+
+---
+
+# Challenges met and lessons learned
+
+The subject provided by 42 holds within 1 page. The goal is simple : at first glance, we _merely_ have to automate the deployment of the Inception project, which is part of common core. Yet it is easy to turn it into something bigger than expected:
+
+- many new domains to understand from the subject itself (cloud, devops) each with its concepts and ecosystem
+- one group member is already experienced with supply chain security. It is a very hot topic, so we were both eager to delve on this and make use of Chainguard and other CI tools. We (especially namichel) put extra efforts in generating ad hoc images for the project. A PR 
+- assimilating the information can prove difficult : Ansible alone has more than 3000 module. Some other tools are less documented. We used AI models to skim through documentation, while being aware that they can easily hallucinate about the specifications.
