@@ -8,17 +8,21 @@ contents:
     - https://Kazibuya.github.io/melange-forge
     - ../packages
   packages:
+    - busybox
     - wolfi-baselayout
     - wordpress
     - wordpress-oci-entrypoint
     - healthcheck-fcgi
-    - php-8.3-fpm
-    - php-8.3-mysqlnd
-    - php-8.3-mysqli
+    - php-8.4-fpm
+    - php-8.4-mysqlnd
+    - php-8.4-mysqli
+    - php-8.4-gd
+    - php-8.4-exif
+    - php-8.4-dom
+    - php-8.4-xml
+    - php-8.4-xmlreader
     - wp-cli
     - mariadb-12.2-client
-    - php-8.3-gd
-    - php-8.3-exif
 
 entrypoint:
   command: /usr/local/bin/docker-entrypoint.sh php-fpm
@@ -30,6 +34,8 @@ accounts:
   groups:
     - groupname: nonroot
       gid: 65532
+
+work-dir: /var/www/html
 
 paths:
   - path: /var/www/html

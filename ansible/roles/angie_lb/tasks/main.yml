@@ -1,0 +1,129 @@
+---
+# angie_lb - tasks/main.yml
+
+- name: Set UFW default forward policy to ACCEPT
+  ansible.builtin.lineinfile:
+    path: /etc/default/ufw
+    regexp: '^DEFAULT_FORWARD_POLICY='
+    line: 'DEFAULT_FORWARD_POLICY="ACCEPT"'
+
+- name: Reload UFW
+  community.general.ufw:
+    state: reloaded
+
+# les prochain roles sont technique je vais faire steps par steps:
+# ici: dire au kernel de ne pas drop les paquets qui ne lui sont pas destine on veut que les instances backends ai acces a internet source_dest_check=false n'est pas suffisant cote AWS
+- name: Enable IP forwarding
+  ansible.posix.sysctl:
+    name: net.ipv4.ip_forward
+    value: "1"
+    sysctl_set: true
+    state: present
+    reload: true
+
+# je remplace l'IP des backends par celui du LB pour avoir une reponse notre backend n'est pas publique !
+- name: Enable NAT masquerade
+  ansible.builtin.iptables:
+    table: nat
+    chain: POSTROUTING
+    out_interface: ens5
+    jump: MASQUERADE
+
+
+# regle pour ne pas que UFW DROP les paquet en chain Forward pour tous les 10.0.0.0/16
+- name: Allow FORWARD for VPC traffic outbound
+  ansible.builtin.iptables:
+    chain: FORWARD
+    source: "10.0.0.0/16"
+    jump: ACCEPT
+
+#meme regle que celle du dessus mais dans l'autre sens donc j'accepte que les connexions que j'ai moi meme init
+- name: Allow FORWARD for established connections inbound
+  ansible.builtin.iptables:
+    chain: FORWARD
+    destination: "10.0.0.0/16"
+    ctstate:
+      - ESTABLISHED
+      - RELATED
+    jump: ACCEPT
+
+# je rends ca persistant ;)
+- name: Install iptables-persistent
+  ansible.builtin.apt:
+    name: iptables-persistent
+    state: present
+
+- name: Save iptables rules
+  ansible.builtin.shell: netfilter-persistent save
+  changed_when: true
+
+- name: Ensure config directory exists
+  ansible.builtin.file:
+    path: "{{ angie_lb_conf_dir }}"
+    state: directory
+    mode: "0755"
+    owner: "65532"
+    group: "65532"
+
+- name: Ensure ACME certs directory exists
+  ansible.builtin.file:
+    path: "{{ angie_lb_conf_dir }}/acme"
+    state: directory
+    mode: "0755"
+    owner: "root"
+    group: "root"
+
+- name: Ensure ACME client directory exists
+  ansible.builtin.file:
+    path: "{{ angie_lb_conf_dir }}/acme_client"
+    state: directory
+    mode: "0755"
+    owner: "root"
+    group: "root"
+
+- name: Ensure Angie tmp directory exists
+  ansible.builtin.file:
+    path: "{{ angie_lb_conf_dir }}/tmp"
+    state: directory
+    mode: "0755"
+    owner: "65532"
+    group: "65532"
+
+- name: Deploy Angie LB configuration
+  ansible.builtin.template:
+    src: angie-lb.conf.j2
+    dest: "{{ angie_lb_conf_path }}"
+    mode: "0644"
+    owner: "65532"
+    group: "65532"
+  notify: Reload angie lb
+
+- name: Pull Angie image
+  community.docker.docker_image:
+    name: "{{ angie_lb_image }}"
+    source: pull
+    force_source: true
+
+- name: Run Angie LB container
+  community.docker.docker_container:
+    name: "{{ angie_lb_container_name }}"
+    image: "{{ angie_lb_image }}"
+    state: started
+    restart_policy: unless-stopped
+    user: "0"
+    capabilities:
+      - NET_BIND_SERVICE  
+    security_opts:
+      - no-new-privileges:false
+    volumes:
+      - "{{ angie_lb_conf_path }}:/etc/angie/angie.conf:ro"
+      - "{{ angie_lb_conf_dir }}/acme:/var/lib/angie/acme"
+      - "{{ angie_lb_conf_dir }}/acme_client:/etc/angie/acme_client"
+      - "{{ angie_lb_conf_dir }}/tmp:/var/lib/angie/tmp"
+    ports:
+      #- "{{ angie_lb_http_port }}:80"
+      #- "{{ angie_lb_https_port }}:443"
+      - "80:80"
+      - "443:443"
+    tmpfs:
+      - "/run/angie:uid=0,gid=0"

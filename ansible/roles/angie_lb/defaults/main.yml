@@ -1,0 +1,15 @@
+---
+# angie_lb - defaults/main.yml
+angie_lb_image: "frape/angie:1.11.6-amd64"
+
+angie_lb_container_name: "angie-lb"
+
+angie_lb_conf_dir: "/opt/angie-lb"
+angie_lb_conf_path: "{{ angie_lb_conf_dir }}/angie.conf"
+angie_lb_http_port: 80
+angie_lb_https_port: 443
+angie_lb_backends: >-
+  {{ groups['backends'] | map('extract', hostvars, 'ansible_host') | list }}
+angie_lb_backend_port: 80
+angie_lb_method: "least_conn"
+angie_lb_domain: "{{ global_duckdns_domain | default('localhost') }}.duckdns.org"

@@ -1,6 +1,6 @@
-output "alb_dns" {
-  description = "Public entry point : load balancer"
-  value       = aws_lb.cloudone_alb.dns_name
+output "angie_ip" {
+  description = "instance of angie load balancer"
+  value       = aws_eip.angie_lb.public_ip
 }
 
 output "instances_ips" {

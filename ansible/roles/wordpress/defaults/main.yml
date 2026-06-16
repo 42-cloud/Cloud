@@ -59,6 +59,8 @@ wordpress_wp_cli_exec: >-
   {{ wordpress_wp_container_name }}
   wp --path={{ wordpress_wp_dir_path_dest }}
 wordpress_wp_site_title: "{{ inventory_hostname }}"
+wordpress_wp_theme: "twentytwentythree"
+wordpress_wp_url: "{{ global_wp_siteurl }}"
 
 # Angie
 wordpress_angie_conf_path_host: "{{ wordpress_compose_src }}/angie/angie.conf"

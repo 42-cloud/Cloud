@@ -32,7 +32,7 @@ variable "duck_domains" {
     type = list(string)
 }
 
-variable "duckdns_token_encrypted" {
-  type      = string
-  sensitive = true
+variable "lb_instance_name" {
+  description = "Name of the instance acting as Angie load balancer (must be in instance_names)"
+  type        = string
 }

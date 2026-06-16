@@ -10,7 +10,7 @@ global_admin_users_list:
 
 
 global_domain_name: "{{ global_duckdns_domain }}"
-global_wp_siteurl: "https://{{ global_domain_name }}"
+global_wp_siteurl: "https://{{ global_domain_name }}.duckdns.org"
 
 global_duckdns_token: !vault |
   $ANSIBLE_VAULT;1.2;AES256;cloudone

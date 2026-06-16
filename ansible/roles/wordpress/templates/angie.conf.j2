@@ -1,7 +1,10 @@
 events {}
 
 http {
-	include /etc/angie/prometheus_all.conf;
+	resolver 127.0.0.11 valid=10s;
+	include     /etc/angie/prometheus_all.conf;
+    include     /etc/angie/mime.types;
+
 
     map $http_x_forwarded_proto $fastcgi_https {
         default off;
@@ -34,7 +37,7 @@ http {
 			proxy_set_header Host $host;
 			proxy_set_header X-Real-IP $remote_addr;
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Proto $http_x_forwarded_proto;
+            proxy_set_header X-Forwarded-Proto $scheme;
 		}
 
 		location /status/ {
@@ -54,9 +57,27 @@ http {
         }
 
         location / {
+            add_header X-Debug-Proto $http_x_forwarded_proto always;
+            add_header X-Debug-Scheme $scheme always;
             status_zone wordpress_http;
             try_files $uri $uri/ /index.php?$args;
             add_header X-Debug-Loc "wp_catchall" always;
+        }
+
+        location ~* \.(css|js|woff|woff2|ttf|svg|eot)$ {
+            root {{ wordpress_angie_wp_root | default('/var/www/html') }};
+            access_log off;
+            log_not_found off;
+            expires max;
+            add_header Cache-Control "public, no-transform";
+        }
+
+        location ~* \.(png|jpg|jpeg|gif|ico)$ {
+            root {{ wordpress_angie_wp_root | default('/var/www/html') }};
+            access_log off;
+            log_not_found off;
+            expires 30d;
+            add_header Cache-Control "public, no-transform";
         }
 
         location ~ \.php$ {
@@ -66,11 +87,13 @@ http {
             fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
             fastcgi_param PATH_INFO $fastcgi_path_info;
             fastcgi_pass wordpress:9000;
-            
+
             # If original client used https
             fastcgi_param HTTPS $fastcgi_https;
             fastcgi_param HTTP_X_FORWARDED_PROTO $http_x_forwarded_proto;
             fastcgi_param  HTTPS  $https_from_alb;
+            fastcgi_param SERVER_PORT 443;
+            fastcgi_param REQUEST_URI $request_uri;
         }
 
         location = /favicon.ico {

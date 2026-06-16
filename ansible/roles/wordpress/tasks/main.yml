@@ -8,7 +8,9 @@
     update_cache: true
   become: true
 
-# --- CERT KEYS ---
+# ==============================================================================
+# TLS
+# ==============================================================================
 
 - name: Handle TLS certificates
   delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
@@ -63,380 +65,381 @@
       ansible.builtin.fail:
         msg: "TLS certificate generation failed"
 
-# --- CONFIG AND COMPOSE UP ---
+# ==============================================================================
+# HOST DIRECTORY STRUCTURE
+# ==============================================================================
 
 - name: Ensure target root and subdirectories exist
   ansible.builtin.file:
     path: "{{ wordpress_compose_src }}/{{ item }}"
     state: directory
+    owner: "{{ (wordpress_become_compose | default(true) | bool) | ternary('65532', omit) }}"
+    group: "{{ (wordpress_become_compose | default(true) | bool) | ternary('65532', omit) }}"
     mode: "0775"
   loop:
     - ""
     - mariadb
     - angie
+    - angie/tmp
     - wordpress
   delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
   become: "{{ wordpress_become_compose | default(true) }}"
 
-- name: Copy WordPress Docker build context
-  ansible.builtin.copy:
-    src: "wordpress/"
-    dest: "{{ wordpress_compose_src }}/wordpress/"
-    mode: "0755"
+# ==============================================================================
+# DEPLOY SERVICES COMPONENTS TO HOST
+# ==============================================================================
+
+- name: mariadb pre-launch host configuration
   delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
   become: "{{ wordpress_become_compose | default(true) }}"
-
-- name: Copy static images assets
-  ansible.builtin.copy:
-    src: "wordpress/images/"
-    dest: "{{ wordpress_compose_src }}/wordpress/assets/"
-    # owner: "{{ wordpress_wp_uid }}"
-    # group: "{{ wordpress_wp_gid }}"
-    mode: "0755"
-  delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
-  become: "{{ wordpress_become_compose | default(true) }}"
-
-- name: Check assets
-  ansible.builtin.shell: |
-    ls "{{ wordpress_compose_src }}/wordpress/assets/"
-  register: wordpress_assets
-  delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
-
-- name: Check assets
-  ansible.builtin.debug:
-    msg: "{{ wordpress_assets }}"
-
-- name: Populate db conf
-  ansible.builtin.template:
-    src: mariadb.conf.j2
-    dest: "{{ wordpress_compose_src }}/mariadb/mariadb.conf"
-    mode: "0644"
-  delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
-  become: "{{ wordpress_become_compose | default(true) }}"
-
-- name: Populate init sql
-  ansible.builtin.template:
-    src: init.sql.j2
-    dest: "{{ wordpress_compose_src }}/mariadb/init.sql"
-    mode: "0644"
-  delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
-  become: "{{ wordpress_become_compose | default(true) }}"
-
-- name: Deploy Angie configuration file
-  ansible.builtin.template:
-    src: angie.conf.j2
-    dest: "{{ wordpress_compose_src }}/angie/angie.conf"
-    mode: "0644"
-  # notify: Reload angie
-  delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
-  become: "{{ wordpress_become_compose | default(true) }}"
-
-- name: Deploy wp-config.php
-  ansible.builtin.template:
-    src: wordpress/wp-config-docker.php.j2
-    dest: "{{ wordpress_compose_src }}/wordpress/wp-config.php"
-    mode: "0644"
-  delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
-  become: "{{ wordpress_become_compose | default(true) }}"
-
-- name: Populate docker compose
-  ansible.builtin.template:
-    src: docker-compose.yml.j2
-    dest: "{{ wordpress_compose_src }}/docker-compose.yml"
-    mode: "0640"
-  delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
-  become: "{{ wordpress_become_compose | default(true) }}"
-
-- name: Ensure secrets directory exists
-  ansible.builtin.file:
-    path: "{{ wordpress_compose_src }}/secrets"
-    state: directory
-    mode: '0700'
-  delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
-  become: "{{ wordpress_become_compose | default(true) }}"
-
-- name: Deploy db passwords and secrets"
-  ansible.builtin.copy:
-    content: "{{ item.value | trim }}"
-    dest: "{{ wordpress_compose_src }}/secrets/{{ item.filename }}"
-    # owner: "{{ (wordpress_become_compose | default(true) | bool) | ternary('65532', omit) }}"
-    # group: "{{ (wordpress_become_compose | default(true) | bool) | ternary('65532', omit) }}"
-    owner: root
-    group: root
-    mode: "{{ (wordpress_become_compose | default(true) | bool) | ternary('0444', '0644') }}"
-  loop:
-    - filename: db_password
-      value: "{{ wordpress_db_password }}"
-    - filename: db_root_password
-      value: "{{ wordpress_db_root_password }}"
-    - filename: wp_admin_password
-      value: "{{ wordpress_wp_admin_default_password }}"
-  delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
-  become: "{{ wordpress_become_compose | default(true) }}"
-  no_log: true
-
-# delegated to localhost in test
-- name: Launch docker compose
-  community.docker.docker_compose_v2:
-    project_src: "{{ wordpress_compose_src }}"
-    state: present
-  delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
-  become: "{{ wordpress_become_compose | default(true) }}"
-
-- name: Wait for wordpress container to be healthy
-  ansible.builtin.shell: |
-    docker inspect --format='{{ "{{.State.Health.Status}}" }}' {{ wordpress_wp_container_name }}
-  register: __wordpress_health
-  until: __wordpress_health.stdout == "healthy"
-  retries: 5
-  delay: 10
-  changed_when: false
-  delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
-  become: "{{ wordpress_become_compose | default(true) }}"
-
-# --- WORDPRESS install and customization ---
-
-- name: Check if wp-cli is installed
-  ansible.builtin.shell: |
-    docker exec {{ wordpress_wp_container_name }} which wp
-  register: __wordpress_cli_check
-  changed_when: false
-  delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
-
-- name: Check if wp core is installed
-  ansible.builtin.shell: |
-    {{ wordpress_wp_cli_exec }} core is-installed
-  register: __wordpress_wp_core_is_configured
-  failed_when: false
-  changed_when: false
-  delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
-
-- name: Debug wp core check result
-  ansible.builtin.debug:
-    var: __wordpress_wp_core_is_configured
-
-# - name: Wait for MariaDB port to be accessible from host
-#   ansible.builtin.wait_for:
-#     host: "127.0.0.1"
-#     port: 3306
-#     timeout: 30
-#   delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
-
-- name: Debug wp core check
-  ansible.builtin.debug:
-    msg: "rc={{ __wordpress_wp_core_is_configured.rc }} stderr={{ __wordpress_wp_core_is_configured.stderr }}"
-
-- name: Check if WordPress core files exist
-  ansible.builtin.shell: |
-    docker exec {{ wordpress_wp_container_name }} \
-      test -f {{ wordpress_wp_dir_path_dest }}/wp-includes/version.php
-  register: __wordpress_core_files_present
-  failed_when: false
-  changed_when: false
-  delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
-
-- name: Fix wp-content permissions
-  ansible.builtin.shell: |
-    docker exec --user 0 {{ wordpress_wp_container_name }} sh -c \
-      'find /var/www/html/wp-content -not -path "*/mu-plugins*" | xargs -r chown 65532:65532'
-  failed_when: false
-  delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
-
-- name: Download WordPress core if missing
-  ansible.builtin.shell: |
-    {{ wordpress_wp_cli_exec }} core download \
-      --locale=fr_FR \
-      --skip-content
-  when: __wordpress_core_files_present.rc != 0
-  changed_when: true
-  delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
-
-- name: One-shot configuration
-  when: "(__wordpress_wp_core_is_configured.rc | default(1)) != 0"
-  delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
+  tags: [wp_host_db]
   block:
-    - name: WP-CLI info
-      ansible.builtin.shell: "{{ wordpress_wp_cli_exec }} --info"
-      register: __wp_info
-      changed_when: false
-      delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
-
-    # - name: Check wp-config.php presence
-    #   ansible.builtin.shell: |
-    #     docker exec {{ wordpress_wp_container_name }} sh -c '
-    #       ls -l /var/www/html/wp-config.php || true
-    #     '
-    #   register: __wordpress_config_ls
-    #   changed_when: false
-    #   delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
-
-    - name: DB connectivity from WordPress container
-      ansible.builtin.shell: |
-        {{ wordpress_wp_cli_exec }} db check --debug
-      register: __wordpress_db_check
-      failed_when: false
-      changed_when: false
-      delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
-
-    # - name: Create wp-config.php
-    #   ansible.builtin.shell: |
-    #     docker exec --user 65532 {{ wordpress_wp_container_name }} sh -c '
-    #       wp --path={{ wordpress_wp_dir_path_dest }} config create \
-    #       --dbname="{{ wordpress_db_name }}" \
-    #       --dbuser="{{ wordpress_db_user }}" \
-    #       --dbpass="$(cat /run/secrets/db_password)" \
-    #       --dbhost="{{ wordpress_db_container_name }}:{{ wordpress_db_port }}" \
-    #       --skip-check \
-    #       --force
-    #     '
-    #   register: __wordpress_wp_config_create
-    #   changed_when: __wordpress_wp_config_create.rc == 0
-    #   delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
-      # no_log: true
-
-    - name: Execute wp-core install
-      ansible.builtin.shell: |
-        docker exec --user 65532 {{ wordpress_wp_container_name }} sh -c '
-          wp --path={{ wordpress_wp_dir_path_dest }} core install \
-            --url="{{ wordpress_wp_url | default("https://" + wordpress_duckdns_domain + ".duckdns.org") }}" \
-            --title="{{ wordpress_wp_site_title }}" \
-            --admin_user="{{ wordpress_wp_admin_user }}" \
-            --admin_password="$(cat /run/secrets/wp_admin_password)" \
-            --admin_email="{{ wordpress_wp_admin_email }}" \
-            --skip-email
-        '
-      register: __wordpress_core_install
-      changed_when: __wordpress_core_install.rc == 0
-      # no_log: true
-
-    - name: Check if wp core is installed (post-install)
-      ansible.builtin.shell: |
-        {{ wordpress_wp_cli_exec }} core is-installed
-      register: __wordpress_wp_core_is_configured
-      failed_when: false
-      changed_when: false
-      delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
-
-    # - name: Set HTTPS forwarded proto fix
-    #   ansible.builtin.shell: |
-    #     {{ wordpress_wp_cli_exec }} config set "if(isset(\$_SERVER['HTTP_X_FORWARDED_PROTO'])&&\$_SERVER['HTTP_X_FORWARDED_PROTO']==='https'){\$_SERVER['HTTPS']='on';}" \
-    #       --type=variable --raw
-
-    - name: Install and activate theme
-      ansible.builtin.shell: |
-        {{ wordpress_wp_cli_exec }} theme install extendable --activate
-      changed_when: true
-      when: (__wordpress_wp_core_is_configured.rc | default(1)) == 0
-
-
-    - name: Purge all posts and pages
-      ansible.builtin.shell: |
-        {{ wordpress_wp_cli_exec }} post delete \
-          $({{ wordpress_wp_cli_exec }} post list \
-          --post_type=post --format=ids) --force
-        {{ wordpress_wp_cli_exec }} post delete \
-          $({{ wordpress_wp_cli_exec }} post list \
-          --post_type=page --format=ids) --force
-      failed_when: false
-      changed_when: false
-
-    - name: Create static pages
-      ansible.builtin.shell: |
-        {{ wordpress_wp_cli_exec }} post create \
-          --post_type=page \
-          --post_title="The project" \
-          --post_content="Welcome to our Cloud-1 project page. A project about hardening and automation" \
-          --post_status=publish
-      changed_when: true
-
-    - name: Check if 'tools' category exists
-      ansible.builtin.shell: |
-        {{ wordpress_wp_cli_exec }} term get category tools --by=slug
-      register: wordpress_tools_category_exists
-      changed_when: false
-      failed_when: false
-
-    - name: Create 'tools' category
-      when: wordpress_tools_category_exists.rc != 0
-      ansible.builtin.shell: |
-        {{ wordpress_wp_cli_exec }} term create category "Tools" --slug="tools"
-      changed_when: true
-
-    - name: Create WordPress posts from local HTML files
-      ansible.builtin.shell: |
-        set -o pipefail
-        echo {{ lookup('ansible.builtin.file', 'files/wordpress/posts/' ~ item ~ '.html') | quote }} \
-          | {{ wordpress_wp_cli_exec }} post create \
-          --post_type=post \
-          --post_title="{{ item | capitalize }}" \
-          --post_status=publish \
-          --post_category="tools" \
-          --porcelain
-      args:
-        executable: /bin/bash
-      loop:
-        - ansible
-        - terraform
-        - yaml
-      register: __wordpress_posts_bulk
-      changed_when: true
-
-    - name: Configure WordPress media sizes
-      ansible.builtin.shell: |
-        {{ wordpress_wp_cli_exec }} option update large_size_w 600
-        {{ wordpress_wp_cli_exec }} option update large_size_h 400
-        {{ wordpress_wp_cli_exec }} option update medium_size_w 400
-        {{ wordpress_wp_cli_exec }} option update medium_size_h 300
-      changed_when: true
-
-    - name: Import images from container root and set as Featured Image
-      ansible.builtin.shell: |
-        {{ wordpress_wp_cli_exec }} media import "/tmp/wp-assets/{{ item.filename }}" \
-          --post_id={{ (wp_posts[item.name] | trim) }} \
-          --title="{{ item.display_name }} Logo" \
-          --featured_image
-      vars:
-        wp_posts: "{{ dict(__wordpress_posts_bulk.results | map(attribute='item') \
-          | zip(__wordpress_posts_bulk.results | map(attribute='stdout'))) }}"
-      loop:
-        - { name: "ansible", filename: "ansible.png", display_name: "Ansible" }
-        - { name: "terraform", filename: "terraform.png", display_name: "Terraform" }
-        - { name: "yaml", filename: "yaml.png", display_name: "Yaml" }
-      changed_when: true
+  - name: Populate db conf
+    ansible.builtin.template:
+      src: mariadb.conf.j2
+      dest: "{{ wordpress_compose_src }}/mariadb/mariadb.conf"
+      mode: "0644"
+  - name: Populate init sql
+    ansible.builtin.template:
+      src: init.sql.j2
+      dest: "{{ wordpress_compose_src }}/mariadb/init.sql"
+      mode: "0644"
   rescue:
-    - name: Fail explicitly if wordpress configuration fails
-      ansible.builtin.fail:
-        msg: "Wordpress configuration failed"
-
-- name: Idempotent configuration
-  delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
-  block:
-    # - name: Disable file editing from Wordpress admin dashboard
-    #   ansible.builtin.shell: |
-    #     {{ wordpress_wp_cli_exec }} config set DISALLOW_FILE_EDIT true --raw
-    #   changed_when: true
-    #   when: (__wordpress_wp_core_is_configured.rc | default(1)) == 0
-
-    # Otherwise would be overwritten as instances share the same bdd
-    - name: Overload site name in wp-config.php
-      ansible.builtin.shell: |
-        {{ wordpress_wp_cli_exec }} config set WORDPRESS_SITE_TITLE "{{ inventory_hostname }}" --type=constant
-      changed_when: true
-      when: (__wordpress_wp_core_is_configured.rc | default(1)) == 0
-
-    - name: Ensure mu-plugins directory exists
-      ansible.builtin.file:
-        path: "{{ wordpress_compose_src }}/wordpress/wp-content/mu-plugins"
-        state: directory
-        mode: "0755"
-
-    - name: Deploy must use plugin for dynamic title
-      ansible.builtin.template:
-        src: wordpress/mu-plugins/instance-title.php.j2
-        dest: "{{ wordpress_compose_src }}/wordpress/wp-content/mu-plugins/instance-title.php"
-        mode: "0644"
-
-  rescue:
-  - name: Fail explicitly if wordpress configuration fails
+  - name: Fail explicitly if db host configuration fails
     ansible.builtin.fail:
-      msg: "Wordpress configuration failed"
+      msg: "host configuration for db service failed"
+
+- name: wordpress pre-launch host configuration
+  delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
+  become: "{{ wordpress_become_compose | default(true) }}"
+  tags: [wp_host_wp]
+  block:
+  - name: Copy WordPress Docker build context
+    ansible.builtin.copy:
+      src: "wordpress/"
+      dest: "{{ wordpress_compose_src }}/wordpress/"
+      mode: "0755"
+  - name: Copy static images assets
+    ansible.builtin.copy:
+      src: "wordpress/images/"
+      dest: "{{ wordpress_compose_src }}/wordpress/assets/"
+      mode: "0755"
+  - name: Get assets
+    ansible.builtin.shell: |
+      ls "{{ wordpress_compose_src }}/wordpress/assets/"
+    register: wordpress_assets
+    changed_when: false
+  - name: Check assets
+    ansible.builtin.debug:
+      msg: "{{ wordpress_assets }}"
+  - name: Deploy wp-config.php
+    ansible.builtin.template:
+      src: wordpress/wp-config-docker.php.j2
+      dest: "{{ wordpress_compose_src }}/wordpress/wp-config.php"
+      mode: "0644"
+  - name: Ensure mu-plugins directory exists
+    ansible.builtin.file:
+      path: "{{ wordpress_compose_src }}/wordpress/wp-content/mu-plugins"
+      state: directory
+      mode: "0755"
+  - name: Deploy must use plugin for dynamic title
+    ansible.builtin.template:
+      src: wordpress/mu-plugins/instance-title.php.j2
+      dest: "{{ wordpress_compose_src }}/wordpress/wp-content/mu-plugins/instance-title.php"
+      mode: "0644"
+  - name: Deploy must use plugin for devsecops styles
+    ansible.builtin.template:
+      src: "wordpress/mu-plugins/devsecops-style.php.j2"
+      dest: "{{ wordpress_compose_src }}/wordpress/wp-content/mu-plugins/devsecops-style.php"
+      mode: "0644"
+  - name: Deploy devsecops card styles
+    ansible.builtin.copy:
+      src: "wordpress/devsecops-cards.css"
+      dest: "{{ wordpress_compose_src }}/wordpress/wp-content/mu-plugins/devsecops-cards.css"
+      mode: "0644"
+
+  rescue:
+  - name: Fail explicitly if worpress host configuration fails
+    ansible.builtin.fail:
+      msg: "host configuration for wordpress service failed"
+
+- name: angie pre-launch host configuration
+  delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
+  become: "{{ wordpress_become_compose | default(true) }}"
+  tags: [wp_host_angie]
+  block:
+  - name: Deploy Angie configuration file
+    ansible.builtin.template:
+      src: angie.conf.j2
+      dest: "{{ wordpress_compose_src }}/angie/angie.conf"
+      mode: "0644"
+    notify: Reload angie
+  rescue:
+  - name: Fail explicitly if angie host configuration fails
+    ansible.builtin.fail:
+      msg: "host configuration for angie service failed"
+
+# ==============================================================================
+# SECRETS AND DOCKER
+# ==============================================================================
+
+- name: secrets and compose up
+  delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
+  become: "{{ wordpress_become_compose | default(true) }}"
+  tags: [wp_host_compose]
+  block:
+  - name: Populate docker compose
+    ansible.builtin.template:
+      src: docker-compose.yml.j2
+      dest: "{{ wordpress_compose_src }}/docker-compose.yml"
+      mode: "0640"
+  - name: Ensure secrets directory exists
+    ansible.builtin.file:
+      path: "{{ wordpress_compose_src }}/secrets"
+      state: directory
+      mode: '0700'
+  - name: Deploy db passwords and secrets"
+    ansible.builtin.copy:
+      content: "{{ item.value | trim }}"
+      dest: "{{ wordpress_compose_src }}/secrets/{{ item.filename }}"
+      owner: "{{ (wordpress_become_compose | default(true) | bool) | ternary('65532', omit) }}"
+      group: "{{ (wordpress_become_compose | default(true) | bool) | ternary('65532', omit) }}"
+      mode: "{{ (wordpress_become_compose | default(true) | bool) | ternary('0444', '0644') }}"
+    loop:
+      - filename: db_password
+        value: "{{ wordpress_db_password }}"
+      - filename: db_root_password
+        value: "{{ wordpress_db_root_password }}"
+      - filename: wp_admin_password
+        value: "{{ wordpress_wp_admin_default_password }}"
+    # no_log: true
+
+    # delegated to localhost in test
+  - name: Launch docker compose
+    community.docker.docker_compose_v2:
+      project_src: "{{ wordpress_compose_src }}"
+      state: present
+  - name: Wait for wordpress container to be healthy
+    ansible.builtin.shell: |
+      docker inspect --format='{{ "{{.State.Health.Status}}" }}' {{ wordpress_wp_container_name }}
+    register: __wordpress_health
+    until: __wordpress_health.stdout == "healthy"
+    retries: 5
+    delay: 10
+    changed_when: false
+  rescue:
+  - name: Fail explicitly if secrets or compose fails
+    ansible.builtin.fail:
+      msg: "compose failed"
+
+# ==============================================================================
+# WORDPRESS PROVISIONNING
+# ==============================================================================
+- name: WordPress - Post-launch configuration and content seeding
+  delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
+  become: "{{ wordpress_become_compose | default(true) }}"
+  tags: [wordpress_setup]
+  block:
+  - name: Seed WP themes/plugins into persistent volume if missing
+    ansible.builtin.shell: |
+      set -e
+      docker exec wordpress sh -lc '
+        if [ ! -f /var/www/html/wp-content/themes/twentytwentyfive/style.css ]; then
+          echo "Seeding themes/plugins into /var/www/html/wp-content ..."
+          mkdir -p /var/www/html/wp-content/themes /var/www/html/wp-content/plugins
+          cp -a /usr/src/wordpress/wp-content/themes/. /var/www/html/wp-content/themes/
+          cp -a /usr/src/wordpress/wp-content/plugins/. /var/www/html/wp-content/plugins/
+        fi
+      '
+    changed_when: false
+
+  - name: Fix wp-content permissions
+    ansible.builtin.shell: |
+      docker exec --user 0 {{ wordpress_wp_container_name }} sh -c \
+        'find /var/www/html/wp-content -not -path "*/mu-plugins*" | xargs -r chown 65532:65532'
+    failed_when: false
+
+  - name: Get wp core installation state
+    ansible.builtin.shell: |
+      {{ wordpress_wp_cli_exec }} core is-installed
+    register: __wordpress_post_install_check
+    failed_when: false
+    changed_when: false
+
+  - name: DEBUG Display wp core installation state
+    ansible.builtin.debug:
+      msg: "rc={{ __wordpress_post_install_check.rc }} stderr={{ __wordpress_post_install_check.stderr }}"
+
+  - name: Check if WordPress core files exist
+    ansible.builtin.shell: |
+      docker exec {{ wordpress_wp_container_name }} \
+        test -f {{ wordpress_wp_dir_path_dest }}/wp-includes/version.php
+    register: __wordpress_core_files_present
+    failed_when: false
+    changed_when: false
+
+  - name: Download WordPress core if missing
+    ansible.builtin.shell: |
+      {{ wordpress_wp_cli_exec }} core download \
+        --locale=fr_FR \
+        --skip-content
+    when: __wordpress_core_files_present.rc != 0
+    changed_when: true
+
+  - name: Initial configuration tasks
+    when: "(__wordpress_post_install_check.rc | default(1)) != 0"
+    block:
+      - name: Execute wp-core install
+        ansible.builtin.shell: |
+          docker exec --user 65532 {{ wordpress_wp_container_name }} sh -c '
+            wp --path={{ wordpress_wp_dir_path_dest }} core install \
+              --url="{{ wordpress_wp_url }}" \
+              --title="{{ wordpress_wp_site_title }}" \
+              --admin_user="{{ wordpress_wp_admin_user }}" \
+              --admin_password="$(cat /run/secrets/wp_admin_password)" \
+              --admin_email="{{ wordpress_wp_admin_email }}" \
+              --skip-email
+          '
+        changed_when: true
+        # no_log: true
+
+      - name: Install and activate theme
+        ansible.builtin.shell: |
+          {{ wordpress_wp_cli_exec }} theme install {{ wordpress_wp_theme }} --activate
+        changed_when: true
+    rescue:
+    - name: Fail explicitly if initial configuration fails
+      ansible.builtin.fail:
+        msg: "wordpress initial configuration failed"
+
+  - name: Dynamic content provisioning tasks
+    when: "(__wordpress_post_install_check.rc | default(1)) != 0 or (wordpress_force_setup | default(false) | bool)"
+    tags: [wordpress_content]
+    block:
+
+      - name: Idempotent - Force sync siteurl and home variables
+        ansible.builtin.shell: |
+          docker exec --user {{ global_apko_uid | default('65532') }} wordpress wp --path={{ global_wp_dir | default('/var/www/html') }} option update siteurl "{{ global_wp_siteurl }}"
+          docker exec --user {{ global_apko_uid | default('65532') }} wordpress wp --path={{ global_wp_dir | default('/var/www/html') }} option update home "{{ global_wp_siteurl }}"
+        changed_when: true
+        tags: [wordpress_url]
+
+      - name: Purge default posts and pages
+        ansible.builtin.shell: |
+          {{ wordpress_wp_cli_exec }} post delete $({{ wordpress_wp_cli_exec }} post list --post_type=post --format=ids) --force
+          {{ wordpress_wp_cli_exec }} post delete $({{ wordpress_wp_cli_exec }} post list --post_type=page --format=ids) --force
+        failed_when: false
+        changed_when: true
+
+      - name: Clean up default navigation menus and unwanted elements
+        ansible.builtin.shell: |
+          {{ wordpress_wp_cli_exec }} menu delete $({{ wordpress_wp_cli_exec }} menu list --format=ids) 2>/dev/null || true          
+          {{ wordpress_wp_cli_exec }} widget reset --all
+        failed_when: false
+        changed_when: true
+
+      - name: DEBUG Check assets are visible inside container
+        ansible.builtin.shell: |
+          docker exec {{ wordpress_wp_container_name }} sh -lc 'ls -la /tmp/wp-assets && test -f /tmp/wp-assets/{{ item.filename }}'
+        loop:
+          - { filename: "dan-lorenc.jpeg" }
+          - { filename: "solomon-hykes.png" }
+          - { filename: "mitchell-hashimoto.png" }
+          - { filename: "stephane-robert.png" }
+        changed_when: false
+        become: "{{ wordpress_become_compose | default(true) }}"
+
+      - name: Create static page
+        ansible.builtin.shell: |
+          {{ wordpress_wp_cli_exec }} post create \
+            --post_type=page \
+            --post_title="The project" \
+            --post_content="Welcome to our Cloud-1 project page. A project about hardening and automation" \
+            --post_status=publish
+        changed_when: true
+
+      - name: Create 'heroes' category if missing
+        ansible.builtin.shell: |
+          if ! {{ wordpress_wp_cli_exec }} term get category heroes --by=slug >/dev/null 2>&1; then
+            {{ wordpress_wp_cli_exec }} term create category "heroes" --slug="heroes"
+          fi
+        changed_when: true
+
+      # uses cat > /tmp -> post create -> rm
+      - name: Create WordPress posts from local HTML files safely
+        ansible.builtin.shell: |
+          docker exec -i {{ wordpress_wp_container_name }} sh -c 'cat > /tmp/{{ item.id }}.html' << 'EOF'
+          {{ lookup('ansible.builtin.file', 'files/wordpress/posts/' ~ item.id ~ '.html') | trim }}
+          EOF
+          {{ wordpress_wp_cli_exec }} post create "/tmp/{{ item.id }}.html" \
+            --post_type=post \
+            --post_title="{{ item.title }}" \
+            --post_status=publish \
+            --post_category="heroes" \
+            --porcelain
+          docker exec {{ wordpress_wp_container_name }} rm -f /tmp/{{ item.id }}.html
+        loop:
+          - { title: "Solomon Hykes", id: solomon-hykes }
+          - { title: "Mitchell Hashimoto", id: mitchell-hashimoto }
+          - { title: "Dan Lorenc", id: dan-lorenc }
+          - { title: "Stéphane Robert", id: stephane-robert }
+        register: __wordpress_posts_bulk
+        changed_when: true
+
+      - name: Configure WordPress media sizes
+        ansible.builtin.shell: |
+          {{ wordpress_wp_cli_exec }} option update large_size_w 600
+          {{ wordpress_wp_cli_exec }} option update large_size_h 400
+        changed_when: true
+
+      - name: Import images from container root and set as Featured Image
+        ansible.builtin.shell: |
+          {{ wordpress_wp_cli_exec }} media import "/tmp/wp-assets/{{ item.filename }}" \
+            --post_id={{ (wp_posts[item.name] | trim) }} \
+            --title="{{ item.display_name }} Logo" \
+            --featured_image
+        vars:
+          wp_posts: "{{ dict(__wordpress_posts_bulk.results | map(attribute='item.id') \
+            | zip(__wordpress_posts_bulk.results | map(attribute='stdout'))) }}"
+        loop:
+          - { name: "solomon-hykes", filename: "solomon-hykes.png", display_name: "Solomon Hykes" }
+          - { name: "mitchell-hashimoto", filename: "mitchell-hashimoto.png", display_name: "Mitchell Hashimoto" }
+          - { name: "dan-lorenc", filename: "dan-lorenc.jpeg", display_name: "Dan Lorenc" }
+          - { name: "stephane-robert", filename: "stephane-robert.png", display_name: "Stephane Robert" }
+        changed_when: true
+    rescue:
+      - name: Fail explicitly if content provisioning fails
+        ansible.builtin.fail:
+          msg: "wordpress content provisioning failed"
+
+  - name: Idempotent - Configure WordPress Permalinks structure to postname
+    ansible.builtin.shell: |
+      {{ wordpress_wp_cli_exec }} rewrite structure '/%category%/%postname%/' --hard
+      {{ wordpress_wp_cli_exec }} rewrite flush --hard
+    changed_when: true
+  
+  rescue:
+    - name: Fail explicitly if wordpress initialization fails
+      ansible.builtin.fail:
+        msg: "Wordpress instance initialization failed"
+
+# ==============================================================================
+# SMOKE TEST
+# ==============================================================================
+
+- name: SMOKE TEST - Target validation
+  tags: [wordpress_setup, smoke_test]
+  block:
+    - name: Execute web response verification
+      ansible.builtin.uri:
+        url: "{{ global_wp_siteurl }}"
+        method: GET
+        validate_certs: true
+        return_content: true
+      register: __wordpress_smoke_test
+      failed_when: 
+       - __wordpress_smoke_test.status != 200
+       - "'Welcome to' not in __wordpress_smoke_test.content"
+      delegate_to: localhost
+      become: false
+

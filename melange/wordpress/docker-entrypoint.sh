@@ -13,7 +13,7 @@ export WP_CLI_CONFIG_PATH="${WP_CLI_CONFIG_PATH:-/var/www/.wp-cli/config.yml}"
 mkdir -p "$WP_CLI_CACHE_DIR"
 # ── 
 
-if [[ "$1" == apache2* ]] || [ "$1" = 'php-fpm' ]; then
+if [[ "$1" == apache2* ]] || [[ "$1" == *php-fpm* ]]; then
 	uid="$(id -u)"
 	gid="$(id -g)"
 	if [ "$uid" = '0' ]; then
@@ -65,7 +65,7 @@ if [[ "$1" == apache2* ]] || [ "$1" = 'php-fpm' ]; then
 			contentPath="${contentPath%/}"
 			[ -e "$contentPath" ] || continue
 			contentPath="${contentPath#/usr/src/wordpress/}" # "wp-content/plugins/akismet", etc.
-			if [ -e "$PWD/$contentPath" ]; then
+            if [ -e "$PWD/$contentPath" ] && [ -n "$(ls -A "$PWD/$contentPath" 2>/dev/null | grep -v '^index\.php$')" ]; then
 				echo >&2 "WARNING: '$PWD/$contentPath' exists! (not copying the WordPress version)"
 				sourceTarArgs+=( --exclude "./$contentPath" )
 			fi
