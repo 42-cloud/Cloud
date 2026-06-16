@@ -115,7 +115,7 @@
           - "'Error establishing a database connection' not in __wordpress_page_content.stdout"
         fail_msg: wordpress container cannot communicate with DB
     - name: Get Wordpress site url
-      ansible.builtin.shell: >-
+      ansible.builtin.command: >-
         docker exec
         --user {{ wordpress_wp_uid }}
         --workdir {{ wordpress_wp_dir_path_dest }}

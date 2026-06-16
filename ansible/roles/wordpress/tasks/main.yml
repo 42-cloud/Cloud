@@ -76,7 +76,7 @@
 # ==============================================================================
 # DEPLOY SERVICES COMPONENTS TO HOST
 # ==============================================================================
-- name: mariadb pre-launch host configuration
+- name: Mariadb pre-launch host configuration
   delegate_to: '{{ wordpress_delegate_host | default(inventory_hostname) }}'
   become: '{{ wordpress_become_compose | default(true) }}'
   tags: [wp_host_db]
@@ -95,7 +95,7 @@
     - name: Fail explicitly if db host configuration fails
       ansible.builtin.fail:
         msg: host configuration for db service failed
-- name: wordpress pre-launch host configuration
+- name: Wordpress pre-launch host configuration
   delegate_to: '{{ wordpress_delegate_host | default(inventory_hostname) }}'
   become: '{{ wordpress_become_compose | default(true) }}'
   tags: [wp_host_wp]
@@ -147,7 +147,7 @@
     - name: Fail explicitly if worpress host configuration fails
       ansible.builtin.fail:
         msg: host configuration for wordpress service failed
-- name: angie pre-launch host configuration
+- name: Angie pre-launch host configuration
   delegate_to: '{{ wordpress_delegate_host | default(inventory_hostname) }}'
   become: '{{ wordpress_become_compose | default(true) }}'
   tags: [wp_host_angie]
@@ -166,7 +166,7 @@
 # ==============================================================================
 # SECRETS AND DOCKER
 # ==============================================================================
-- name: secrets and compose up
+- name: Secrets and compose up
   delegate_to: '{{ wordpress_delegate_host | default(inventory_hostname) }}'
   become: '{{ wordpress_become_compose | default(true) }}'
   tags: [wp_host_compose]
@@ -237,9 +237,11 @@
       changed_when: false
     - name: Fix wp-content permissions
       ansible.builtin.shell: |
+        set -o pipefail
         docker exec --user 0 {{ wordpress_wp_container_name }} sh -c \
           'find /var/www/html/wp-content -not -path "*/mu-plugins*" | xargs -r chown 65532:65532'
       failed_when: false
+      changed_when: true
     - name: Get wp core installation state
       ansible.builtin.shell: |
         {{ wordpress_wp_cli_exec }} core is-installed
