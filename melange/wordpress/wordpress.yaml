@@ -7,7 +7,10 @@ package:
     - license: GPL-2.0-only
   dependencies:
     runtime:
-      - php-8.3
+      - php-8.4
+      - php-8.4-dom
+      - php-8.4-xml
+      - php-8.4-xmlreader
 
 environment:
   contents:
@@ -26,9 +29,10 @@ pipeline:
       repository: https://github.com/wordpress/wordpress
       tag: ${{package.version}}
       expected-commit: 97b7f62adb5d8864c3fac554bc7182d9fd754a41
-      destination: "${{targets.destdir}}/usr/src/wordpress"
+      destination: "${{targets.destdir}}/var/www/html"
   - runs: |
-      cp wp-config-docker.php "${{targets.destdir}}/usr/src/wordpress/"
+      cp wp-config-docker.php "${{targets.destdir}}/var/www/html"
+      chown -R 65532:65532 "${{targets.destdir}}/var/www/html"
 
 subpackages:
   - name: ${{package.name}}-oci-entrypoint
