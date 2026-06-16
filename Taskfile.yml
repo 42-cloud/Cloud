@@ -10,7 +10,7 @@ vars:
   NC: "\\033[0m"
   VOLUME: ""
   PROFILE: ""
-  DOCKER_USER: namichel
+  DOCKER_USER: frape
 
 tasks:
   default:
@@ -42,42 +42,42 @@ tasks:
 # ──────────────────────────────────────────
 # TERRAFORM
 # ──────────────────────────────────────────
-  terraform:fmt:
+  tf:fmt:
     desc: Terraform fmt
     cmds:
       - |
         echo -e "{{ .PPL }}Process terraform fmt...{{ .NC }}"
         cd terraform && terraform fmt
     silent: true
-  terraform:init:
+  tf:init:
     desc: Terraform init
     cmds:
       - |
         echo -e "{{ .PPL }}Process terraform init...{{ .NC }}"
         cd terraform && terraform init
     silent: true
-  terraform:plan:
+  tf:plan:
     desc: Terraform plan
     cmds:
       - |
         echo -e "{{ .PPL }}Process terraform plan...{{ .NC }}"
         cd terraform && terraform plan
     silent: true
-  terraform:apply:
+  tf:apply:
     desc: Terraform apply
     cmds:
       - |
         echo -e "{{ .PPL }}Process terraform apply...{{ .NC }}"
         cd terraform && terraform apply
     silent: true
-  terraform:output:
+  tf:output:
     desc: Terraform output
     cmds:
       - |
         echo -e "{{ .PPL }}Process terraform output...{{ .NC }}"
         cd terraform && terraform output
     silent: true
-  terraform:down:
+  tf:down:
     desc: Terraform destroy
     cmds:
       - |
@@ -87,14 +87,14 @@ tasks:
         echo -e "{{ .PPL }}Rm inventory...{{ .NC }}"
         rm -f ansible/inventory/inventory.ini
     silent: true
-  terraform:show:
+  tf:show:
     desc: Terraform show
     cmds:
       - |
         echo -e "{{ .PPL }}Process terraform show...{{ .NC }}"
         cd terraform && terraform show
     silent: true
-  terraform:tfvars:
+  tf:tfvars:
     desc: Create a terraform.tfvars
     cmds:
       - bash scripts/tfvars.sh
@@ -176,6 +176,15 @@ tasks:
       - ansible-playbook -i inventory/inventory.ini site.yml --vault-id cloudone@{{.TASKFILE_DIR}}/.vault_pass_cloudone
         --tags angie_lb --diff
 
+  ansible:tag:
+    desc: "Run a specific tag"
+    dir: "{{.TASKFILE_DIR}}/ansible"
+    vars:
+      TAG: '{{.TAG | default "wordpress_setup"}}'
+    cmds:
+      - ansible-playbook -i inventory/inventory.ini site.yml --vault-id cloudone@{{.TASKFILE_DIR}}/.vault_pass_cloudone -e wordpress_force_setup=true --tags {{.TAG}}
+
+
   # ──────────────────────────────────────────
   # DOCKER COMPOSE
   # ──────────────────────────────────────────
@@ -233,7 +242,7 @@ tasks:
     vars:
       SERVICE: '{{.SERVICE}}'
     cmds:
-      - rm -rf packages
+      - rm -rf ../packages/{{.ARCH | default "x86_64"}}/*
       - >
         docker run --rm 
         -v {{.USER_WORKING_DIR}}/melange:/work 
@@ -324,7 +333,7 @@ tasks:
     internal: true
     cmds:
       # - docker tag {{.SERVICE}}:latest-amd64 {{.SERVICE}}:{{.TAG}}-amd64
-      - docker tag {{.SERVICE}}:{{.TAG}}-amd64 {{.DOCKER_USER}}/{{.SERVICE}}:{{.TAG}}-amd64
+      - docker tag {{.SERVICE}}:latest-amd64 {{.DOCKER_USER}}/{{.SERVICE}}:{{.TAG}}-amd64
       - docker push {{.DOCKER_USER}}/{{.SERVICE}}:{{.TAG}}-amd64
 
   push:angie:

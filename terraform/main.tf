@@ -16,7 +16,7 @@ resource "aws_instance" "cloudone" {
   iam_instance_profile   = aws_iam_instance_profile.ec2_profile.name
   vpc_security_group_ids = each.value == var.lb_instance_name ? [aws_security_group.angie_lb.id] : [aws_security_group.backends.id]
 
-  subnet_id = each.value == var.lb_instance_name ? aws_subnet.cloudone_a.id : aws_subnet.cloudone_b.id
+  subnet_id = each.value == var.lb_instance_name ? aws_subnet.cloudone_public.id : aws_subnet.cloudone_backend.id
 
   source_dest_check = each.value == var.lb_instance_name ? false : true
 

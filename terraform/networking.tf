@@ -129,25 +129,25 @@ resource "aws_iam_role_policy" "cloudone" {
 # NETWORK & ROUTING
 # ==========================================
 
-resource "aws_subnet" "cloudone_a" {
+resource "aws_subnet" "cloudone_public" {
   # checkov:skip=CKV_AWS_130: use public IP for Ansible instead of bastion
   vpc_id                  = aws_vpc.cloudone.id
   cidr_block              = "10.0.1.0/24"
   availability_zone       = "${var.aws_region}a"
   map_public_ip_on_launch = false
   tags = {
-    Name = "${var.project_name}-subnet-a"
+    Name = "${var.project_name}-subnet-pub"
   }
 }
 
-resource "aws_subnet" "cloudone_b" {
+resource "aws_subnet" "cloudone_backend" {
   # checkov:skip=CKV_AWS_130: use public IP for Ansible instead of bastion
   vpc_id                  = aws_vpc.cloudone.id
   cidr_block              = "10.0.2.0/24"
   availability_zone       = "${var.aws_region}b"
   map_public_ip_on_launch = false
   tags = {
-    Name = "${var.project_name}-subnet-b"
+    Name = "${var.project_name}-subnet-back"
   }
 }
 
@@ -172,23 +172,22 @@ resource "aws_route_table" "lb" {
 
 resource "aws_route_table" "backends" {
   vpc_id = aws_vpc.cloudone.id
+  tags = { Name = "${var.project_name}-backends-rt" }
+}
 
-  route {
-    cidr_block           = "0.0.0.0/0"
-    network_interface_id = aws_instance.cloudone[var.lb_instance_name].primary_network_interface_id
-  }
-  tags = {
-    Name = "${var.project_name}-backends-rt"
-  }
+resource "aws_route" "backends_nat" {
+  route_table_id         = aws_route_table.backends.id
+  destination_cidr_block = "0.0.0.0/0"
+  network_interface_id   = aws_instance.cloudone[var.lb_instance_name].primary_network_interface_id
 }
 
 resource "aws_route_table_association" "lb_a" {
-  subnet_id      = aws_subnet.cloudone_a.id
+  subnet_id      = aws_subnet.cloudone_public.id
   route_table_id = aws_route_table.lb.id
 }
 
 resource "aws_route_table_association" "backends_b" {
-  subnet_id      = aws_subnet.cloudone_b.id
+  subnet_id      = aws_subnet.cloudone_backend.id
   route_table_id = aws_route_table.backends.id
 }
 
@@ -208,6 +207,15 @@ resource "aws_security_group" "angie_lb" {
   description = "Security group for Angie load balancer: public facing"
   vpc_id      = aws_vpc.cloudone.id
 
+  
+  ingress {
+    description = "Allow private subnet traffic to route out via NAT"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["10.0.0.0/16"]
+  }
+ 
   ingress {
     description = "HTTP public traffic"
     from_port   = 80
@@ -287,13 +295,13 @@ resource "aws_security_group" "backends" {
     security_groups = [aws_security_group.angie_lb.id]
   }
 
-  ingress {
-    description = "SSH access for Ansible"
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = [var.ip_host]
-  }
+#   ingress {
+#     description = "SSH access for Ansible"
+#     from_port   = 22
+#     to_port     = 22
+#     protocol    = "tcp"
+#     cidr_blocks = [var.ip_host]
+#   }
 
   ingress {
     description     = "SSH from LB for ProxyJump"
