@@ -411,7 +411,7 @@
   block:
     - name: Execute web response verification
       ansible.builtin.uri:
-        url: '{{ global_wp_siteurl }}'
+        url: "{{ global_wp_siteurl }}"
         method: GET
         validate_certs: true
         return_content: true
@@ -421,3 +421,10 @@
         - "'Welcome to' not in __wordpress_smoke_test.content"
       delegate_to: localhost
       become: false
+  rescue:
+    - name: Fail explicitly if smoke test fails
+      ansible.builtin.fail:
+        msg: >-
+          Smoke test failed - {{ global_wp_siteurl }}
+          returned {{ __wordpress_smoke_test.status | default('no response') }}
+

@@ -202,7 +202,8 @@ resource "aws_default_security_group" "default" {
 }
 
 resource "aws_security_group" "angie_lb" {
-  # checkov:skip=CKV_AWS_277: attached to LB EC2 instance in main.tf
+  # checkov:skip=CKV2_AWS_5:Attached to EC2 instances via vpc_security_group_ids in main.tf
+  # checkov:skip=CKV_AWS_260:Port 80 must be open for Let's Encrypt ACME HTTP-01 challenge and certificate renewal
   name        = "${var.project_name}-lb-sg"
   description = "Security group for Angie load balancer: public facing"
   vpc_id      = aws_vpc.cloudone.id
@@ -282,7 +283,7 @@ resource "aws_security_group" "angie_lb" {
 }
 
 resource "aws_security_group" "backends" {
-  # checkov:skip=CKV_AWS_277: attached to backend EC2 instances in main.tf
+  # checkov:skip=CKV2_AWS_5:Attached to EC2 instances via vpc_security_group_ids in main.tf
   name        = "${var.project_name}-backends-sg"
   description = "Security group for backend instances: only reachable from Angie LB"
   vpc_id      = aws_vpc.cloudone.id
@@ -294,14 +295,6 @@ resource "aws_security_group" "backends" {
     protocol        = "tcp"
     security_groups = [aws_security_group.angie_lb.id]
   }
-
-#   ingress {
-#     description = "SSH access for Ansible"
-#     from_port   = 22
-#     to_port     = 22
-#     protocol    = "tcp"
-#     cidr_blocks = [var.ip_host]
-#   }
 
   ingress {
     description     = "SSH from LB for ProxyJump"
