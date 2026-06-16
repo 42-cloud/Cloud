@@ -1,8 +1,7 @@
 ---
 # wordpress - defaults/main.yml
-wordpress_apko_uid: '{{ global_apko_uid | default(65532) }}'
-wordpress_apko_gid: '{{ global_apko_gid | default(65532) }}'
-wordpress_project_name: cloudone
+
+wordpress_project_name: "cloudone"
 wordpress_domain_name: "{{ global_domain_name | default('cloud1.duckdns.org') }}"
 wordpress_project_path: "{{ global_project_path | default('/opt/cloud-1') }}"
 
@@ -46,19 +45,13 @@ wordpress_wp_gid: '{{ wordpress_apko_gid }}'
 wordpress_wp_dir_path_dest: "{{ global_wp_dir | default('/var/www/html') }}"
 wordpress_wp_admin_user: wp-admin
 wordpress_wp_admin_default_password: "{{ global_wp_admin_default_password | default('dev_wp_admin_pass_fallback') }}"
-wordpress_wp_admin_email: admin@cloud.one
-wordpress_wp_mem_limit: 256m
-wordpress_wp_mem_res_limit: 128m
-wordpress_wp_container_name: wordpress
-  # --workdir {{ wordpress_wp_dir_path_dest }}
-wordpress_wp_cli_exec: >-
-  {{ wordpress_docker_cmd | default('docker') }} exec
-  --user {{ wordpress_apko_uid | int }}
-  {{ wordpress_wp_container_name }}
-  wp --path={{ wordpress_wp_dir_path_dest }}
-wordpress_wp_site_title: '{{ inventory_hostname }}'
-wordpress_wp_theme: twentytwentythree
-wordpress_wp_url: '{{ global_wp_siteurl }}'
+wordpress_wp_admin_email: "admin@cloud.one"
+wordpress_wp_mem_limit: "256m"
+wordpress_wp_mem_res_limit: "128m"
+wordpress_wp_container_name: "wordpress"
+wordpress_wp_site_title: "{{ inventory_hostname }}"
+wordpress_wp_theme: "twentytwentythree"
+wordpress_wp_url: "{{ global_wp_siteurl }}"
 
 # Angie
 wordpress_angie_conf_path_host: '{{ wordpress_compose_src }}/angie/angie.conf'
