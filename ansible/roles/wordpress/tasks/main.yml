@@ -427,4 +427,3 @@
         msg: >-
           Smoke test failed - {{ global_wp_siteurl }}
           returned {{ __wordpress_smoke_test.status | default('no response') }}
-
