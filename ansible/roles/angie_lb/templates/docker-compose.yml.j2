@@ -1,0 +1,51 @@
+name: "{{ angie_lb_project_name }}"
+
+services:
+  step-ca:
+    image: "{{ step_ca_image }}"
+    container_name: "{{ step_ca_container_name }}"
+    restart: unless-stopped
+    volumes:
+      - "{{ step_ca_home }}:/home/step"
+      - "{{ angie_lb_conf_dir }}/secrets/step_password:/run/secrets/step_password:ro"
+    environment:
+      STEPPATH: /home/step
+    networks:
+      - lb-internal
+    healthcheck:
+      test:
+        - "CMD"
+        - "step"
+        - "ca"
+        - "health"
+        - "--ca-url=https://localhost:9000"
+        - "--root=/home/step/certs/root_ca.crt"
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  angie-lb:
+    image: "{{ angie_lb_image }}"
+    container_name: "{{ angie_lb_container_name }}"
+    restart: unless-stopped
+    volumes:
+      - "{{ angie_lb_conf_path }}:/etc/angie/angie.conf:ro"
+      - "{{ angie_lb_conf_dir }}/acme:/var/lib/angie/acme"
+      - "{{ angie_lb_conf_dir }}/acme_client:/etc/angie/acme_client"
+      - "{{ angie_lb_conf_dir }}/tmp:/var/lib/angie/tmp"
+      - "{{ step_ca_home }}:/home/step:ro"
+    ports:
+      - "{{ angie_lb_http_port }}:80"
+      - "{{ angie_lb_https_port }}:443"
+    tmpfs:
+      - "/run/angie:uid=65532,gid=65532"
+    networks:
+      - lb-internal
+    depends_on:
+      step-ca:
+        condition: service_healthy
+
+networks:
+  lb-internal:
+    driver: bridge

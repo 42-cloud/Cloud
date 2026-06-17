@@ -1,9 +1,8 @@
-user angie;
-
 events {}
 
 http {
     resolver 8.8.8.8 ipv6=off;
+
     acme_client letsencrypt https://acme-v02.api.letsencrypt.org/directory;
 
     include /etc/angie/mime.types;
@@ -16,10 +15,6 @@ http {
         {% endfor %}
     }
 
-    proxy_set_header Host $host;
-    proxy_set_header X-Real-IP $remote_addr;
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-
     server {
         listen 80;
         server_name {{ angie_lb_domain }};
@@ -27,7 +22,6 @@ http {
         location / {
             return 301 https://$host$request_uri;
         }
-
     }
 
     server {
@@ -41,11 +35,13 @@ http {
         ssl_ciphers HIGH:!aNULL:!MD5;
 
         location / {
-          proxy_pass http://wordpress_backends;
-          proxy_set_header X-Forwarded-Proto https;
-          proxy_buffers 16 16k;
-          proxy_buffer_size 32k;
-          proxy_pass_header Content-Type;
+            proxy_pass http://wordpress_backends;
+            proxy_set_header Host              $host;
+            proxy_set_header X-Real-IP         $remote_addr;
+            proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto https;
+            proxy_buffers 16 16k;
+            proxy_buffer_size 32k;
         }
     }
 }

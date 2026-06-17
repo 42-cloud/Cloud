@@ -10,7 +10,7 @@ vars:
   NC: "\\033[0m"
   VOLUME: ""
   PROFILE: ""
-  DOCKER_USER: frape
+  DOCKER_USER: namichel
 
 tasks:
   default:
@@ -279,6 +279,10 @@ tasks:
       - task: melange
         vars: { SERVICE: wordpress }
 
+  melange:step-ca:
+    cmds:
+      - task: melange
+        vars: { SERVICE: step-ca }
 # ──────────────────────────────────────────
 # APKO
 # ──────────────────────────────────────────
@@ -321,6 +325,11 @@ tasks:
       - task: apko
         vars: { SERVICE: wordpress }
 
+  apko:step-ca:
+    cmds:
+      - task: apko
+        vars: { SERVICE: step-ca }
+
 # ──────────────────────────────────────────
 # DOCKER
 # ──────────────────────────────────────────
@@ -333,7 +342,8 @@ tasks:
     internal: true
     cmds:
       # - docker tag {{.SERVICE}}:latest-amd64 {{.SERVICE}}:{{.TAG}}-amd64
-      - docker tag {{.SERVICE}}:latest-amd64 {{.DOCKER_USER}}/{{.SERVICE}}:{{.TAG}}-amd64
+      # - docker tag {{.SERVICE}}:latest-amd64 {{.DOCKER_USER}}/{{.SERVICE}}:{{.TAG}}-amd64
+      - docker tag {{.SERVICE}}:{{.TAG}}-amd64 {{.DOCKER_USER}}/{{.SERVICE}}:{{.TAG}}-amd64
       - docker push {{.DOCKER_USER}}/{{.SERVICE}}:{{.TAG}}-amd64
 
   push:angie:
@@ -356,9 +366,15 @@ tasks:
       - task: push
         vars: { SERVICE: phpmyadmin, TAG: '{{.TAG}}' }
 
+  push:step-ca:
+    cmds:
+      - task: push
+        vars: { SERVICE: step-ca, TAG: '{{.TAG}}' }
+
   push:all:
     cmds:
       - task: push:angie
       - task: push:mariadb
       - task: push:wordpress
       - task: push:phpmyadmin
+      - task: push:step-ca
