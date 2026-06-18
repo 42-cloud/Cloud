@@ -29,6 +29,15 @@
     out_interface: ens5
     jump: MASQUERADE
 
+# test ACME fix
+- name: Allow step-ca container to reach backends subnet
+  ansible.builtin.iptables:
+    table: nat
+    chain: POSTROUTING
+    source: "172.18.0.0/16"
+    destination: "10.0.2.0/24"
+    jump: MASQUERADE
+
 # UFW a une policy DROP sur FORWARD — on accepte le trafic sortant des backends.
 - name: Allow FORWARD for VPC traffic outbound
   ansible.builtin.iptables:
@@ -175,6 +184,8 @@
     volumes:
       - "{{ step_ca_home }}:/home/step"
       - "{{ angie_lb_conf_dir }}/secrets/step_password:/run/secrets/step_password:ro"
+    env:
+      STEPPATH: /home/step
     entrypoint:
       - step
       - ca

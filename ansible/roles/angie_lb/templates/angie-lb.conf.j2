@@ -4,6 +4,7 @@ http {
     resolver 8.8.8.8 ipv6=off;
 
     acme_client letsencrypt https://acme-v02.api.letsencrypt.org/directory;
+    acme_client internal https://step-ca:9000/acme/acme/directory;
 
     include /etc/angie/mime.types;
     default_type application/octet-stream;
@@ -13,6 +14,12 @@ http {
         {% for backend_ip in angie_lb_backends %}
         server {{ backend_ip }}:{{ angie_lb_backend_port }};
         {% endfor %}
+    }
+
+    server {
+        listen unix:/tmp/acme_internal.sock;
+        server_name lb.internal;
+        acme internal;
     }
 
     server {
@@ -34,8 +41,19 @@ http {
         ssl_protocols TLSv1.2 TLSv1.3;
         ssl_ciphers HIGH:!aNULL:!MD5;
 
+        location @acme {
+            proxy_pass https://step-ca:9000;
+            proxy_ssl_trusted_certificate /home/step/certs/root_ca.crt;
+            proxy_ssl_verify on;
+        }
+
         location / {
-            proxy_pass http://wordpress_backends;
+            proxy_pass https://wordpress_backends;
+            proxy_ssl_certificate     $acme_cert_internal;
+            proxy_ssl_certificate_key $acme_cert_key_internal;
+            proxy_ssl_trusted_certificate /home/step/certs/root_ca.crt;
+            proxy_ssl_verify       off;
+            proxy_ssl_verify_depth 2;
             proxy_set_header Host              $host;
             proxy_set_header X-Real-IP         $remote_addr;
             proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;

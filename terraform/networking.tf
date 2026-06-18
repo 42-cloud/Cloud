@@ -208,7 +208,6 @@ resource "aws_security_group" "angie_lb" {
   description = "Security group for Angie load balancer: public facing"
   vpc_id      = aws_vpc.cloudone.id
 
-  
   ingress {
     description = "Allow private subnet traffic to route out via NAT"
     from_port   = 0
@@ -239,6 +238,14 @@ resource "aws_security_group" "angie_lb" {
     to_port     = 22
     protocol    = "tcp"
     cidr_blocks = [var.ip_host]
+  }
+
+  ingress {
+    description     = "step-ca ACME for backends"
+    from_port       = 9000
+    to_port         = 9000
+    protocol        = "tcp"
+    cidr_blocks = ["10.0.2.0/24"]
   }
 
   egress {
@@ -310,6 +317,22 @@ resource "aws_security_group" "backends" {
     to_port     = 80
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    description     = "HTTPS from Angie LB for mTLS"
+    from_port       = 443
+    to_port         = 443
+    protocol        = "tcp"
+    security_groups = [aws_security_group.angie_lb.id]
+  }
+
+  egress {
+    description = "step-ca ACME"
+    from_port   = 9000
+    to_port     = 9000
+    protocol    = "tcp"
+    cidr_blocks = ["10.0.1.0/24"]
   }
 
   egress {

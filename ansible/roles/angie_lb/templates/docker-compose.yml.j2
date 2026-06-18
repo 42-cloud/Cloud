@@ -5,13 +5,20 @@ services:
     image: "{{ step_ca_image }}"
     container_name: "{{ step_ca_container_name }}"
     restart: unless-stopped
+    command: ["/home/step/config/ca.json", "--password-file=/run/secrets/step_password"]
     volumes:
       - "{{ step_ca_home }}:/home/step"
       - "{{ angie_lb_conf_dir }}/secrets/step_password:/run/secrets/step_password:ro"
     environment:
       STEPPATH: /home/step
+    extra_hosts:
+{% for backend_ip in angie_lb_backends %}
+      - "{{ groups['backends'][loop.index0] }}.internal:{{ backend_ip }}"
+{% endfor %}
     networks:
       - lb-internal
+    ports:
+      - "9000:9000"
     healthcheck:
       test:
         - "CMD"
@@ -29,6 +36,8 @@ services:
     image: "{{ angie_lb_image }}"
     container_name: "{{ angie_lb_container_name }}"
     restart: unless-stopped
+    cap_add:
+      - NET_BIND_SERVICE
     volumes:
       - "{{ angie_lb_conf_path }}:/etc/angie/angie.conf:ro"
       - "{{ angie_lb_conf_dir }}/acme:/var/lib/angie/acme"
@@ -41,7 +50,9 @@ services:
     tmpfs:
       - "/run/angie:uid=65532,gid=65532"
     networks:
-      - lb-internal
+      lb-internal:
+        aliases:
+          - lb.internal
     depends_on:
       step-ca:
         condition: service_healthy

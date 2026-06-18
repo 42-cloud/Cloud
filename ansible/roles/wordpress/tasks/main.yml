@@ -7,57 +7,39 @@
     update_cache: true
   become: true
 
-# ==============================================================================
-# TLS
-# ==============================================================================
-- name: Handle TLS certificates
-  delegate_to: '{{ wordpress_delegate_host | default(inventory_hostname) }}'
-  become: '{{ wordpress_become_compose | default(true) }}'
-  block:
-    - name: Ensure cert directory exists
-      ansible.builtin.file:
-        path: '{{ wordpress_cert_dir }}'
-        state: directory
-        mode: '0755'
-        owner: "{{ (wordpress_become_compose | default(true) | bool) | ternary('65532', omit) }}"
-        group: "{{ (wordpress_become_compose | default(true) | bool) | ternary('65532', omit) }}"
-    - name: Generate key
-      community.crypto.openssl_privatekey:
-        path: '{{ wordpress_cert_key_path }}'
-        size: 2048
-        type: RSA
-        mode: '0400'
-        owner: "{{ (wordpress_become_compose | default(true) | bool) | ternary('65532', omit) }}"
-        group: "{{ (wordpress_become_compose | default(true) | bool) | ternary('65532', omit) }}"
-    - name: Generate CSR
-      community.crypto.openssl_csr:
-        path: '{{ wordpress_cert_csr_path }}'
-        privatekey_path: '{{ wordpress_cert_key_path }}'
-        common_name: '{{ wordpress_cert_domain }}'
-        owner: "{{ (wordpress_become_compose | default(true) | bool) | ternary('65532', omit) }}"
-        group: "{{ (wordpress_become_compose | default(true) | bool) | ternary('65532', omit) }}"
-    - name: Generate Certificate
-      community.crypto.x509_certificate:
-        path: '{{ wordpress_cert_crt_path }}'
-        privatekey_path: '{{ wordpress_cert_key_path }}'
-        csr_path: '{{ wordpress_cert_csr_path }}'
-        provider: selfsigned
-        selfsigned_not_after: +365d
-        mode: '0644'
-        owner: "{{ (wordpress_become_compose | default(true) | bool) | ternary('65532', omit) }}"
-        group: "{{ (wordpress_become_compose | default(true) | bool) | ternary('65532', omit) }}"
-    - name: Force permissions on certs directory and files
-      ansible.builtin.file:
-        path: '{{ wordpress_cert_dir }}'
-        state: directory
-        recurse: true
-        owner: "{{ (wordpress_become_compose | default(true) | bool) | ternary('65532', omit) }}"
-        group: "{{ (wordpress_become_compose | default(true) | bool) | ternary('65532', omit) }}"
-        mode: '0755'
-  rescue:
-    - name: Fail explicitly if TLS generation fails
-      ansible.builtin.fail:
-        msg: TLS certificate generation failed
+- name: Fetch step-ca root certificate from LB
+  ansible.builtin.fetch:
+    src: "{{ global_angie_lb_conf_dir }}/step/certs/root_ca.crt"
+    dest: "/tmp/step_ca_root.crt"
+    flat: true
+  delegate_to: "{{ groups['angie_lb'][0] }}"
+
+- name: Ensure Angie tmp directory exists
+  ansible.builtin.file:
+    path: "{{ wordpress_compose_src }}/angie/certs"
+    state: directory
+    mode: "0755"
+    owner: "65532"
+    group: "65532"
+
+- name: Ensure Angie acme directories exist
+  ansible.builtin.file:
+    path: "{{ wordpress_compose_src }}/angie/{{ item }}"
+    state: directory
+    mode: "0755"
+    owner: "65532"
+    group: "65532"
+  loop:
+    - acme
+    - acme_client
+
+- name: Copy step-ca root certificate to backend
+  ansible.builtin.copy:
+    src: "/tmp/step_ca_root.crt"
+    dest: "{{ wordpress_compose_src }}/angie/certs/step_ca_root.crt"
+    mode: "0644"
+    owner: "{{ wordpress_apko_uid }}"
+    group: "{{ wordpress_apko_gid }}"
 
 # ==============================================================================
 # HOST DIRECTORY STRUCTURE
@@ -152,6 +134,9 @@
   become: '{{ wordpress_become_compose | default(true) }}'
   tags: [wp_host_angie]
   block:
+    - name: Debug step-ca url
+      ansible.builtin.debug:
+        msg: "{{ hostvars[groups['angie_lb'][0]] }}"
     - name: Deploy Angie configuration file
       ansible.builtin.template:
         src: angie.conf.j2

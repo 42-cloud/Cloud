@@ -74,7 +74,8 @@ resource "local_file" "dynamic_inventory" {
       if name != var.lb_instance_name
     ],
     ["", "[backends:vars]",
-    "ansible_ssh_common_args=-o ProxyJump=ubuntu@${aws_eip.angie_lb.public_ip} -o StrictHostKeyChecking=no -o ForwardAgent=yes"
+    "ansible_ssh_common_args=-o ProxyJump=ubuntu@${aws_eip.angie_lb.public_ip} -o StrictHostKeyChecking=no -o ForwardAgent=yes",
+    "global_lb_private_ip=${aws_instance.cloudone[var.lb_instance_name].private_ip}"
     ]
   ))
   filename             = "../ansible/inventory/inventory.ini"

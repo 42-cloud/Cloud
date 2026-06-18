@@ -106,6 +106,8 @@ services:
       - "{{ wordpress_angie_conf_path_host }}:{{ wordpress_angie_conf_path_dest }}:ro"
       - "{{ wordpress_cert_dir }}:/etc/angie/certs:ro"
       - "{{ wordpress_compose_src }}/angie/tmp:/var/lib/angie/tmp"
+      - "{{ wordpress_compose_src }}/angie/acme_client:/etc/angie/acme_client"
+      - "{{ wordpress_compose_src }}/angie/acme:/var/lib/angie/acme"
     depends_on:
       wordpress:
         condition: service_healthy
