@@ -133,8 +133,11 @@ services:
     <<: *config
     image: namichel/phpmyadmin:5.2.2-amd64
     container_name: phpmyadmin
+    volumes:
+      - "{{ wordpress_compose_src }}/phpmyadmin/config.inc.php:/var/www/html/config.inc.php:ro"
     environment:
       PMA_HOST: mariadb
+      PMA_ABSOLUTE_URI: "{{ global_wp_siteurl }}/phpmyadmin/"
     depends_on:
       mariadb:
         condition: service_healthy

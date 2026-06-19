@@ -51,7 +51,7 @@
     owner: "{{ (wordpress_become_compose | default(true) | bool) | ternary('65532', omit) }}"
     group: "{{ (wordpress_become_compose | default(true) | bool) | ternary('65532', omit) }}"
     mode: '0775'
-  loop: ['', mariadb, angie, angie/tmp, wordpress]
+  loop: ['', mariadb, angie, angie/tmp, wordpress, phpmyadmin]
   delegate_to: '{{ wordpress_delegate_host | default(inventory_hostname) }}'
   become: '{{ wordpress_become_compose | default(true) }}'
 
@@ -147,6 +147,14 @@
     - name: Fail explicitly if angie host configuration fails
       ansible.builtin.fail:
         msg: host configuration for angie service failed
+
+- name: Deploy phpmyadmin config
+  ansible.builtin.template:
+    src: config.inc.php.j2
+    dest: "{{ wordpress_compose_src }}/phpmyadmin/config.inc.php"
+    mode: "0644"
+    owner: "65532"
+    group: "65532"
 
 # ==============================================================================
 # SECRETS AND DOCKER

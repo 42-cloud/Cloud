@@ -9,8 +9,15 @@ http {
     include /etc/angie/mime.types;
     default_type application/octet-stream;
 
+    map $upstream_addr $backend_ssl_name {
+        {% for backend_ip in angie_lb_backends %}
+        ~{{ backend_ip }} {{ groups['backends'][loop.index0] }}.internal;
+        {% endfor %}
+        default wordpress_backends;
+    }
+
     upstream wordpress_backends {
-        {{ angie_lb_method }};
+        sticky cookie srv_id expires=1h;
         {% for backend_ip in angie_lb_backends %}
         server {{ backend_ip }}:{{ angie_lb_backend_port }};
         {% endfor %}
@@ -47,13 +54,30 @@ http {
             proxy_ssl_verify on;
         }
 
+        location /phpmyadmin/ {
+            proxy_pass https://wordpress_backends/phpmyadmin/;
+            proxy_ssl_certificate         $acme_cert_internal;
+            proxy_ssl_certificate_key     $acme_cert_key_internal;
+            proxy_ssl_trusted_certificate /home/step/certs/root_ca.crt;
+            proxy_ssl_verify              on;
+            proxy_ssl_verify_depth        2;
+            proxy_ssl_name                $backend_ssl_name;
+            proxy_ssl_server_name         on;
+            proxy_set_header Host              $host;
+            proxy_set_header X-Real-IP         $remote_addr;
+            proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto https;
+        }
+
         location / {
             proxy_pass https://wordpress_backends;
-            proxy_ssl_certificate     $acme_cert_internal;
-            proxy_ssl_certificate_key $acme_cert_key_internal;
+            proxy_ssl_certificate         $acme_cert_internal;
+            proxy_ssl_certificate_key     $acme_cert_key_internal;
             proxy_ssl_trusted_certificate /home/step/certs/root_ca.crt;
-            proxy_ssl_verify       off;
-            proxy_ssl_verify_depth 2;
+            proxy_ssl_verify              on;
+            proxy_ssl_verify_depth        2;
+            proxy_ssl_name                $backend_ssl_name;
+            proxy_ssl_server_name         on;
             proxy_set_header Host              $host;
             proxy_set_header X-Real-IP         $remote_addr;
             proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;

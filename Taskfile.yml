@@ -412,4 +412,7 @@ tasks:
     cmds:
       - task: tf:apply
       - task: duckdns:update
+      - cmd: |
+          echo "Waiting 30s for instances to be ready..."
+          sleep 30
       - task: ansible:play
