@@ -22,7 +22,7 @@ http {
         listen [::]:80 default_server;
         listen 443 ssl default_server;
         listen [::]:443 ssl default_server;
-        server_name {{ inventory_hostname }}.internal localhost 127.0.0.1;
+        server_name {{ inventory_hostname }}.internal;
 
         acme internal;
         ssl_certificate $acme_cert_internal;
@@ -40,6 +40,10 @@ http {
         }
 
         location /phpmyadmin/ {
+            if ($ssl_client_verify != SUCCESS) {
+                return 403;
+            }
+
             status_zone phpmyadmin;
             proxy_pass http://phpmyadmin:80/;
             proxy_set_header Host $host;
@@ -47,8 +51,6 @@ http {
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
             proxy_set_header X-Forwarded-Proto $scheme;
         }
-
-        location /.well-known/acme-challenge/ {}
 
         location /status/ {
             api /status/;
@@ -59,10 +61,17 @@ http {
         }
 
         location = /admin {
+            if ($ssl_client_verify != SUCCESS) {
+                return 403;
+            }
             return 301 /admin/;
         }
 
         location /admin/ {
+            if ($ssl_client_verify != SUCCESS) {
+                return 403;
+            }
+
             return 301 /wp-admin/;
         }
 
@@ -78,6 +87,9 @@ http {
         }
 
         location ~* \.(css|js|woff|woff2|ttf|svg|eot)$ {
+            if ($ssl_client_verify != SUCCESS) {
+                return 403;
+            }
             root {{ wordpress_angie_wp_root | default('/var/www/html') }};
             access_log off;
             log_not_found off;
@@ -86,6 +98,9 @@ http {
         }
 
         location ~* \.(png|jpg|jpeg|gif|ico)$ {
+            if ($ssl_client_verify != SUCCESS) {
+                return 403;
+            }
             root {{ wordpress_angie_wp_root | default('/var/www/html') }};
             access_log off;
             log_not_found off;
@@ -94,6 +109,9 @@ http {
         }
 
         location ~ \.php$ {
+            if ($ssl_client_verify != SUCCESS) {
+                return 403;
+            }
             try_files $uri =404;
             include fastcgi_params;
             fastcgi_index index.php;

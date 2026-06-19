@@ -3,6 +3,8 @@
 
 version: "3"
 
+dotenv: ['.env']
+
 vars:
   RED: "\\033[0;31m"
   GREEN: "\\033[0;32m"
@@ -11,6 +13,8 @@ vars:
   VOLUME: ""
   PROFILE: ""
   DOCKER_USER: namichel
+  DUCKDNS_TOKEN: '{{env "DUCKDNS_TOKEN"}}'
+  DUCKDNS_DOMAIN: '{{env "DUCKDNS_DOMAIN"}}'
 
 tasks:
   default:
@@ -378,3 +382,34 @@ tasks:
       - task: push:wordpress
       - task: push:phpmyadmin
       - task: push:step-ca
+
+# ──────────────────────────────────────────
+# DUCKDNS
+# ──────────────────────────────────────────
+  duckdns:update:
+    desc: Update DuckDNS IP with LB public IP from Terraform output
+    vars:
+      LB_IP:
+        sh: cd terraform && terraform output -raw angie_ip
+    cmds:
+      - |
+        echo -e "{{ .PPL }}Updating DuckDNS...{{ .NC }}"
+        RESPONSE=$(wget -qO- "https://www.duckdns.org/update?domains=$DUCKDNS_DOMAIN&token=$DUCKDNS_TOKEN&ip={{ .LB_IP }}")
+        if [ "$RESPONSE" = "OK" ]; then
+          echo -e "{{ .GREEN }}DuckDNS updated: $DUCKDNS_DOMAIN.duckdns.org → {{ .LB_IP }}{{ .NC }}"
+        else
+          echo -e "{{ .RED }}DuckDNS update failed: $RESPONSE{{ .NC }}"
+          exit 1
+        fi
+    silent: true
+
+
+
+
+
+  deploy:
+    desc: "Full deploy: Terraform → DuckDNS → Ansible"
+    cmds:
+      - task: tf:apply
+      - task: duckdns:update
+      - task: ansible:play

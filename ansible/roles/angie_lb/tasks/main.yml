@@ -29,23 +29,39 @@
     out_interface: ens5
     jump: MASQUERADE
 
-# test ACME fix
-- name: Allow step-ca container to reach backends subnet
+# test ACME
+- name: MASQUERADE step-ca outbound to backends (ACME http-01 callback)
   ansible.builtin.iptables:
     table: nat
     chain: POSTROUTING
     source: "172.18.0.0/16"
     destination: "10.0.2.0/24"
+    out_interface: ens5
     jump: MASQUERADE
 
-# UFW a une policy DROP sur FORWARD — on accepte le trafic sortant des backends.
+- name: Allow FORWARD from Docker bridge to backends (ACME http-01)
+  ansible.builtin.iptables:
+    chain: FORWARD
+    source: "172.18.0.0/16"
+    destination: "10.0.2.0/24"
+    jump: ACCEPT
+
+- name: Allow FORWARD return from backends to Docker bridge
+  ansible.builtin.iptables:
+    chain: FORWARD
+    source: "10.0.2.0/24"
+    destination: "172.18.0.0/16"
+    ctstate: [ESTABLISHED, RELATED]
+    jump: ACCEPT
+
+# UFW a une policy DROP sur FORWARD on accepte le trafic sortant des backends.
 - name: Allow FORWARD for VPC traffic outbound
   ansible.builtin.iptables:
     chain: FORWARD
     source: 10.0.0.0/16
     jump: ACCEPT
 
-# Meme chose dans l'autre sens — on accepte uniquement les connexions déjà établies.
+# Meme chose dans l'autre sens on accepte uniquement les connexions déjà établies.
 - name: Allow FORWARD for established connections inbound
   ansible.builtin.iptables:
     chain: FORWARD
