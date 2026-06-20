@@ -9,10 +9,11 @@ angie_lb_conf_path: "{{ angie_lb_conf_dir }}/angie.conf"
 angie_lb_http_port: 80
 angie_lb_https_port: 443
 angie_lb_backends: >-
-  {{ groups['backends'] | map('extract', hostvars, 'ansible_host') | list }}
+  {{ groups['backends'] | default([]) | map('extract', hostvars, 'ansible_host') | list }}
 angie_lb_backend_port: 443
 angie_lb_method: least_conn
 angie_lb_domain: "{{ global_duckdns_domain | default('localhost') }}.duckdns.org"
+angie_lb_wan_interface: "{{ ansible_default_ipv4.interface | default('ens5') }}"
 
 step_ca_image: "namichel/step-ca:0.30.2-amd64"
 step_ca_container_name: step-ca

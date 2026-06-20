@@ -39,12 +39,13 @@ http {
             root /usr/share/angie/html;
         }
 
-        location ~ ^/phpmyadmin/.*\.php$ {
+        location ~ ^/phpmyadmin/(.*)$ {
             if ($ssl_client_verify != SUCCESS) {
                 return 403;
             }
-            status_zone phpmyadmin;
+            rewrite ^/phpmyadmin/(.*)$ /$1 break;
             proxy_pass http://phpmyadmin:80;
+            status_zone phpmyadmin;
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -53,6 +54,7 @@ http {
             sub_filter '<head>' '<head><base href="/phpmyadmin/">';
             sub_filter_once on;
         }
+
 
         location /status/ {
             api /status/;

@@ -1,0 +1,246 @@
+---
+- name: Verify angie-lb
+  hosts: all
+  gather_facts: true
+  become: true
+  vars:
+    global_duckdns_domain: "test-domain"
+    global_step_ca_password: "changeme-test"
+    angie_lb_backends:
+      - "10.0.2.10"
+  tasks:
+    - name: Load role default vars
+      ansible.builtin.include_vars:
+        file: ../../defaults/main.yml
+
+    # ==========================================
+    # SYSCTL — IP FORWARDING
+    # ==========================================
+
+    - name: Read net.ipv4.ip_forward value
+      ansible.builtin.command: sysctl -n net.ipv4.ip_forward
+      register: __angie_lb_ip_forward
+      changed_when: false
+
+    - name: Assert IP forwarding is enabled
+      ansible.builtin.assert:
+        that:
+          - "__angie_lb_ip_forward.stdout | trim == '1'"
+        fail_msg: "net.ipv4.ip_forward is not set to 1 (got: {{ __angie_lb_ip_forward.stdout }})"
+        success_msg: "IP forwarding is enabled"
+
+    # ==========================================
+    # UFW — DEFAULT FORWARD POLICY
+    # ==========================================
+
+    - name: Read UFW default forward policy
+      ansible.builtin.command: grep "^DEFAULT_FORWARD_POLICY" /etc/default/ufw
+      register: __angie_lb_ufw_forward
+      changed_when: false
+
+    - name: Assert UFW default forward policy is ACCEPT
+      ansible.builtin.assert:
+        that:
+          - "'\"ACCEPT\"' in __angie_lb_ufw_forward.stdout"
+        fail_msg: "UFW DEFAULT_FORWARD_POLICY is not ACCEPT (got: {{ __angie_lb_ufw_forward.stdout }})"
+        success_msg: "UFW forward policy is ACCEPT"
+
+    # ==========================================
+    # IPTABLES — REGLES NAT ET FORWARD
+    # ==========================================
+
+    - name: List NAT table rules
+      ansible.builtin.command: iptables -t nat -L POSTROUTING -n --line-numbers
+      register: __angie_lb_nat_rules
+      changed_when: false
+
+    - name: Assert MASQUERADE rule exists
+      ansible.builtin.assert:
+        that:
+          - "'MASQUERADE' in __angie_lb_nat_rules.stdout"
+        fail_msg: "No MASQUERADE rule found in NAT POSTROUTING"
+        success_msg: "MASQUERADE rule is present"
+
+    - name: List FORWARD chain rules
+      ansible.builtin.command: iptables -L FORWARD -n
+      register: __angie_lb_forward_rules
+      changed_when: false
+
+    - name: Assert FORWARD ACCEPT rules exist
+      ansible.builtin.assert:
+        that:
+          - "'ACCEPT' in __angie_lb_forward_rules.stdout"
+        fail_msg: "No ACCEPT rule found in FORWARD chain"
+        success_msg: "FORWARD ACCEPT rules are present"
+
+    # ==========================================
+    # PACKAGE — IPTABLES-PERSISTENT
+    # ==========================================
+
+    - name: Check iptables-persistent is installed
+      ansible.builtin.command: dpkg -s iptables-persistent
+      register: __angie_lb_iptables_persistent
+      changed_when: false
+
+    - name: Assert iptables-persistent is installed
+      ansible.builtin.assert:
+        that:
+          - "'Status: install ok installed' in __angie_lb_iptables_persistent.stdout"
+        fail_msg: "iptables-persistent is not installed"
+        success_msg: "iptables-persistent is installed"
+
+    # ==========================================
+    # REPERTOIRES
+    # ==========================================
+
+    - name: Stat all expected directories
+      ansible.builtin.stat:
+        path: "{{ item.path }}"
+      loop:
+        - { path: "{{ angie_lb_conf_dir }}",          mode: "0755" }
+        - { path: "{{ angie_lb_conf_dir }}/acme",      mode: "0755" }
+        - { path: "{{ angie_lb_conf_dir }}/acme_client", mode: "0755" }
+        - { path: "{{ angie_lb_conf_dir }}/tmp",       mode: "0755" }
+        - { path: "{{ step_ca_home }}",                mode: "0755" }
+        - { path: "{{ angie_lb_conf_dir }}/secrets",   mode: "0700" }
+      register: __angie_lb_dirs
+
+    - name: Assert all directories exist with correct permissions and owner
+      ansible.builtin.assert:
+        that:
+          - item.stat.exists
+          - item.stat.isdir
+          - item.stat.mode == item.item.mode
+          - item.stat.uid == 65532
+          - item.stat.gid == 65532
+        fail_msg: >
+          Directory {{ item.item.path }} — exists={{ item.stat.exists }},
+          mode={{ item.stat.mode }} (expected {{ item.item.mode }}),
+          uid={{ item.stat.uid }} (expected 65532)
+        success_msg: "Directory {{ item.item.path }} OK"
+      loop: "{{ __angie_lb_dirs.results }}"
+
+    # ==========================================
+    # SECRET — STEP-CA PASSWORD
+    # ==========================================
+
+    - name: Stat step-ca password file
+      ansible.builtin.stat:
+        path: "{{ angie_lb_conf_dir }}/secrets/step_password"
+      register: __angie_lb_step_secret
+
+    - name: Assert step_password file exists with mode 0400
+      ansible.builtin.assert:
+        that:
+          - __angie_lb_step_secret.stat.exists
+          - __angie_lb_step_secret.stat.mode == '0400'
+          - __angie_lb_step_secret.stat.uid == 65532
+          - __angie_lb_step_secret.stat.gid == 65532
+        fail_msg: >
+          step_password — exists={{ __angie_lb_step_secret.stat.exists }},
+          mode={{ __angie_lb_step_secret.stat.mode }} (expected 0400),
+          uid={{ __angie_lb_step_secret.stat.uid }}
+        success_msg: "step_password secret file is correctly secured"
+
+    - name: Read step_password content
+      ansible.builtin.slurp:
+        src: "{{ angie_lb_conf_dir }}/secrets/step_password"
+      register: __angie_lb_step_secret_content
+
+    - name: Assert step_password content is not empty
+      ansible.builtin.assert:
+        that:
+          - (__angie_lb_step_secret_content.content | b64decode) | length > 0
+        fail_msg: "step_password file is empty"
+        success_msg: "step_password has content"
+
+    # ==========================================
+    # TEMPLATE — ANGIE.CONF
+    # ==========================================
+
+    - name: Stat angie.conf
+      ansible.builtin.stat:
+        path: "{{ angie_lb_conf_path }}"
+      register: __angie_lb_conf_stat
+
+    - name: Assert angie.conf exists with correct permissions
+      ansible.builtin.assert:
+        that:
+          - __angie_lb_conf_stat.stat.exists
+          - __angie_lb_conf_stat.stat.mode == '0644'
+          - __angie_lb_conf_stat.stat.uid == 65532
+        fail_msg: "angie.conf missing or wrong permissions (mode={{ __angie_lb_conf_stat.stat.mode }})"
+        success_msg: "angie.conf exists with correct permissions"
+
+    - name: Read angie.conf content
+      ansible.builtin.slurp:
+        src: "{{ angie_lb_conf_path }}"
+      register: __angie_lb_conf_content
+
+    - name: Set angie_conf fact
+      ansible.builtin.set_fact:
+        __angie_lb_conf_text: "{{ __angie_lb_conf_content.content | b64decode }}"
+
+    - name: Assert angie.conf domain is rendered
+      ansible.builtin.assert:
+        that:
+          - "angie_lb_domain in __angie_lb_conf_text"
+        fail_msg: "angie.conf does not contain expected domain {{ angie_lb_domain }} — got: {{ __angie_lb_conf_text | regex_findall('server_name .*') }}"
+        success_msg: "angie.conf contains domain {{ angie_lb_domain }}"
+
+    - name: Assert angie.conf contains expected directives
+      ansible.builtin.assert:
+        that:
+          - "'upstream wordpress_backends' in __angie_lb_conf_text"
+          - "'sticky' in __angie_lb_conf_text"
+          - "'listen 80' in __angie_lb_conf_text"
+          - "'listen 443 ssl' in __angie_lb_conf_text"
+          - "'acme letsencrypt' in __angie_lb_conf_text"
+          - "'acme internal' in __angie_lb_conf_text"
+          - "'10.0.2.10:443' in __angie_lb_conf_text"
+          - "'return 301' in __angie_lb_conf_text"
+          - "'ssl_protocols TLSv1.2 TLSv1.3' in __angie_lb_conf_text"
+          - "'proxy_pass https://wordpress_backends' in __angie_lb_conf_text"
+        fail_msg: "angie.conf is missing expected configuration directives"
+        success_msg: "angie.conf contains all expected directives"
+
+    # ==========================================
+    # TEMPLATE — DOCKER-COMPOSE.YML
+    # ==========================================
+
+    - name: Stat docker-compose.yml
+      ansible.builtin.stat:
+        path: "{{ angie_lb_conf_dir }}/docker-compose.yml"
+      register: __angie_lb_compose_stat
+
+    - name: Assert docker-compose.yml exists with correct permissions
+      ansible.builtin.assert:
+        that:
+          - __angie_lb_compose_stat.stat.exists
+          - __angie_lb_compose_stat.stat.mode == '0644'
+          - __angie_lb_compose_stat.stat.uid == 65532
+        fail_msg: "docker-compose.yml missing or wrong permissions"
+        success_msg: "docker-compose.yml exists with correct permissions"
+
+    - name: Read docker-compose.yml content
+      ansible.builtin.slurp:
+        src: "{{ angie_lb_conf_dir }}/docker-compose.yml"
+      register: __angie_lb_compose_content
+
+    - name: Set compose fact
+      ansible.builtin.set_fact:
+        __angie_lb_compose_text: "{{ __angie_lb_compose_content.content | b64decode }}"
+
+    - name: Assert docker-compose.yml contains expected services and config
+      ansible.builtin.assert:
+        that:
+          - "'step-ca' in __angie_lb_compose_text"
+          - "'angie-lb' in __angie_lb_compose_text"
+          - "'9000:9000' in __angie_lb_compose_text"
+          - "'lb-internal' in __angie_lb_compose_text"
+          - "'lb.internal' in __angie_lb_compose_text"
+          - "'service_healthy' in __angie_lb_compose_text"
+          - "'unless-stopped' in __angie_lb_compose_text"
+          - "'10.0.2.10' in __angie_lb_compose_text"
+        fail_msg: "docker-compose.yml is missing expected configuration"
+        success_msg: "docker-compose.yml contains all expected services and config"

@@ -11,8 +11,7 @@
   community.general.ufw:
     state: reloaded
 
-# ici: dire au kernel de ne pas drop les paquets qui ne lui sont pas destine.
-# source_dest_check=false n'est pas suffisant cote AWS — il faut aussi le faire cote OS.
+# Nécessaire côté OS : source_dest_check=false AWS ne suffit pas
 - name: Enable IP forwarding
   ansible.posix.sysctl:
     name: net.ipv4.ip_forward
@@ -21,23 +20,27 @@
     state: present
     reload: true
 
-# je remplace l'IP des backends par celle du LB — les backends n'ont pas d'IP publique.
-- name: Enable NAT masquerade
+# Remplace l'IP src des backends par celle du LB (backends sans IP publique)
+- name: Enable NAT masquerade on WAN interface
   ansible.builtin.iptables:
     table: nat
     chain: POSTROUTING
-    out_interface: ens5
+    out_interface: "{{ angie_lb_wan_interface }}"
     jump: MASQUERADE
+    state: present
+  notify: Save iptables
 
-# test ACME
+# ACME http-01 : step-ca (bridge Docker) doit joindre les backends
 - name: MASQUERADE step-ca outbound to backends (ACME http-01 callback)
   ansible.builtin.iptables:
     table: nat
     chain: POSTROUTING
     source: "172.18.0.0/16"
     destination: "10.0.2.0/24"
-    out_interface: ens5
+    out_interface: "{{ angie_lb_wan_interface }}"
     jump: MASQUERADE
+    state: present
+  notify: Save iptables
 
 - name: Allow FORWARD from Docker bridge to backends (ACME http-01)
   ansible.builtin.iptables:
@@ -45,91 +48,67 @@
     source: "172.18.0.0/16"
     destination: "10.0.2.0/24"
     jump: ACCEPT
+    state: present
+  notify: Save iptables
 
+# -m conntrack explicite : module kernel déterministe vs ipt_state legacy
 - name: Allow FORWARD return from backends to Docker bridge
   ansible.builtin.iptables:
     chain: FORWARD
     source: "10.0.2.0/24"
     destination: "172.18.0.0/16"
+    match: conntrack
     ctstate: [ESTABLISHED, RELATED]
     jump: ACCEPT
+    state: present
+  notify: Save iptables
 
-# UFW a une policy DROP sur FORWARD on accepte le trafic sortant des backends.
+# UFW a une policy DROP sur FORWARD donc on accepte le trafic sortant des backends
 - name: Allow FORWARD for VPC traffic outbound
   ansible.builtin.iptables:
     chain: FORWARD
-    source: 10.0.0.0/16
+    source: "10.0.0.0/16"
     jump: ACCEPT
+    state: present
+  notify: Save iptables
 
-# Meme chose dans l'autre sens on accepte uniquement les connexions déjà établies.
+# Uniquement les connexions déjà établies dans l'autre sens
 - name: Allow FORWARD for established connections inbound
   ansible.builtin.iptables:
     chain: FORWARD
-    destination: 10.0.0.0/16
+    destination: "10.0.0.0/16"
+    match: conntrack
     ctstate: [ESTABLISHED, RELATED]
     jump: ACCEPT
+    state: present
+  notify: Save iptables
 
-# persistant au reboot
+# Persistance au reboot et le set de DEBIAN_FRONTEND évite le prompt interactif en CI
 - name: Install iptables-persistent
   ansible.builtin.apt:
     name: iptables-persistent
     state: present
-
-- name: Save iptables rules
-  ansible.builtin.command: netfilter-persistent save
-  changed_when: true
+  environment:
+    DEBIAN_FRONTEND: noninteractive
 
 # ==========================================
 # REPERTOIRES
 # ==========================================
 
-- name: Ensure config directory exists
+- name: Ensure config directories exist
   ansible.builtin.file:
-    path: "{{ angie_lb_conf_dir }}"
+    path: "{{ item.path }}"
     state: directory
-    mode: "0755"
+    mode: "{{ item.mode }}"
     owner: "65532"
     group: "65532"
-
-- name: Ensure ACME certs directory exists
-  ansible.builtin.file:
-    path: "{{ angie_lb_conf_dir }}/acme"
-    state: directory
-    mode: "0755"
-    owner: "65532"
-    group: "65532"
-
-- name: Ensure ACME client directory exists
-  ansible.builtin.file:
-    path: "{{ angie_lb_conf_dir }}/acme_client"
-    state: directory
-    mode: "0755"
-    owner: "65532"
-    group: "65532"
-
-- name: Ensure Angie tmp directory exists
-  ansible.builtin.file:
-    path: "{{ angie_lb_conf_dir }}/tmp"
-    state: directory
-    mode: "0755"
-    owner: "65532"
-    group: "65532"
-
-- name: Ensure step-ca home directory exists
-  ansible.builtin.file:
-    path: "{{ step_ca_home }}"
-    state: directory
-    mode: "0755"
-    owner: "65532"
-    group: "65532"
-
-- name: Ensure secrets directory exists
-  ansible.builtin.file:
-    path: "{{ angie_lb_conf_dir }}/secrets"
-    state: directory
-    mode: "0700"
-    owner: "65532"
-    group: "65532"
+  loop:
+    - { path: "{{ angie_lb_conf_dir }}",             mode: "0755" }
+    - { path: "{{ angie_lb_conf_dir }}/acme",         mode: "0755" }
+    - { path: "{{ angie_lb_conf_dir }}/acme_client",  mode: "0755" }
+    - { path: "{{ angie_lb_conf_dir }}/tmp",          mode: "0755" }
+    - { path: "{{ step_ca_home }}",                   mode: "0755" }
+    - { path: "{{ angie_lb_conf_dir }}/secrets",      mode: "0700" }
 
 # ==========================================
 # SECRETS
@@ -174,12 +153,14 @@
     name: "{{ angie_lb_image }}"
     source: pull
     force_source: true
+  when: not molecule_docker_skip | default(false)
 
 - name: Pull step-ca image
   community.docker.docker_image:
     name: "{{ step_ca_image }}"
     source: pull
     force_source: true
+  when: not molecule_docker_skip | default(false)
 
 # ==========================================
 # BOOTSTRAP STEP-CA (one-shot)
@@ -214,7 +195,9 @@
       - "--provisioner-password-file=/run/secrets/step_password"
       - "--password-file=/run/secrets/step_password"
       - "--acme"
-  when: not __step_ca_initialized.stat.exists
+  when:
+    - not __step_ca_initialized.stat.exists
+    - not molecule_docker_skip | default(false)
 
 # ==========================================
 # COMPOSE UP
@@ -224,3 +207,4 @@
   community.docker.docker_compose_v2:
     project_src: "{{ angie_lb_conf_dir }}"
     state: present
+  when: not molecule_docker_skip | default(false)

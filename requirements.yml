@@ -2,4 +2,5 @@
 # ansible/requirements.yml
 collections:
   - name: community.general
+  - name: community.docker
   - name: ansible.posix
