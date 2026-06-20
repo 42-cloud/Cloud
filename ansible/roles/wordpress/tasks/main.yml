@@ -6,40 +6,34 @@
     state: present
     update_cache: true
   become: true
-
 - name: Fetch step-ca root certificate from LB
   ansible.builtin.fetch:
-    src: "{{ global_angie_lb_conf_dir }}/step/certs/root_ca.crt"
-    dest: "/tmp/step_ca_root.crt"
+    src: '{{ global_angie_lb_conf_dir }}/step/certs/root_ca.crt'
+    dest: /tmp/step_ca_root.crt
     flat: true
   delegate_to: "{{ groups['angie_lb'][0] }}"
-
 - name: Ensure Angie tmp directory exists
   ansible.builtin.file:
-    path: "{{ wordpress_compose_src }}/angie/certs"
+    path: '{{ wordpress_compose_src }}/angie/certs'
     state: directory
-    mode: "0755"
-    owner: "65532"
-    group: "65532"
-
+    mode: '0755'
+    owner: '65532'
+    group: '65532'
 - name: Ensure Angie acme directories exist
   ansible.builtin.file:
-    path: "{{ wordpress_compose_src }}/angie/{{ item }}"
+    path: '{{ wordpress_compose_src }}/angie/{{ item }}'
     state: directory
-    mode: "0755"
-    owner: "65532"
-    group: "65532"
-  loop:
-    - acme
-    - acme_client
-
+    mode: '0755'
+    owner: '65532'
+    group: '65532'
+  loop: [acme, acme_client]
 - name: Copy step-ca root certificate to backend
   ansible.builtin.copy:
-    src: "/tmp/step_ca_root.crt"
-    dest: "{{ wordpress_compose_src }}/angie/certs/step_ca_root.crt"
-    mode: "0644"
-    owner: "{{ wordpress_apko_uid }}"
-    group: "{{ wordpress_apko_gid }}"
+    src: /tmp/step_ca_root.crt
+    dest: '{{ wordpress_compose_src }}/angie/certs/step_ca_root.crt'
+    mode: '0644'
+    owner: '{{ wordpress_apko_uid }}'
+    group: '{{ wordpress_apko_gid }}'
 
 # ==============================================================================
 # HOST DIRECTORY STRUCTURE
@@ -147,14 +141,13 @@
     - name: Fail explicitly if angie host configuration fails
       ansible.builtin.fail:
         msg: host configuration for angie service failed
-
 - name: Deploy phpmyadmin config
   ansible.builtin.template:
     src: config.inc.php.j2
-    dest: "{{ wordpress_compose_src }}/phpmyadmin/config.inc.php"
-    mode: "0644"
-    owner: "65532"
-    group: "65532"
+    dest: '{{ wordpress_compose_src }}/phpmyadmin/config.inc.php'
+    mode: '0644'
+    owner: '65532'
+    group: '65532'
 
 # ==============================================================================
 # SECRETS AND DOCKER
@@ -404,7 +397,7 @@
   block:
     - name: Execute web response verification
       ansible.builtin.uri:
-        url: "{{ global_wp_siteurl }}"
+        url: '{{ global_wp_siteurl }}'
         method: GET
         validate_certs: true
         return_content: true

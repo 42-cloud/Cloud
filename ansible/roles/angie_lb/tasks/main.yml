@@ -5,7 +5,6 @@
     path: /etc/default/ufw
     regexp: ^DEFAULT_FORWARD_POLICY=
     line: DEFAULT_FORWARD_POLICY="ACCEPT"
-
 - name: Reload UFW
   community.general.ufw:
     state: reloaded
@@ -40,7 +39,6 @@
     jump: MASQUERADE
     state: present
   notify: Save iptables
-
 - name: Allow FORWARD from Docker bridge to backends (ACME http-01)
   ansible.builtin.iptables:
     chain: FORWARD
@@ -131,7 +129,6 @@
     owner: '65532'
     group: '65532'
   notify: Reload angie lb
-
 - name: Deploy docker-compose.yml
   ansible.builtin.template:
     src: docker-compose.yml.j2
@@ -149,7 +146,6 @@
     source: pull
     force_source: true
   when: not molecule_docker_skip | default(false)
-
 - name: Pull step-ca image
   community.docker.docker_image:
     name: '{{ angie_lb_step_ca_image }}'
@@ -164,7 +160,6 @@
   ansible.builtin.stat:
     path: '{{ angie_lb_step_ca_cert_dir }}/root_ca.crt'
   register: __angie_lb_step_ca_initialized
-
 - name: Bootstrap step-ca
   community.docker.docker_container:
     name: step-ca-init

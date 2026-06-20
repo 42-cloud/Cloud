@@ -1,9 +1,7 @@
 ---
 # internal vars
-
-wordpress_apko_uid: "{{ global_apko_uid | default(65532) }}"
-wordpress_apko_gid: "{{ global_apko_gid | default(65532) }}"
-
+wordpress_apko_uid: '{{ global_apko_uid | default(65532) }}'
+wordpress_apko_gid: '{{ global_apko_gid | default(65532) }}'
 wordpress_wp_cli_exec: >-
   {{ wordpress_docker_cmd | default('docker') }} exec
   --user {{ wordpress_apko_uid | int }}

@@ -4,34 +4,29 @@
   hosts: angie_lb
   become: true
   roles:
-    - { role: bootstrap, tags: bootstrap }
-
+    - {role: bootstrap, tags: bootstrap}
 - name: Deploy Docker on LB
   hosts: angie_lb
   become: true
   roles:
-    - { role: docker, tags: docker }
-
+    - {role: docker, tags: docker}
 - name: Deploy Angie LB + NAT
   hosts: angie_lb
   become: true
   roles:
-    - { role: angie_lb, tags: angie_lb }
-
+    - {role: angie_lb, tags: angie_lb}
 - name: Bootstrap backends
   hosts: backends
   become: true
   roles:
-    - { role: bootstrap, tags: bootstrap }
-
+    - {role: bootstrap, tags: bootstrap}
 - name: Deploy Docker on backends
   hosts: backends
   become: true
   roles:
-    - { role: docker, tags: docker }
-
+    - {role: docker, tags: docker}
 - name: Deploy WordPress stack on backends
   hosts: backends
   become: true
   roles:
-    - { role: wordpress, tags: wordpress }
+    - {role: wordpress, tags: wordpress}
