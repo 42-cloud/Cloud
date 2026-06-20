@@ -7,11 +7,7 @@ global_wp_dir: "/var/www/html"
 global_admin_users_list:
   - name: codastream
     db_user: "wp_codastream"
-global_step_ca_url: >-
-  https://{{
-  hostvars[groups['angie_lb'][0]]['ansible_all_ipv4_addresses']
-  | select('match', '^10\\.')
-  | first }}:9000
+global_step_ca_url: "https://{{ hostvars[groups['angie_lb'][0]]['ansible_all_ipv4_addresses'] | select('match', '^10\\.') | first }}:9000" # noqa: yaml[line-length]
 global_domain_name: "{{ global_duckdns_domain }}"
 global_wp_siteurl: "https://{{ global_domain_name }}.duckdns.org"
 global_angie_lb_conf_dir: "/opt/angie-lb"
