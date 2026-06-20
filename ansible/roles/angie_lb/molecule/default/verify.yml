@@ -85,7 +85,7 @@
         - {path: '{{ angie_lb_conf_dir }}/acme', mode: '0755'}
         - {path: '{{ angie_lb_conf_dir }}/acme_client', mode: '0755'}
         - {path: '{{ angie_lb_conf_dir }}/tmp', mode: '0755'}
-        - {path: '{{ step_ca_home }}', mode: '0755'}
+        - {path: '{{ angie_lb_step_ca_home }}', mode: '0755'}
         - {path: '{{ angie_lb_conf_dir }}/secrets', mode: '0700'}
       register: __angie_lb_dirs
     - name: Assert all directories exist with correct permissions and owner

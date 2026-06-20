@@ -5,6 +5,7 @@
     path: /etc/default/ufw
     regexp: ^DEFAULT_FORWARD_POLICY=
     line: DEFAULT_FORWARD_POLICY="ACCEPT"
+
 - name: Reload UFW
   community.general.ufw:
     state: reloaded
@@ -39,6 +40,7 @@
     jump: MASQUERADE
     state: present
   notify: Save iptables
+
 - name: Allow FORWARD from Docker bridge to backends (ACME http-01)
   ansible.builtin.iptables:
     chain: FORWARD
@@ -80,7 +82,7 @@
     state: present
   notify: Save iptables
 
-# Persistance au reboot et le set de DEBIAN_FRONTEND évite le prompt interactif en CI
+# Persistance au reboot — DEBIAN_FRONTEND évite le prompt interactif en CI
 - name: Install iptables-persistent
   ansible.builtin.apt:
     name: iptables-persistent
@@ -103,7 +105,7 @@
     - {path: '{{ angie_lb_conf_dir }}/acme', mode: '0755'}
     - {path: '{{ angie_lb_conf_dir }}/acme_client', mode: '0755'}
     - {path: '{{ angie_lb_conf_dir }}/tmp', mode: '0755'}
-    - {path: '{{ step_ca_home }}', mode: '0755'}
+    - {path: '{{ angie_lb_step_ca_home }}', mode: '0755'}
     - {path: '{{ angie_lb_conf_dir }}/secrets', mode: '0700'}
 
 # ==========================================
@@ -111,7 +113,7 @@
 # ==========================================
 - name: Deploy step-ca password
   ansible.builtin.copy:
-    content: '{{ step_ca_password }}'
+    content: '{{ angie_lb_step_ca_password }}'
     dest: '{{ angie_lb_conf_dir }}/secrets/step_password'
     mode: '0400'
     owner: '65532'
@@ -129,6 +131,7 @@
     owner: '65532'
     group: '65532'
   notify: Reload angie lb
+
 - name: Deploy docker-compose.yml
   ansible.builtin.template:
     src: docker-compose.yml.j2
@@ -146,9 +149,10 @@
     source: pull
     force_source: true
   when: not molecule_docker_skip | default(false)
+
 - name: Pull step-ca image
   community.docker.docker_image:
-    name: '{{ step_ca_image }}'
+    name: '{{ angie_lb_step_ca_image }}'
     source: pull
     force_source: true
   when: not molecule_docker_skip | default(false)
@@ -158,17 +162,18 @@
 # ==========================================
 - name: Check if step-ca is already initialized
   ansible.builtin.stat:
-    path: '{{ step_ca_cert_dir }}/root_ca.crt'
-  register: __step_ca_initialized
+    path: '{{ angie_lb_step_ca_cert_dir }}/root_ca.crt'
+  register: __angie_lb_step_ca_initialized
+
 - name: Bootstrap step-ca
   community.docker.docker_container:
     name: step-ca-init
-    image: '{{ step_ca_image }}'
+    image: '{{ angie_lb_step_ca_image }}'
     state: started
     detach: false
     cleanup: true
     volumes:
-      - '{{ step_ca_home }}:/home/step'
+      - '{{ angie_lb_step_ca_home }}:/home/step'
       - '{{ angie_lb_conf_dir }}/secrets/step_password:/run/secrets/step_password:ro'
     env:
       STEPPATH: /home/step
@@ -176,16 +181,16 @@
       - step
       - ca
       - init
-      - --name={{ step_ca_name }}
+      - --name={{ angie_lb_step_ca_name }}
       - --dns=localhost
-      - --dns={{ step_ca_container_name }}
+      - --dns={{ angie_lb_step_ca_container_name }}
       - --address=0.0.0.0:9000
-      - --provisioner={{ step_ca_provisioner }}
+      - --provisioner={{ angie_lb_step_ca_provisioner }}
       - --provisioner-password-file=/run/secrets/step_password
       - --password-file=/run/secrets/step_password
       - --acme
   when:
-    - not __step_ca_initialized.stat.exists
+    - not __angie_lb_step_ca_initialized.stat.exists
     - not molecule_docker_skip | default(false)
 
 # ==========================================

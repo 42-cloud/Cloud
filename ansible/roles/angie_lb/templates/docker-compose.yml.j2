@@ -2,12 +2,12 @@ name: "{{ angie_lb_project_name }}"
 
 services:
   step-ca:
-    image: "{{ step_ca_image }}"
-    container_name: "{{ step_ca_container_name }}"
+    image: "{{ angie_lb_step_ca_image }}"
+    container_name: "{{ angie_lb_step_ca_container_name }}"
     restart: unless-stopped
     command: ["/home/step/config/ca.json", "--password-file=/run/secrets/step_password"]
     volumes:
-      - "{{ step_ca_home }}:/home/step"
+      - "{{ angie_lb_step_ca_home }}:/home/step"
       - "{{ angie_lb_conf_dir }}/secrets/step_password:/run/secrets/step_password:ro"
     environment:
       STEPPATH: /home/step
@@ -43,7 +43,7 @@ services:
       - "{{ angie_lb_conf_dir }}/acme:/var/lib/angie/acme"
       - "{{ angie_lb_conf_dir }}/acme_client:/etc/angie/acme_client"
       - "{{ angie_lb_conf_dir }}/tmp:/var/lib/angie/tmp"
-      - "{{ step_ca_home }}:/home/step:ro"
+      - "{{ angie_lb_step_ca_home }}:/home/step:ro"
     ports:
       - "{{ angie_lb_http_port }}:80"
       - "{{ angie_lb_https_port }}:443"
