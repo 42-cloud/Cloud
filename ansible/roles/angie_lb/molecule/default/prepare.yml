@@ -10,7 +10,7 @@
         update_cache: true
     - name: Ensure iptables is present
       ansible.builtin.apt:
-        name: [iptables, ufw]
+        name: [iptables, ufw, kmod]
         state: present
     - name: Ensure ip_tables kernel module is loaded
       community.general.modprobe:
