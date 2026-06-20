@@ -31,26 +31,26 @@ jobs:
       - name: Install Linting tools and dependencies
         run: |
           python -m pip install --upgrade pip &&
-          pip install yamllint ansible-lint ansible-navigator "ansible-core>=2.15,<2.16"
+          pip install yamllint ansible-lint ansible-navigator "ansible-core>=2.17,<2.18"
+
+      - name: Write vault password
+        run: |
+          echo "${{ secrets.VAULT_PASS_CLOUDONE }}" > .vault_pass_cloudone
+          chmod 600 .vault_pass_cloudone
 
       - name: Run Yaml Lint
         uses: ibiqlik/action-yamllint@v3
         with:
           file_or_dir: .
 
+
       - name: Run Ansible Lint
         run: |
-          touch .ansible.ci.cfg
-          if [ -n "community.general" ]; then
-            ansible-galaxy collection install community.general
-          fi
-          if [ -n "community.crypto" ]; then
-            ansible-galaxy collection install community.crypto
-          fi
-          if [ -n "community.docker" ]; then
-            ansible-galaxy collection install community.docker
-          fi
+          ansible-galaxy collection install -r requirements.yml
           ansible-lint ansible/
         env:
           ANSIBLE_CONFIG: ".ansible.ci.cfg"
-          ANSIBLE_VAULT_PASSWORD_LIST: "cloudone=${{ secrets.VAULT_PASS_CLOUDONE }}"
+
+      - name: Cleanup vault password
+        if: always()
+        run: rm -f .vault_pass_cloudone
