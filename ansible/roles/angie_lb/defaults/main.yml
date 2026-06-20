@@ -1,11 +1,10 @@
 ---
 # angie_lb - defaults/main.yml
-
 angie_lb_project_name: angie-lb
-angie_lb_image: "frape/angie:1.11.6-amd64"
+angie_lb_image: frape/angie:1.11.6-amd64
 angie_lb_container_name: angie-lb
 angie_lb_conf_dir: /opt/angie-lb
-angie_lb_conf_path: "{{ angie_lb_conf_dir }}/angie.conf"
+angie_lb_conf_path: '{{ angie_lb_conf_dir }}/angie.conf'
 angie_lb_http_port: 80
 angie_lb_https_port: 443
 angie_lb_backends: >-
@@ -14,11 +13,10 @@ angie_lb_backend_port: 443
 angie_lb_method: least_conn
 angie_lb_domain: "{{ global_duckdns_domain | default('localhost') }}.duckdns.org"
 angie_lb_wan_interface: "{{ ansible_default_ipv4.interface | default('ens5') }}"
-
-step_ca_image: "namichel/step-ca:0.30.2-amd64"
+step_ca_image: namichel/step-ca:0.30.2-amd64
 step_ca_container_name: step-ca
-step_ca_cert_dir: "{{ angie_lb_conf_dir }}/step/certs"
-step_ca_home: "{{ angie_lb_conf_dir }}/step"
+step_ca_cert_dir: '{{ angie_lb_conf_dir }}/step/certs'
+step_ca_home: '{{ angie_lb_conf_dir }}/step'
 step_ca_password: "{{ global_step_ca_password | default('changeme') }}"
-step_ca_provisioner: "admin@cloud.one"
-step_ca_name: "Cloud-1 Internal CA"
+step_ca_provisioner: admin@cloud.one
+step_ca_name: Cloud-1 Internal CA

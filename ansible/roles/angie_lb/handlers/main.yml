@@ -1,16 +1,15 @@
 ---
 # angie_lb - handlers/main.yml
-
 - name: Wait for angie lb container to be running
   listen: Reload angie lb
   community.docker.docker_container_info:
     name: '{{ angie_lb_container_name }}'
   register: __angie_lb_info
-  until: __angie_lb_info.container is defined and __angie_lb_info.container.State.Status == "running"
+  until: __angie_lb_info.container is defined and __angie_lb_info.container.State.Status
+    == "running"
   retries: 10
   delay: 3
   when: not molecule_docker_skip | default(false)
-
 - name: Reload angie lb
   listen: Reload angie lb
   ansible.builtin.shell: |
@@ -19,7 +18,6 @@
     docker restart angie-lb
   changed_when: true
   when: not molecule_docker_skip | default(false)
-
 - name: Save iptables
   ansible.builtin.command: netfilter-persistent save
   changed_when: true

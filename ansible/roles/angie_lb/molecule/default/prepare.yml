@@ -8,25 +8,18 @@
         name: python3
         state: present
         update_cache: true
-
     - name: Ensure iptables is present
       ansible.builtin.apt:
-        name:
-          - iptables
-          - ufw
+        name: [iptables, ufw]
         state: present
-
     - name: Ensure ip_tables kernel module is loaded
       community.general.modprobe:
         name: ip_tables
         state: present
-
     - name: Enable UFW (non-interactive)
       ansible.builtin.command: ufw --force enable
       changed_when: true
-
     - name: Install required Ansible collections deps (python-docker)
       ansible.builtin.apt:
-        name:
-          - python3-docker
+        name: [python3-docker]
         state: present

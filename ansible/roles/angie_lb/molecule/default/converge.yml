@@ -5,17 +5,16 @@
   become: true
   vars:
     molecule_docker_skip: true
-    global_duckdns_domain: "test-domain"
-    global_step_ca_password: "changeme-test"
-    global_step_ca_url: "https://10.0.2.10:9000"
-    angie_lb_backends:
-      - "10.0.2.10"
+    global_duckdns_domain: test-domain
+    global_step_ca_password: changeme-test
+    global_step_ca_url: https://10.0.2.10:9000
+    angie_lb_backends: [10.0.2.10]
   pre_tasks:
     - name: Create fake backends group for template rendering
       ansible.builtin.add_host:
         name: fake-backend-01
         groups: backends
-        ansible_host: "10.0.2.10"
+        ansible_host: 10.0.2.10
   tasks:
     - name: Include angie_lb role
       ansible.builtin.include_role:

@@ -1,12 +1,10 @@
 ---
 # angie_lb - tasks/main.yml
-
 - name: Set UFW default forward policy to ACCEPT
   ansible.builtin.lineinfile:
     path: /etc/default/ufw
     regexp: ^DEFAULT_FORWARD_POLICY=
     line: DEFAULT_FORWARD_POLICY="ACCEPT"
-
 - name: Reload UFW
   community.general.ufw:
     state: reloaded
@@ -15,7 +13,7 @@
 - name: Enable IP forwarding
   ansible.posix.sysctl:
     name: net.ipv4.ip_forward
-    value: "1"
+    value: '1'
     sysctl_set: true
     state: present
     reload: true
@@ -25,7 +23,7 @@
   ansible.builtin.iptables:
     table: nat
     chain: POSTROUTING
-    out_interface: "{{ angie_lb_wan_interface }}"
+    out_interface: '{{ angie_lb_wan_interface }}'
     jump: MASQUERADE
     state: present
   notify: Save iptables
@@ -35,18 +33,17 @@
   ansible.builtin.iptables:
     table: nat
     chain: POSTROUTING
-    source: "172.18.0.0/16"
-    destination: "10.0.2.0/24"
-    out_interface: "{{ angie_lb_wan_interface }}"
+    source: 172.18.0.0/16
+    destination: 10.0.2.0/24
+    out_interface: '{{ angie_lb_wan_interface }}'
     jump: MASQUERADE
     state: present
   notify: Save iptables
-
 - name: Allow FORWARD from Docker bridge to backends (ACME http-01)
   ansible.builtin.iptables:
     chain: FORWARD
-    source: "172.18.0.0/16"
-    destination: "10.0.2.0/24"
+    source: 172.18.0.0/16
+    destination: 10.0.2.0/24
     jump: ACCEPT
     state: present
   notify: Save iptables
@@ -55,8 +52,8 @@
 - name: Allow FORWARD return from backends to Docker bridge
   ansible.builtin.iptables:
     chain: FORWARD
-    source: "10.0.2.0/24"
-    destination: "172.18.0.0/16"
+    source: 10.0.2.0/24
+    destination: 172.18.0.0/16
     match: conntrack
     ctstate: [ESTABLISHED, RELATED]
     jump: ACCEPT
@@ -67,7 +64,7 @@
 - name: Allow FORWARD for VPC traffic outbound
   ansible.builtin.iptables:
     chain: FORWARD
-    source: "10.0.0.0/16"
+    source: 10.0.0.0/16
     jump: ACCEPT
     state: present
   notify: Save iptables
@@ -76,7 +73,7 @@
 - name: Allow FORWARD for established connections inbound
   ansible.builtin.iptables:
     chain: FORWARD
-    destination: "10.0.0.0/16"
+    destination: 10.0.0.0/16
     match: conntrack
     ctstate: [ESTABLISHED, RELATED]
     jump: ACCEPT
@@ -94,70 +91,64 @@
 # ==========================================
 # REPERTOIRES
 # ==========================================
-
 - name: Ensure config directories exist
   ansible.builtin.file:
-    path: "{{ item.path }}"
+    path: '{{ item.path }}'
     state: directory
-    mode: "{{ item.mode }}"
-    owner: "65532"
-    group: "65532"
+    mode: '{{ item.mode }}'
+    owner: '65532'
+    group: '65532'
   loop:
-    - { path: "{{ angie_lb_conf_dir }}",             mode: "0755" }
-    - { path: "{{ angie_lb_conf_dir }}/acme",         mode: "0755" }
-    - { path: "{{ angie_lb_conf_dir }}/acme_client",  mode: "0755" }
-    - { path: "{{ angie_lb_conf_dir }}/tmp",          mode: "0755" }
-    - { path: "{{ step_ca_home }}",                   mode: "0755" }
-    - { path: "{{ angie_lb_conf_dir }}/secrets",      mode: "0700" }
+    - {path: '{{ angie_lb_conf_dir }}', mode: '0755'}
+    - {path: '{{ angie_lb_conf_dir }}/acme', mode: '0755'}
+    - {path: '{{ angie_lb_conf_dir }}/acme_client', mode: '0755'}
+    - {path: '{{ angie_lb_conf_dir }}/tmp', mode: '0755'}
+    - {path: '{{ step_ca_home }}', mode: '0755'}
+    - {path: '{{ angie_lb_conf_dir }}/secrets', mode: '0700'}
 
 # ==========================================
 # SECRETS
 # ==========================================
-
 - name: Deploy step-ca password
   ansible.builtin.copy:
-    content: "{{ step_ca_password }}"
-    dest: "{{ angie_lb_conf_dir }}/secrets/step_password"
-    mode: "0400"
-    owner: "65532"
-    group: "65532"
+    content: '{{ step_ca_password }}'
+    dest: '{{ angie_lb_conf_dir }}/secrets/step_password'
+    mode: '0400'
+    owner: '65532'
+    group: '65532'
   no_log: true
 
 # ==========================================
 # CONFIGURATION
 # ==========================================
-
 - name: Deploy Angie LB configuration
   ansible.builtin.template:
     src: angie-lb.conf.j2
-    dest: "{{ angie_lb_conf_path }}"
-    mode: "0644"
-    owner: "65532"
-    group: "65532"
+    dest: '{{ angie_lb_conf_path }}'
+    mode: '0644'
+    owner: '65532'
+    group: '65532'
   notify: Reload angie lb
-
 - name: Deploy docker-compose.yml
   ansible.builtin.template:
     src: docker-compose.yml.j2
-    dest: "{{ angie_lb_conf_dir }}/docker-compose.yml"
-    mode: "0644"
-    owner: "65532"
-    group: "65532"
+    dest: '{{ angie_lb_conf_dir }}/docker-compose.yml'
+    mode: '0644'
+    owner: '65532'
+    group: '65532'
 
 # ==========================================
 # IMAGES
 # ==========================================
-
 - name: Pull Angie image
   community.docker.docker_image:
-    name: "{{ angie_lb_image }}"
+    name: '{{ angie_lb_image }}'
     source: pull
     force_source: true
   when: not molecule_docker_skip | default(false)
-
 - name: Pull step-ca image
   community.docker.docker_image:
-    name: "{{ step_ca_image }}"
+    name: '{{ step_ca_image }}'
     source: pull
     force_source: true
   when: not molecule_docker_skip | default(false)
@@ -165,36 +156,34 @@
 # ==========================================
 # BOOTSTRAP STEP-CA (one-shot)
 # ==========================================
-
 - name: Check if step-ca is already initialized
   ansible.builtin.stat:
-    path: "{{ step_ca_cert_dir }}/root_ca.crt"
+    path: '{{ step_ca_cert_dir }}/root_ca.crt'
   register: __step_ca_initialized
-
 - name: Bootstrap step-ca
   community.docker.docker_container:
     name: step-ca-init
-    image: "{{ step_ca_image }}"
+    image: '{{ step_ca_image }}'
     state: started
     detach: false
     cleanup: true
     volumes:
-      - "{{ step_ca_home }}:/home/step"
-      - "{{ angie_lb_conf_dir }}/secrets/step_password:/run/secrets/step_password:ro"
+      - '{{ step_ca_home }}:/home/step'
+      - '{{ angie_lb_conf_dir }}/secrets/step_password:/run/secrets/step_password:ro'
     env:
       STEPPATH: /home/step
     entrypoint:
       - step
       - ca
       - init
-      - "--name={{ step_ca_name }}"
-      - "--dns=localhost"
-      - "--dns={{ step_ca_container_name }}"
-      - "--address=0.0.0.0:9000"
-      - "--provisioner={{ step_ca_provisioner }}"
-      - "--provisioner-password-file=/run/secrets/step_password"
-      - "--password-file=/run/secrets/step_password"
-      - "--acme"
+      - --name={{ step_ca_name }}
+      - --dns=localhost
+      - --dns={{ step_ca_container_name }}
+      - --address=0.0.0.0:9000
+      - --provisioner={{ step_ca_provisioner }}
+      - --provisioner-password-file=/run/secrets/step_password
+      - --password-file=/run/secrets/step_password
+      - --acme
   when:
     - not __step_ca_initialized.stat.exists
     - not molecule_docker_skip | default(false)
@@ -202,9 +191,8 @@
 # ==========================================
 # COMPOSE UP
 # ==========================================
-
 - name: Launch docker compose
   community.docker.docker_compose_v2:
-    project_src: "{{ angie_lb_conf_dir }}"
+    project_src: '{{ angie_lb_conf_dir }}'
     state: present
   when: not molecule_docker_skip | default(false)
