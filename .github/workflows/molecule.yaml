@@ -1,0 +1,75 @@
+name: Ansible Molecule Tests
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+  checks: write
+
+jobs:
+  discover:
+    runs-on: ubuntu-22.04
+    outputs:
+      roles: ${{ steps.set-matrix.outputs.roles }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Find roles with Molecule tests
+        id: set-matrix
+        run: |
+          ROLES_JSON=$(find ansible/roles -type d -name "default" \
+            | grep "molecule/default" \
+            | awk -F'/' '{print $(NF-2)}' \
+            | jq -R . | jq -s -c .)
+          echo "Found roles: $ROLES_JSON"
+          echo "roles=${ROLES_JSON}" >> $GITHUB_OUTPUT
+
+  molecule:
+    needs: discover
+    if: ${{ needs.discover.outputs.roles != '[]' && needs.discover.outputs.roles != '' }}
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        role: ${{ fromJson(needs.discover.outputs.roles) }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          pip install ansible==9.* molecule molecule-plugins[docker] ansible-lint
+
+      - name: Install Ansible collections
+        run: |
+          ansible-galaxy collection install -r requirements.yml
+        working-directory: ansible
+
+      - name: Write vault password
+        run: |
+          echo "${{ secrets.VAULT_PASS_CLOUDONE }}" > .vault_pass_cloudone
+          chmod 600 .vault_pass_cloudone
+
+      - name: Run Molecule
+        run: molecule test
+        working-directory: ansible/roles/${{ matrix.role }}
+        env:
+          ANSIBLE_CONFIG: ${{ github.workspace }}/.ansible.ci.cfg
+          PY_COLORS: "1"
+          ANSIBLE_FORCE_COLOR: "1"
+
+      - name: Cleanup vault password
+        if: always()
+        run: rm -f .vault_pass_cloudone
