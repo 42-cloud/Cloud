@@ -2,16 +2,14 @@ contents:
   keyring:
     - https://packages.wolfi.dev/os/wolfi-signing.rsa.pub
     - https://Kazibuya.github.io/melange-forge/melange-ci.rsa.pub
-    - ../melange.rsa.pub
   repositories:
     - https://packages.wolfi.dev/os
     - https://Kazibuya.github.io/melange-forge
-    - ../packages
   packages:
     - wolfi-baselayout
-    - mariadb-12.2
-    - mariadb-12.2-client
-    - mariadb-12.2-oci-entrypoint
+    - mariadb-12.3
+    - mariadb-12.3-client
+    - mariadb-12.3-oci-entrypoint
     - healthcheck-sql
     - gosu
     - tzdata

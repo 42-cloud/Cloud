@@ -306,7 +306,6 @@ tasks:
         cgr.dev/chainguard/apko build apko.yaml 
         {{.SERVICE}}:{{.TAG}} 
         {{.SERVICE}}.tar 
-        --keyring-append ../melange.rsa.pub
       - docker load < {{.USER_WORKING_DIR}}/melange/{{.SERVICE}}/{{.SERVICE}}.tar
 
   apko:angie:
@@ -345,8 +344,6 @@ tasks:
   push:
     internal: true
     cmds:
-      # - docker tag {{.SERVICE}}:latest-amd64 {{.SERVICE}}:{{.TAG}}-amd64
-      # - docker tag {{.SERVICE}}:latest-amd64 {{.DOCKER_USER}}/{{.SERVICE}}:{{.TAG}}-amd64
       - docker tag {{.SERVICE}}:{{.TAG}}-amd64 {{.DOCKER_USER}}/{{.SERVICE}}:{{.TAG}}-amd64
       - docker push {{.DOCKER_USER}}/{{.SERVICE}}:{{.TAG}}-amd64
 
