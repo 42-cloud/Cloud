@@ -1,7 +1,7 @@
 ---
 # angie_lb - defaults/main.yml
 angie_lb_project_name: angie-lb
-angie_lb_image: frape/angie:1.11.6-amd64
+angie_lb_image: namichel/angie:1.11.6-amd64
 angie_lb_container_name: angie-lb
 angie_lb_conf_dir: /opt/angie-lb
 angie_lb_conf_path: '{{ angie_lb_conf_dir }}/angie.conf'

@@ -17,7 +17,7 @@ name: "{{ wordpress_project_name }}"
 services:
   mariadb:
     <<: *config
-    image: namichel/mariadb:12.2.2-amd64
+    image: namichel/mariadb:12.3.2-amd64
     container_name: {{ wordpress_db_container_name }}
     cap_add:
       - IPC_LOCK
@@ -55,7 +55,7 @@ services:
 
   wordpress:
     <<: *config
-    image: frape/wordpress:latest-amd64
+    image: namichel/wordpress:7.0.0-amd64
     container_name: {{ wordpress_wp_container_name }}
     environment:
       WORDPRESS_DB_HOST: mariadb
@@ -95,7 +95,7 @@ services:
 
   angie:
     <<: *config
-    image: frape/angie:1.11.6-amd64
+    image: namichel/angie:1.11.6-amd64
     container_name: {{ wordpress_angie_container_name }}
     ports:
       - "{{ wordpress_expose_http | default('80') | int }}:80"
@@ -131,7 +131,7 @@ services:
 
   phpmyadmin:
     <<: *config
-    image: namichel/phpmyadmin:5.2.2-amd64
+    image: namichel/phpmyadmin:5.2.3-amd64
     container_name: phpmyadmin
     volumes:
       - "{{ wordpress_compose_src }}/phpmyadmin/config.inc.php:/var/www/html/config.inc.php:ro"

@@ -1,4 +1,9 @@
 ---
+global_wordpress_version: "7.0.0"
+global_angie_version: "1.11.6"
+global_step-ca_version: "7.0.0"
+global_phpmyadmin_version: "5.2.3"
+global_mariadb_version: "12.3.2"
 global_apko_uid: 65532
 global_apko_gid: 65532
 global_project_path: /opt/cloud-1
