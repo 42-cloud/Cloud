@@ -1,7 +1,8 @@
 ---
 # wordpress - defaults/main.yml
 wordpress_project_name: cloudone
-wordpress_domain_name: "{{ global_domain_name | default('cloud1.duckdns.org') }}"
+wordpress_subdomain: "{{ global_duckdns_domain | default('nuage-un') }}"
+wordpress_domain_name: "{{ wordpress_subdomain if '.' in wordpress_subdomain else wordpress_subdomain + '.duckdns.org' }}"
 wordpress_project_path: "{{ global_project_path | default('/opt/cloud-1') }}"
 
 # admins
@@ -50,21 +51,19 @@ wordpress_wp_mem_res_limit: 128m
 wordpress_wp_container_name: wordpress
 wordpress_wp_site_title: '{{ inventory_hostname }}'
 wordpress_wp_theme: twentytwentythree
-wordpress_wp_url: '{{ global_wp_siteurl }}'
+wordpress_wp_url: "{{ global_wp_siteurl | default('http://localhost') }}"
 
 # Angie
 wordpress_angie_conf_path_host: '{{ wordpress_compose_src }}/angie/angie.conf'
 wordpress_angie_conf_path_dest: /etc/angie/angie.conf
 wordpress_angie_wp_root: '{{ wordpress_wp_dir_path_dest }}'
 wordpress_angie_container_name: angie
-wordpress_assets_host_path: '{{ wordpress_compose_src }}/wordpress/assets'
+# wordpress_assets_host_path: '{{ wordpress_compose_src }}/wordpress/assets'
 
 # PHP My admin
 
 # TLS
-wordpress_cert_dir: '{{ wordpress_compose_src }}/angie/certs'
-wordpress_duckdns_domain: "{{ global_duckdns_domain | default('') }}"
-wordpress_cert_domain: "{{ global_duckdns_domain | default('cloud1') }}.duckdns.org"
-wordpress_cert_key_path: '{{ wordpress_cert_dir }}/{{ wordpress_cert_domain }}.key'
-wordpress_cert_crt_path: '{{ wordpress_cert_dir }}/{{ wordpress_cert_domain }}.crt'
-wordpress_cert_csr_path: '{{ wordpress_cert_dir }}/{{ wordpress_cert_domain }}.csr'
+wordpress_cert_host_dir: '{{ wordpress_compose_src }}/angie/certs'
+wordpress_cert_crt_path: "{{ wordpress_cert_host_dir }}/{{ wordpress_domain_name }}.crt"
+wordpress_cert_key_path: "{{ wordpress_cert_host_dir }}/{{ wordpress_domain_name }}.key"
+wordpress_cert_csr_path: '{{ wordpress_cert_host_dir }}/{{ wordpress_cert_domain }}.csr'

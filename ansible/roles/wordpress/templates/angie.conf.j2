@@ -4,7 +4,6 @@ http {
     resolver 127.0.0.11 valid=10s;
     include /etc/angie/prometheus_all.conf;
     include /etc/angie/mime.types;
-
     acme_client internal {{ global_step_ca_url }}/acme/acme/directory;
 
     map $http_x_forwarded_proto $fastcgi_https {

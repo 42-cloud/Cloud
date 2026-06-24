@@ -1,7 +1,7 @@
 events {}
 
 http {
-    resolver 8.8.8.8 ipv6=off;
+    resolver 127.0.0.11 ipv6=off;
 
     acme_client letsencrypt https://acme-v02.api.letsencrypt.org/directory;
     acme_client internal https://step-ca:9000/acme/acme/directory;
@@ -32,10 +32,12 @@ http {
     server {
         listen 80;
         server_name {{ angie_lb_domain }};
+        acme letsencrypt;
 
         location / {
             return 301 https://$host$request_uri;
         }
+
     }
 
     server {

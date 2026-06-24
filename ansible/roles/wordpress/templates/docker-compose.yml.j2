@@ -62,8 +62,8 @@ services:
       WORDPRESS_DB_USER: "{{ wordpress_db_user }}"
       WORDPRESS_DB_NAME: "{{ wordpress_db_name }}"
       WORDPRESS_DB_PASSWORD_FILE: /run/secrets/db_password
-      WORDPRESS_HOME: "https://{{ wordpress_duckdns_domain }}.duckdns.org"
-      WORDPRESS_SITEURL: "https://{{ wordpress_duckdns_domain }}.duckdns.org"
+      WORDPRESS_HOME: "https://{{ global_duckdns_domain }}.duckdns.org"
+      WORDPRESS_SITEURL: "https://{{ global_duckdns_domain }}.duckdns.org"
     secrets:
       - source: db_password
         target: db_password
@@ -104,7 +104,7 @@ services:
       - wordpress_data:{{ wordpress_angie_wp_root }}:rw
       - "{{ wordpress_compose_src }}/wordpress/wp-content/mu-plugins:/var/www/html/wp-content/mu-plugins:ro"
       - "{{ wordpress_angie_conf_path_host }}:{{ wordpress_angie_conf_path_dest }}:ro"
-      - "{{ wordpress_cert_dir }}:/etc/angie/certs:ro"
+      - "{{ wordpress_cert_host_dir }}:/etc/angie/certs:ro"
       - "{{ wordpress_compose_src }}/angie/tmp:/var/lib/angie/tmp"
       - "{{ wordpress_compose_src }}/angie/acme_client:/etc/angie/acme_client"
       - "{{ wordpress_compose_src }}/angie/acme:/var/lib/angie/acme"
@@ -137,7 +137,7 @@ services:
       - "{{ wordpress_compose_src }}/phpmyadmin/config.inc.php:/var/www/html/config.inc.php:ro"
     environment:
       PMA_HOST: mariadb
-      PMA_ABSOLUTE_URI: "{{ global_wp_siteurl }}/phpmyadmin/"
+      PMA_ABSOLUTE_URI: "{{ wordpress_wp_url }}/phpmyadmin/"
     depends_on:
       mariadb:
         condition: service_healthy

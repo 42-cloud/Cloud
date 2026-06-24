@@ -40,6 +40,7 @@ services:
       - NET_BIND_SERVICE
     volumes:
       - "{{ angie_lb_conf_path }}:/etc/angie/angie.conf:ro"
+      - "{{ angie_lb_step_ca_home }}/certs/root_ca.crt:/etc/angie/certs/step_ca_root.crt:ro"
       - "{{ angie_lb_conf_dir }}/acme:/var/lib/angie/acme"
       - "{{ angie_lb_conf_dir }}/acme_client:/etc/angie/acme_client"
       - "{{ angie_lb_conf_dir }}/tmp:/var/lib/angie/tmp"

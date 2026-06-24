@@ -22,12 +22,11 @@ in `defaults/main.yml` :
 | Variable | Default | Description |
 | :--- | :--- | :--- |
 | `wordpress_project_name` | `"cloudone"` | Name of the project (used for volumes and stack identification). |
-| `wordpress_domain_name` | `"{{ global_domain_name \| default('cloud1.duckdns.org') }}"` | Global domain used to access the deployed services. |
+| `wordpress_domain_name` | `"{{ global_domain_name \| default('nuage-un.duckdns.org') }}"` | Global domain used to access the deployed services. |
 | `wordpress_project_path` | `"{{ global_project_path \| default('/opt/cloud-1') }}"` | Base root directory for the project on the host system. |
 | `wordpress_compose_src` | `"{{ wordpress_project_path }}"` | Source path where the Docker Compose configuration files are orchestrated. |
 | `wordpress_docker_cmd` | `"docker"` | Binary command to call for Docker operations. |
 | `wordpress_admin_users_list` | `"{{ global_admin_users_list \| default([]) \| list }}"` | List of global administrator users. |
-| `wordpress_assets_host_path` | `"{{ wordpress_compose_src }}/wordpress/assets"` | Host directory for storing static asset files (images). |
 
 #### Network and Reverse Proxy (Angie)
 

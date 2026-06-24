@@ -31,6 +31,7 @@ provisioner:
     - -v
     - --extra-vars
     - >
+      bootstrap_project_path=/tmp/molecule_shared/wordpress_stack
       bootstrap_duckdns_domain=test-domain
       bootstrap_duckdns_token=test-token
       bootstrap_duckdns_api_base=http://172.17.0.1:8081

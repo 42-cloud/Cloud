@@ -14,3 +14,22 @@
     - name: Execute bootstrap role to create groups and directories
       ansible.builtin.include_role:
         name: bootstrap
+    - name: Create molecule_shared base directory with open permissions
+      ansible.builtin.file:
+        path: /tmp/molecule_shared/wordpress_stack
+        state: directory
+        mode: '0777'
+        recurse: true
+    - name: Generate a self-signed test CA certificate
+      ansible.builtin.command:
+        cmd: >
+          openssl req -x509 -newkey rsa:2048
+          -keyout /tmp/step_ca_root.key
+          -out /tmp/step_ca_root.crt
+          -days 365 -nodes
+          -subj "/CN=test-step-ca"
+      changed_when: true
+    - name: Validate generated test CA certificate
+      ansible.builtin.command:
+        cmd: openssl x509 -in /tmp/step_ca_root.crt -noout -subject -issuer
+      changed_when: false

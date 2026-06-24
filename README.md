@@ -6,56 +6,6 @@ Automated deployment of Wordpress related services using Terraform and Ansible
 
 [![CI/CD Pipeline](https://github.com/42-cloud/Cloud/actions/workflows/ansible.yml/badge.svg)](https://github.com/42-cloud/Cloud/actions)
 
-# Tasks list
-
-__network and security__
-- [ ] only `80` and `443` should be accessible (replace 8080 and 8443)
-- [ ] usage of TLS between load balancer and instances ?
-- [x] network isolation of DB from the internet
-
-__roles__
-- [ ] Bootstrap role
-  - [x] Readme
-  - [x] Molecule tests
-- [ ] LB role
-  - [ ] Readme
-  - [ ] Molecule tests
-- [x] Docker role
-  - [x] Readme
-  - [x] Molecule tests
-- [ ] Wordpress role
-  - [x] Readme for `wordpress` role
-  - [x] Molecule tests
-  - [x] handler to reload angie
-  - [ ] PHP My Admin configuration
-
-__resilience__
-- [ ] dynamic DNS : call DuckDNS GET API to attach LB IP to subdomain
-- [ ] auto-restart if server is rebooted with data preserved
-
-__scalability__
-- [x] parallel deploy to multiple servers
-
-__flexibility__
-- [-] provider-agnostic configuration
-  - [x] provider-independant load balancer 
-- [-] can create various users with admin rights on EC2, app admin rights on wordpress
-
-__security__
-- [x] distroless OCI images via apko/melange
-- [x] SBOM generation for all images
-- [x] automated CVE scanning via syft + grype
-- [x] GitHub Issues automation for CVE reporting
-- [x] secrets via file (tmpfs in prod)
-- [x] non-root containers
-- [ ] GHA release for melange-forge binaries
-- [ ] matrix refactor for CVE scan workflow
-- [ ] pinpoint images in docker compose (no `latest`)
-
-__styling__
-
-- [ ] yaml lint
-- [ ] ansible lint
 
 ---
 
@@ -267,6 +217,8 @@ The architecture went through different phases:
 
 - _instances with custom made load balancer_ : this implied having a separate instance with Angie as a load balancer. Network security is ensured at OS level by iptable configuration. Contrary to free version of Nginx, Angie handles ACME challenges, which also enabled us to get a LetsEncrypt certificate for the chosen subdomain. On the minus side, availability level is not the same as ALB, and scaling would require configuration modification through Ansible.
 
+![image](diagrams/cloud_architecture.png)
+
 Would we have had more time to explore more in-depth cloud architecture, it could have been relevant to have 
 - fully multitier instances with separate DBs (Amazon RDS)
 - shared storage for WordPress uploads (Amazon EFS)
@@ -406,9 +358,9 @@ Resource type
 | :--------------------- | :----- |
 | **Senior guidance** : we submit an approach, the AI suggests alternative implementations with their tradeoffs. | LLM Chatbot (Gemini, Claude) |
 | **Documentation / Crash course** : we ask for a recap over a tools or part of its features. | LLM Chatbot (Gemini, Claude) |
-| **Boilerplate code** : we asked to generate parts of the code, that were not in the immediate scope of the project and/or once we reckoned we would have been able to do it by ourselves : useed for `tfvars.sh` script | Chatbot (Gemini, Claude) |
-| **Debugging help** : sometimes direct questions (why does this occur + console log as a context). Many times. But as we got a better mastery of the concepts and tools, we tried to prompt the AI to provide methods and heuristics instead | 
-| **PR Review** : | Github Copilot | 
+| **Boilerplate code** : we asked to generate parts of the code, that were not in the immediate scope of the project and/or once we reckoned we would have been able to do it by ourselves : useed for `tfvars.sh` script | LLM Chatbot (Gemini, Claude) |
+| **Debugging help** : sometimes direct questions (why does this occur + console log as a context). Many times. But as we got a better mastery of the concepts and tools, we tried to prompt the AI to provide methods and heuristics instead | LLM Chatbot / CLI (Gemini) |
+| **PR Review** : early check of potential bugs | Github Copilot | 
 
 We didn't take time to provide a recurrent context for this project, although the quality and rapidity of AI inputs could have largely benefitted from it.
 
@@ -421,5 +373,20 @@ We used a browser extension (PiiBlocker) to prevent leaking personal information
 The subject provided by 42 holds within 1 page. The goal is simple : at first glance, we _merely_ have to automate the deployment of the Inception project, which is part of common core. Yet it is easy to turn it into something bigger than expected:
 
 - many new domains to understand from the subject itself (cloud, devops) each with its concepts and ecosystem
-- one group member is already experienced with supply chain security. It is a very hot topic, so we were both eager to delve on this and make use of Chainguard and other CI tools. We (especially namichel) put extra efforts in generating ad hoc images for the project. A PR 
+- one group member is already experienced with supply chain security. It is now a trending topic, so we were both eager to delve on this and make use of Chainguard and other CI tools. We (especially namichel) put extra efforts in generating ad hoc images for the project.
 - assimilating the information can prove difficult : Ansible alone has more than 3000 module. Some other tools are less documented. We used AI models to skim through documentation, while being aware that they can easily hallucinate about the specifications.
+
+More specifically, we encountered following tool-specific issues
+
+- Terraform : tradeoff between full Checkov compliance and project simplicity
+- Ansible : 
+  - variable management, given the combination of multiple declaration levels with their priority (group_vars, role vars, role defaults, role converge, molecule extra vars, ...), and necessity to overload them for molecule test
+  - use of shell module and ensuring idempotence 
+
+## What could be improved
+
+- be more consistent in variables naming and inheritance
+- tests: make use of other libraries such as terratest, as testing docker deployments within molecule (docker within docker) can cause headache and make declarative code harder to read
+- improve playbooks readability, by creating subfiles
+- leverage on created users in bootstrap roles : provide them with wordpress admin access. For the moment they just have sudo rights on the deployed instances
+- use more modern modules like `ansible.builtin.slurp` instead of `ansible.builtin.copy`

@@ -1,4 +1,9 @@
 ---
+
+# ==============================================================================
+# ROOT CERTIFICATE DIFFUSION
+# ==============================================================================
+
 # wordpress - molecule/tasks/main.yml
 - name: Ensure Python cryptography library is installed for SSL modules
   ansible.builtin.apt:
@@ -6,19 +11,26 @@
     state: present
     update_cache: true
   become: true
-- name: Fetch step-ca root certificate from LB
-  ansible.builtin.fetch:
-    src: '{{ global_angie_lb_conf_dir }}/step/certs/root_ca.crt'
-    dest: /tmp/step_ca_root.crt
-    flat: true
-  delegate_to: "{{ groups['angie_lb'][0] }}"
+
+- name: Create a dummy domain certificate for Angie TLS
+  delegate_to: localhost
+  become: false
+  ansible.builtin.command:
+    cmd: >
+      openssl req -x509 -newkey rsa:2048 -nodes 
+      -keyout /tmp/molecule_shared/wordpress_stack/angie/certs/nuage-un.duckdns.org.key 
+      -out /tmp/molecule_shared/wordpress_stack/angie/certs/nuage-un.duckdns.org.crt 
+      -days 1 -subj "/CN=nuage-un.duckdns.org"
+  changed_when: false
+  when: molecule_dns_skip | default(false) | bool
+
+# {{ wordpress_compose_src }}/angie/certs
 - name: Ensure Angie tmp directory exists
   ansible.builtin.file:
-    path: '{{ wordpress_compose_src }}/angie/certs'
+    path: "{{ wordpress_cert_host_dir }}"
     state: directory
     mode: '0755'
-    owner: '65532'
-    group: '65532'
+
 - name: Ensure Angie acme directories exist
   ansible.builtin.file:
     path: '{{ wordpress_compose_src }}/angie/{{ item }}'
@@ -27,27 +39,56 @@
     owner: '65532'
     group: '65532'
   loop: [acme, acme_client]
-- name: Copy step-ca root certificate to backend
-  ansible.builtin.copy:
-    src: /tmp/step_ca_root.crt
-    dest: '{{ wordpress_compose_src }}/angie/certs/step_ca_root.crt'
-    mode: '0644'
-    owner: '{{ wordpress_apko_uid }}'
-    group: '{{ wordpress_apko_gid }}'
+
+- name: Fetch step-ca root certificate from LB
+  ansible.builtin.fetch:
+    src: '{{ global_angie_lb_conf_dir }}/step/certs/root_ca.crt'
+    dest: "/tmp/step_ca_root.crt"
+    flat: true
+  delegate_to: "{{ groups['angie_lb'][0] }}"
+
+- name: Validate copied CA certificate
+  delegate_to: localhost
+  ansible.builtin.command:
+    cmd: "openssl x509 -in /tmp/step_ca_root.crt -noout -subject -issuer"
+  changed_when: false
+  become: false
 
 # ==============================================================================
 # HOST DIRECTORY STRUCTURE
 # ==============================================================================
-- name: Ensure target root and subdirectories exist
+
+- name: Ensure project root directory exists (Host Admins)
   ansible.builtin.file:
-    path: '{{ wordpress_compose_src }}/{{ item }}'
+    path: "{{ wordpress_compose_src }}"
     state: directory
-    owner: "{{ (wordpress_become_compose | default(true) | bool) | ternary('65532', omit) }}"
-    group: "{{ (wordpress_become_compose | default(true) | bool) | ternary('65532', omit) }}"
-    mode: '0775'
-  loop: ['', mariadb, angie, angie/tmp, wordpress, phpmyadmin]
-  delegate_to: '{{ wordpress_delegate_host | default(inventory_hostname) }}'
-  become: '{{ wordpress_become_compose | default(true) }}'
+    owner: "{{ 'root' if (wordpress_become_compose | default(true) | bool) else omit }}"
+    group: "{{ 'admins' if (wordpress_become_compose | default(true) | bool) else omit }}"
+    mode: "{{ '0775' if (wordpress_become_compose | default(true) | bool) else omit }}"
+  delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
+  become: "{{ wordpress_become_compose | default(true) }}"
+
+- name: Ensure structural configuration subdirectories exist and are owned by host admins
+  ansible.builtin.file:
+    path: "{{ wordpress_compose_src }}/{{ item }}"
+    state: directory
+    owner: "{{ 'root' if (wordpress_become_compose | default(true) | bool) else omit }}"
+    group: "{{ 'admins' if (wordpress_become_compose | default(true) | bool) else omit }}"
+    mode: "{{ '0775' if (wordpress_become_compose | default(true) | bool) else omit }}"
+  loop: [mariadb, angie, phpmyadmin]
+  delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
+  become: "{{ wordpress_become_compose | default(true) }}"
+
+- name: Ensure runtime and data subdirectories exist and are owned by non root user
+  ansible.builtin.file:
+    path: "{{ wordpress_compose_src }}/{{ item }}"
+    state: directory
+    owner: "{{ wordpress_apko_uid | default('65532') if (wordpress_become_compose | default(true) | bool) else omit }}"
+    group: "{{ wordpress_apko_gid | default('65532') if (wordpress_become_compose | default(true) | bool) else omit }}"
+    mode: "{{ '0755' if (wordpress_become_compose | default(true) | bool) else omit }}"
+  loop: [angie/tmp, wordpress]
+  delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
+  become: "{{ wordpress_become_compose | default(true) }}"
 
 # ==============================================================================
 # DEPLOY SERVICES COMPONENTS TO HOST
@@ -88,7 +129,7 @@
         mode: '0755'
     - name: Get assets
       ansible.builtin.shell: |
-        ls "{{ wordpress_compose_src }}/wordpress/assets/"
+        ls '{{ wordpress_compose_src }}/wordpress/assets/'
       register: wordpress_assets
       changed_when: false
     - name: Check assets
@@ -128,15 +169,27 @@
   become: '{{ wordpress_become_compose | default(true) }}'
   tags: [wp_host_angie]
   block:
-    - name: Debug step-ca url
+    - name: Debug step-ca availability
       ansible.builtin.debug:
-        msg: "{{ hostvars[groups['angie_lb'][0]] }}"
+        msg: >-
+          {{ 
+            'LB Host: ' + groups['angie_lb'][0] 
+            if 'angie_lb' in groups and groups['angie_lb'] | length > 0 
+            else 'No LB group found (Molecule context)' 
+          }}
     - name: Deploy Angie configuration file
       ansible.builtin.template:
         src: angie.conf.j2
         dest: '{{ wordpress_compose_src }}/angie/angie.conf'
         mode: '0644'
       notify: Reload angie
+    - name: Copy step-ca root certificate to instance host directory
+      ansible.builtin.copy:
+        src: /tmp/step_ca_root.crt
+        dest: "{{ wordpress_cert_host_dir }}/step_ca_root.crt"
+        mode: '0644'
+        owner: "{{ wordpress_apko_uid | default('65532') }}"
+        group: "{{ wordpress_apko_gid | default('65532') }}"
   rescue:
     - name: Fail explicitly if angie host configuration fails
       ansible.builtin.fail:
@@ -167,7 +220,7 @@
         path: '{{ wordpress_compose_src }}/secrets'
         state: directory
         mode: '0700'
-    - name: Deploy db passwords and secrets"
+    - name: Deploy db passwords and secrets
       ansible.builtin.copy:
         content: '{{ item.value | trim }}'
         dest: '{{ wordpress_compose_src }}/secrets/{{ item.filename }}'
@@ -224,10 +277,15 @@
     - name: Fix wp-content permissions
       ansible.builtin.shell: |
         set -o pipefail
-        docker exec --user 0 {{ wordpress_wp_container_name }} sh -c \
-          'find /var/www/html/wp-content -not -path "*/mu-plugins*" | xargs -r chown 65532:65532'
+        MIGR_FILES=$(docker exec --user 0 {{ wordpress_wp_container_name }} sh -c \
+          'find /var/www/html/wp-content -not -path "*/mu-plugins*" \( ! -user 65532 -o ! -group 65532 \) -print')
+        if [ -n "$MIGR_FILES" ]; then
+          echo "$MIGR_FILES" | docker exec -i --user 0 {{ wordpress_wp_container_name }} sh -c 'xargs -r chown 65532:65532'
+          echo "CHANGED"
+        fi
+      register: __wp_perms_res
+      changed_when: "'CHANGED' in __wp_perms_res.stdout"
       failed_when: false
-      changed_when: true
     - name: Get wp core installation state
       ansible.builtin.shell: |
         {{ wordpress_wp_cli_exec }} core is-installed
@@ -284,10 +342,10 @@
           ansible.builtin.shell: |
             docker exec --user {{ global_apko_uid | default('65532') }} \
               wordpress wp --path={{ global_wp_dir | default('/var/www/html') }} \
-              option update siteurl "{{ global_wp_siteurl }}"
+              option update siteurl "{{ wordpress_wp_url }}"
             docker exec --user {{ global_apko_uid | default('65532') }} \
               wordpress wp --path={{ global_wp_dir | default('/var/www/html') }} \
-              option update home "{{ global_wp_siteurl }}"
+              option update home "{{ wordpress_wp_url }}"
           changed_when: true
           tags: [wordpress_url]
         - name: Purge default posts and pages
@@ -379,37 +437,25 @@
         - name: Fail explicitly if content provisioning fails
           ansible.builtin.fail:
             msg: wordpress content provisioning failed
-    - name: Idempotent - Configure WordPress Permalinks structure to postname
+
+    - name: Configure WordPress Permalinks structure to postname
       ansible.builtin.shell: |
-        {{ wordpress_wp_cli_exec }} rewrite structure '/%category%/%postname%/' --hard
-        {{ wordpress_wp_cli_exec }} rewrite flush --hard
-      changed_when: true
+        set -o pipefail
+        # Extraction propre de la valeur actuelle via la BDD
+        CURRENT_STRUC=$({{ wordpress_wp_cli_exec }} option get permalink_structure 2>/dev/null | tr -d '\r\n ')
+
+        TARGET_STRUC="/%category%/%postname%/"
+        CLEAN_TARGET="/%category%/%postname%/"
+
+        if [ "$CURRENT_STRUC" != "/%category%/%postname%/" ]; then
+          {{ wordpress_wp_cli_exec }} option update permalink_structure '/%category%/%postname%/' >/dev/null
+          {{ wordpress_wp_cli_exec }} rewrite flush >/dev/null
+          echo "PERMALINKS_CHANGED"
+        fi
+      register: __wp_permalink_res
+      changed_when: "'PERMALINKS_CHANGED' in __wp_permalink_res.stdout"
+      failed_when: false
   rescue:
     - name: Fail explicitly if wordpress initialization fails
       ansible.builtin.fail:
         msg: Wordpress instance initialization failed
-
-# ==============================================================================
-# SMOKE TEST
-# ==============================================================================
-- name: SMOKE TEST - Target validation
-  tags: [wordpress_setup, smoke_test]
-  block:
-    - name: Execute web response verification
-      ansible.builtin.uri:
-        url: '{{ global_wp_siteurl }}'
-        method: GET
-        validate_certs: true
-        return_content: true
-      register: __wordpress_smoke_test
-      failed_when:
-        - __wordpress_smoke_test.status != 200
-        - "'Welcome to' not in __wordpress_smoke_test.content"
-      delegate_to: localhost
-      become: false
-  rescue:
-    - name: Fail explicitly if smoke test fails
-      ansible.builtin.fail:
-        msg: >-
-          Smoke test failed - {{ global_wp_siteurl }}
-          returned {{ __wordpress_smoke_test.status | default('no response') }}

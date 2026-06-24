@@ -5,9 +5,7 @@
     path: /etc/default/ufw
     regexp: ^DEFAULT_FORWARD_POLICY=
     line: DEFAULT_FORWARD_POLICY="ACCEPT"
-- name: Reload UFW
-  community.general.ufw:
-    state: reloaded
+  notify: Reload UFW
 
 # Nécessaire côté OS : source_dest_check=false AWS ne suffit pas
 - name: Enable IP forwarding
@@ -196,3 +194,23 @@
     project_src: '{{ angie_lb_conf_dir }}'
     state: present
   when: not molecule_docker_skip | default(false)
+
+# ==========================================
+# DUCKDNS UPDATE
+# ==========================================
+
+
+- name: Update DuckDNS domain with LB IP
+  delegate_to: localhost
+  become: false
+  run_once: true
+  ansible.builtin.uri:
+    url: "https://www.duckdns.org/update?domains={{ global_duckdns_domain }}&token={{ global_duckdns_token }}&ip={{ hostvars[groups['angie_lb'][0]]['ansible_host'] }}"
+    method: GET
+    return_content: true
+  register: __duckdns_response
+  until: __duckdns_response.content is defined and __duckdns_response.content == "OK"
+  retries: 5
+  delay: 5
+  changed_when: false
+  when: not (molecule_dns_skip | default(false) | bool)

@@ -53,7 +53,7 @@
     owner: '{{ bootstrap_wp_uid | int }}'
     group: '{{ bootstrap_wp_gid | int }}'
     mode: '0755'
-- name: Create configuration directories
+- name: Create read-only configuration directories
   ansible.builtin.file:
     path: '{{ item }}'
     state: directory
@@ -63,6 +63,19 @@
   loop:
     - '{{ bootstrap_project_path }}'
     - '{{ bootstrap_project_path }}/mariadb'
-    - '{{ bootstrap_project_path }}/wordpress'
+    - '{{ bootstrap_project_path }}/phpmyadmin'
     - '{{ bootstrap_project_path }}/angie'
   become: true
+  delegate_to: '{{ bootstrap_delegate_host | default(inventory_hostname) }}'
+- name: Create configuration directories
+  ansible.builtin.file:
+    path: '{{ item }}'
+    state: directory
+    owner: "{{ global_apko_uid | default('65532') }}"
+    group: "{{ global_apko_gid | default('65532') }}"
+    mode: '0755'
+  loop:
+    - '{{ bootstrap_project_path }}/wordpress'
+    - '{{ bootstrap_project_path }}/angie/tmp'
+  become: true
+  delegate_to: '{{ bootstrap_delegate_host | default(inventory_hostname) }}'

@@ -1,0 +1,5 @@
+global_wp_siteurl: "http://localhost:8080"
+global_duckdns_domain: "nuage-un"
+global_step_ca_url: "https://127.0.0.1:9000"
+global_step_ca_password: changeme-test
+global_angie_lb_conf_dir: /tmp/molecule_shared/lb_confs

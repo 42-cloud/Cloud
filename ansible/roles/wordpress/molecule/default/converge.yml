@@ -3,10 +3,37 @@
 - name: Converge
   hosts: all
   gather_facts: true
+  connection: local
   # those variables remain in converge as they influence role behavior
   vars:
-    wordpress_delegate_host: localhost
+    ansible_become: false
     wordpress_become_compose: false
+    wordpress_delegate_host: localhost
+    global_angie_lb_conf_dir: /tmp/molecule_shared/lb_confs
+  pre_tasks:
+    - name: Ensure angie_lb group exists for delegation
+      ansible.builtin.add_host:
+        name: localhost
+        groups: angie_lb
+        ansible_connection: local
+    - name: Ensure step-ca directory exists layout
+      ansible.builtin.file:
+        path: /tmp/molecule_shared/lb_confs/step/certs
+        state: directory
+        mode: '0777'
+      delegate_to: localhost
+      become: false
+    - name: Create a valid dummy root_ca.crt for testing via openssl
+      ansible.builtin.command:
+        cmd: >
+          openssl req -x509 -newkey rsa:2048 -nodes 
+          -keyout /tmp/dummy.key 
+          -out {{ global_angie_lb_conf_dir }}/step/certs/root_ca.crt 
+          -days 1 -subj "/CN=Molecule-Test-CA"
+      delegate_to: localhost
+      become: false
+      changed_when: false
+
   tasks:
     - name: Include wordpress role
       ansible.builtin.include_role:

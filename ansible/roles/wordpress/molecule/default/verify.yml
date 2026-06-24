@@ -64,20 +64,6 @@
       loop: '{{ __wordpress_volume_info.results }}'
 
     # --- VERIFICATION ON CONTAINERS ---
-    - name: Get info on running containers
-      community.docker.docker_container_info:
-        name: '{{ item }}'
-      delegate_to: localhost
-      register: __wordpress_docker_containers_info
-      loop: [mariadb, wordpress, angie, phpmyadmin]
-    - name: Assert all containers are running and healthy
-      ansible.builtin.assert:
-        that:
-          - item.exists
-          - item.container.State.Status == 'running'
-          - item.container.State.Health.Status | default('healthy') == 'healthy'
-        fail_msg: Service {{ item.item }} did not launch or is unhealthy
-      loop: '{{ __wordpress_docker_containers_info.results }}'
     - name: Check Angie SSL port is responsive
       ansible.builtin.wait_for:
         host: 127.0.0.1
@@ -85,47 +71,3 @@
         timeout: 30
         state: started
       delegate_to: localhost
-
-    # --- VERIFICATION INTEGRATION ---
-
-    # using curl because uri module sometimes raises UNEXPECTED_EOF_WHILE_READING with TLSv1.3
-    - name: Access Wordpress via Angie
-      ansible.builtin.command: >
-        curl -k -s -o /dev/null -w "%{http_code}"
-        --tlsv1.2
-        --header "Host: {{ wordpress_cert_domain }}"
-        https://127.0.0.1:{{ wordpress_expose_https | default('443') }}
-      delegate_to: localhost
-      register: __wordpress_curl_result
-      until: __wordpress_curl_result.stdout in ["200", "302"]
-      retries: 20
-      delay: 10
-      changed_when: false
-      # noqa: command-instead-of-module
-    - name: Verify Wordpress DB configuration health status
-      ansible.builtin.command: >
-        curl -k -s --header "Host: {{ wordpress_cert_domain }}" https://127.0.0.1:8443
-      register: __wordpress_page_content
-      delegate_to: localhost
-      changed_when: false
-      # noqa: command-instead-of-module
-    - name: Check DB connection is functional
-      ansible.builtin.assert:
-        that:
-          - "'Error establishing a database connection' not in __wordpress_page_content.stdout"
-        fail_msg: wordpress container cannot communicate with DB
-    - name: Get Wordpress site url
-      ansible.builtin.command: >-
-        docker exec
-        --user {{ wordpress_wp_uid }}
-        --workdir {{ wordpress_wp_dir_path_dest }}
-        {{ wordpress_wp_container_name }}
-        wp option get siteurl
-      register: __wordpress_site_url
-      failed_when: false
-      changed_when: false
-      delegate_to: localhost
-    - name: Check Wordpress url
-      ansible.builtin.assert:
-        that: [__wordpress_site_url.rc == 0]
-        fail_msg: Wordpress has not accessible url

@@ -32,11 +32,8 @@ provisioner:
     - --extra-vars
     - >
       wordpress_compose_src=/tmp/molecule_shared/wordpress_stack
-      wordpress_wp_url_override: "http://localhost"
       wordpress_expose_http=8080
       wordpress_expose_https=8443
-      wordpress_duckdns_domain="test-domain"
-      global_duckdns_domain=test-domain
   env:
     ANSIBLE_ROLES_PATH: ../../../
     ANSIBLE_STDOUT_CALLBACK: default
