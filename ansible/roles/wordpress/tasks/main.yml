@@ -310,9 +310,9 @@
             docker exec {{ wordpress_wp_container_name }} sh -lc \
               'ls -la /tmp/wp-assets && test -f /tmp/wp-assets/{{ item.filename }}'
           loop:
-            - {filename: dan-lorenc.jpeg}
+            - {filename: dan-lorenc.png}
             - {filename: solomon-hykes.png}
-            - {filename: mitchell-hashimoto.png}
+            - {filename: mitchell-hashimoto.jpeg}
             - {filename: stephane-robert.png}
           changed_when: false
           become: '{{ wordpress_become_compose | default(true) }}'
@@ -369,9 +369,9 @@
           loop:
             - {name: solomon-hykes, filename: solomon-hykes.png, display_name: Solomon
                 Hykes}
-            - {name: mitchell-hashimoto, filename: mitchell-hashimoto.png, display_name: Mitchell
+            - {name: mitchell-hashimoto, filename: mitchell-hashimoto.jpeg, display_name: Mitchell
                 Hashimoto}
-            - {name: dan-lorenc, filename: dan-lorenc.jpeg, display_name: Dan Lorenc}
+            - {name: dan-lorenc, filename: dan-lorenc.png, display_name: Dan Lorenc}
             - {name: stephane-robert, filename: stephane-robert.png, display_name: Stephane
                 Robert}
           changed_when: true
