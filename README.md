@@ -59,6 +59,11 @@ aws configure
 
 ## Tasks
 
+### all-in-one command
+```bash
+task deploy
+```
+
 ### domain and terraform vars
 
 Go on `duckdns.org`, choose an available custom subdomain (ex: `cloud1`).
@@ -82,6 +87,7 @@ fill required inputs
 ### provisionning and configuration
 
 ```bash
+
 # download providers
 task tf:init
 
@@ -93,20 +99,89 @@ task tf:apply
 
 # deploy configuration
 task ansible:play
-
 ```
 
 Access the app on `https://cloud1.duckdns.org` (supposing you chose `cloud1`)
 
-### replay a role or a group of tasks
+### check idempotency - replay a role or a group of tasks
+Ansible report should reflect changed steps
 
 ```bash
-task ansible:tag TAG=angie-lb
+# ex: after changing a post content, run the wp-content block
+task ansible:tag TAG=wp_content
+```
+
+### check that db is not accessible from the internet
+
+#### fom outside machine
+
+```bash
+# get public IP (or check in ansible inventory)
+LB_IP=$(terraform output -raw angie_ip)
+
+# scan network for mariadb port
+nc -zv -w 3 $LB_IP 3306
+
+# check if mariadb can execute with this IP (check credentials from ansible variables)
+docker run --rm -it namichel/mariadb:12.3.2-amd64 mariadb \
+  -h $LB_IP \
+  -u wp_user \
+  -p
+
+```
+
+#### from angie
+
+```bash
+# get public IP (or check in ansible inventory)
+LB_IP=$(terraform output -raw angie_ip)
+
+# connect to LB instance
+ssh ubuntu@$LB_IP
+
+# get private backend IP (or check ansible inventory)
+BK_IP=$(terraform output -json instances_ips | jq -r '. | to_entries | map(select(.key != "'$(terraform json | jq -r '.lb_instance_name' 2>/dev/null || echo "node-1")'")) | .[0].value.private')
+
+# scan network
+nc -zv $BK_IP 3306
+```
+
+### check automated restart
+
+```bash
+# connect to the instance
+ssh -i ~/.ssh/id_ed25519 -o "ProxyJump=ubuntu@<LB IP>" ubuntu@<instance IP>
+
+# check that website is accessible -> should be 200
+curl -I https://<subdomain>.duckdns.org
+
+# restart remote host machine
+sudo reboot
+
+# wait for 45 sec
+# check again that website is accessible -> should be 200
+curl -I https://<subdomain>.duckdns.org
+
 ```
 
 ---
 
 # Stack
+
+[![Terraform](https://img.shields.io/badge/Terraform-%237B42BC.svg?style=for-the-badge&logo=terraform&logoColor=white)](https://www.terraform.io/)
+[![Ansible](https://img.shields.io/badge/Ansible-%23EE0000.svg?style=for-the-badge&logo=ansible&logoColor=white)](https://www.ansible.com/)
+[![Go--Task](https://img.shields.io/badge/Go--Task-%2329BEB0.svg?style=for-the-badge&logo=task&logoColor=white)](https://taskfile.dev/)
+
+[![AWS](https://img.shields.io/badge/AWS-%23FF9900.svg?style=for-the-badge&logo=amazon-aws&logoColor=white)](https://aws.amazon.com/)
+[![Ubuntu](https://img.shields.io/badge/Ubuntu-%23E95420.svg?style=for-the-badge&logo=ubuntu&logoColor=white)](https://ubuntu.com/)
+
+[![Wolfi OS](https://img.shields.io/badge/Wolfi%20OS-%23411BE1.svg?style=for-the-badge&logo=linux&logoColor=white)](https://github.com/wolfi-dev/os)
+[![Apko](https://img.shields.io/badge/Apko-%2300B4CC.svg?style=for-the-badge&logo=docker&logoColor=white)](https://github.com/chainguard-dev/apko)
+[![Melange](https://img.shields.io/badge/Melange-%231DAC62.svg?style=for-the-badge&logo=go&logoColor=white)](https://github.com/chainguard-dev/melange)
+
+[![Molecule](https://img.shields.io/badge/Molecule-%23343A4D.svg?style=for-the-badge&logo=ansible&logoColor=FF4200)](https://github.com/ansible-community/molecule)
+[![Checkov](https://img.shields.io/badge/Checkov-%232D3748.svg?style=for-the-badge&logo=bridgecrew&logoColor=635BFF)](https://www.checkov.io/)
+[![Grype](https://img.shields.io/badge/Grype-%23CC4125.svg?style=for-the-badge&logo=anchore&logoColor=white)](https://github.com/anchore/grype)
 
 ## Ubuntu as base OS
 
@@ -177,24 +252,96 @@ UID and GID are `65532` : conventional ID for non-root
 | Service | Base | Tag |
 |:--|:--|:--|
 | Angie | Wolfi | `namichel/angie:1.11.6-amd64` |
-| WordPress | Wolfi | `namichel/wordpress:6.9.4-amd64` |
+| WordPress | Wolfi | `namichel/wordpress:7.0-amd64` |
 | MariaDB | Wolfi | `namichel/mariadb:12.2.2-amd64` |
 | phpMyAdmin | Wolfi | `namichel/phpmyadmin:5.2.3-amd64` |
 
 ## Infrastructure as Code
 
-We define a basic network architecture :
- - VPC (virtual private cloud) with subnet to isolate the cloud environment
- - Internet Gateway to bridge VPC with public internet
- - Security group acting as a firewall
-
-__Best practices__
-
-- Restrict SSH to specific IP
-
 ### Terraform
 
 > An infrastructure as code tool that defines cloud resources
+
+Key benefits :
+- scaling : write one config file, run it for as many instances as needed
+- idempotent : only applies steps that change the state
+- configuration files can be versioned
+
+#### Terraform basics
+
+Terraform state is the source of truth for the deployment. It maps a declarative configuration (written in HCL) to real provider resources. It can detect _configuration drifts_ when the actual state of the cloud differs from the declared one.
+
+__building blocks__
+- `terraform {}` : define CLI version and external providers (here `hashicorp/aws` and `hashicorp/local`).
+- `provider` : configure provider and instanciate region
+- `resource` block : define various types of AWS components : `aws_instance`, `aws_vpc`, ..
+- `data` block : fetch external information
+
+__advanced logic__
+- `for_each` : meta-argument that accept a map of a set of strings to generate multiple resources
+- `depends_on` : force execution order between resources. Ex : ensure that ansible inventory is only generated once EC2 and EIP are created.
+
+__variables__
+Terraform uses variables stored in `terraform.tfvars`. Their type is defined in `variables.tf`. They are accessed with `var.myvar` syntax within the configuration.
+
+- `outputs.tf` : define which info is displayed after deployment, and can be used by other tools (such as Ansible)
+
+##### Hashicorp Configuration Language
+
+```hcl
+# ternary expresssions
+vpc_security_group_ids = each.value == var.lb_instance_name ? [aws_security_group.angie_lb.id] : [aws_security_group.backends.id]
+
+# for loops and list or map comprehensions
+[for name, instance in aws_instance.cloudone : "${name} ansible_host=${instance.private_ip}"]
+```
+
+__builtin functions__
+
+- `toset()` : convert a list of promitive values to a set
+- `file()` : read and inject a local file content : used to load public ssh key
+- `join()` : turn a string array into single string
+- `concat()` : turn multiple lists into a single one
+- `element()` : retrieve an intem at specified position
+- `index()` : retrieve the position of specified item value
+- `trimspace()` : clean strings
+
+### Ansible
+
+> Automation and configuration management tool
+
+Key benefits
+- agentless : contrary to Puppet, no need to deploy an agent. Ansible only requires a ssh connection and root access. It temporarily copies Python modules to run its operations
+- idempotency : only applies tasks causing changes
+
+#### Key parts of Ansible
+
+- __inventory__ : script defining target hosts, ip addresses and groups. In this project, we use a dynamic inventory generated using Terraform. It defines two groups : public node `[angie_lb]` and private instances `[backends]
+- __playbook__ : `site.yml` is the top-level orchestration file. Here, we reuse some roles and ensure that `angie_lb` is configured before the backend nodes.
+- __roles__ allow to break down configuration into consistent and reusable components. Ex : `docker` role installs and launches a docker daemon.
+
+#### Key concepts
+
+- _idempotence_ : running the same configuration multiple times must result in the same system. i.e., contrary to running a script having `mkdir` which would create a new directory on every run, the same step in Ansible would only run if it is not present in the target state.
+- _declarative_ code focuses on _what_ is the desired state. As opposed to _imperative_ code (i.e. a script focusing on _how_ to attain it)
+
+#### Variables and scope
+
+variables are resolved using a strict hierarchy with 22 priority levels (cf [details](https://blog.stephane-robert.info/docs/infra-as-code/gestion-de-configuration/ansible/ecrire-code/variables-facts/precedence-variables/))
+
+| Category | Precedence | Usage |
+|:--- |:-- |:-- |
+|__role defaults__|1|variables that could be overriden by the user| 
+|__group_vars/all.yml__|5| global values shared accross all host layers
+|`--extra-vars`|22|max priority|
+
+#### Ansible vault
+
+Used for secrets, such as Duck DNS token or MariaDB passwords
+
+#### Handlers
+
+Special tasks that are triggered by using `notify`. Ex : reload Angie configuration
 
 ## Architecture evolution
 
@@ -372,21 +519,32 @@ We used a browser extension (PiiBlocker) to prevent leaking personal information
 
 The subject provided by 42 holds within 1 page. The goal is simple : at first glance, we _merely_ have to automate the deployment of the Inception project, which is part of common core. Yet it is easy to turn it into something bigger than expected:
 
-- many new domains to understand from the subject itself (cloud, devops) each with its concepts and ecosystem
-- one group member is already experienced with supply chain security. It is now a trending topic, so we were both eager to delve on this and make use of Chainguard and other CI tools. We (especially namichel) put extra efforts in generating ad hoc images for the project.
-- assimilating the information can prove difficult : Ansible alone has more than 3000 module. Some other tools are less documented. We used AI models to skim through documentation, while being aware that they can easily hallucinate about the specifications.
+## DevSecOps paradigm can always be pushed further
+Rather than pulling standard and potentially vulnerable official Docker image, we chose, driven by namichel appetence for those tools, to dive into supply-chain security.
+We included a series of tools from **Chainguard / Wolfi OS** ecosystem to generate ad hoc images for the project. This also implied rewriting healthchecks (as we could not rely any more on bundled shells), defining new packages, ...
 
-More specifically, we encountered following tool-specific issues
+## Ansible variable matrix
+The 22 priority levels, combined with the necessity to override some of the variables for molecule tests and some design good practices (prefixing variables with the role name, a good way to ensure roles are independant), led to a certain level of complexity, which has not been entirely flattened yet.
 
-- Terraform : tradeoff between full Checkov compliance and project simplicity
-- Ansible : 
-  - variable management, given the combination of multiple declaration levels with their priority (group_vars, role vars, role defaults, role converge, molecule extra vars, ...), and necessity to overload them for molecule test
-  - use of shell module and ensuring idempotence 
+## Idempotence vs automation efficiency
+Maintaining pure idempotence and relying on ansible modules (although there are more than 3000 of them) proved difficult, especially for wordpress configuration tasks. As no official wordpress CLI module is available, we could only run ansible.builtin.shell tasks, manually determining the change condition
 
-## What could be improved
+## Cloud architecture rigor
+We went on with many adjustments with the cloud architecture (cf. supra). We realized that operating a real cloud environment meant finding best tradeoffs between security best practices (mostly highlighted by Checkov), operational costs and performance.
 
-- be more consistent in variables naming and inheritance
-- tests: make use of other libraries such as terratest, as testing docker deployments within molecule (docker within docker) can cause headache and make declarative code harder to read
-- improve playbooks readability, by creating subfiles
-- leverage on created users in bootstrap roles : provide them with wordpress admin access. For the moment they just have sudo rights on the deployed instances
-- use more modern modules like `ansible.builtin.slurp` instead of `ansible.builtin.copy`
+## Technical debt : what could be improved
+
+Not exhaustive..
+
+### Code quality and architcture
+- playbook modularization
+- variable naming and inheritance consistency
+
+### Security and hardening
+- modern ansible modules : identify tasks that could make use of idiomatic modules like `ansible.builtin.slurp`
+
+### Observability
+- integrate Prometheus / Grafana in the deployed configuration. Drawback : might require running bigger instances.
+
+### Testing
+- advanced IaC testing : use true integration testing frameworks such as __Terratest__, which could spare the project of the complexity introduced by attempting to check docker deployments within molecule docker instances.
