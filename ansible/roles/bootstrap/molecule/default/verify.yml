@@ -90,38 +90,42 @@
           - bootstrap_db_dir_res.stat.mode == '0700'
 
     # --- VERIFICATION DIRS ---
-    - name: Get conf directory details
+    - name: Stat read-only configuration directories
       ansible.builtin.stat:
         path: '{{ item }}'
       loop:
         - '{{ bootstrap_project_path }}'
         - '{{ bootstrap_project_path }}/mariadb'
-        - '{{ bootstrap_project_path }}/wordpress'
+        - '{{ bootstrap_project_path }}/phpmyadmin'
         - '{{ bootstrap_project_path }}/angie'
-      register: __bootstrap_directories_stats
-    - name: Assert config directorties exists and have correct permissions
+      register: __bootstrap_ro_dirs_stats
+
+    - name: Assert read-only config directories properties
       ansible.builtin.assert:
         that:
           - item.stat.exists
           - item.stat.isdir
           - item.stat.mode == '0775'
+          - item.stat.pw_name == 'root'
           - item.stat.gr_name == 'admins'
-        fail_msg: Missing config directory {{ item.item }}
-      loop: '{{ __bootstrap_directories_stats.results }}'
+        fail_msg: "Directory {{ item.item }} is misconfigured (Expected mode 0775, owner root, group admins)"
+      loop: '{{ __bootstrap_ro_dirs_stats.results }}'
 
-    #  # --- VERIFICATION DUCK DNS ---
+    - name: Stat non-root application directories
+      ansible.builtin.stat:
+        path: '{{ item }}'
+      loop:
+        - '{{ bootstrap_project_path }}/wordpress'
+        - '{{ bootstrap_project_path }}/angie/tmp'
+      register: __bootstrap_app_dirs_stats
 
-    # - name: Read host crontab entries
-    #   ansible.builtin.command: crontab -l
-    #   register: __bootstrap_crontab
-    #   changed_when: false
-
-    # - name: Assert DuckDNS update is configured for persistence
-    #   ansible.builtin.assert:
-    #     that:
-    #       - "'Sync AWS Elastic IP with DuckDNS' in __bootstrap_crontab.stdout"
-    #       - "'@reboot' in __bootstrap_crontab.stdout"
-    #       - "'*/10' in __bootstrap_crontab.stdout"
-    #       - "'/update?domains=' in __bootstrap_crontab.stdout"
-    #       - "'&token=' in __bootstrap_crontab.stdout"
-    #     fail_msg: "DuckDNS cron updates are misconfigured"
+    - name: Assert non-root application directories properties
+      ansible.builtin.assert:
+        that:
+          - item.stat.exists
+          - item.stat.isdir
+          - item.stat.mode == '0755'
+          - item.stat.uid == (global_apko_uid | default('65532') | int)
+          - item.stat.gid == (global_apko_gid | default('65532') | int)
+        fail_msg: "Application directory {{ item.item }} is misconfigured (Expected mode 0755, owner/group {{ global_apko_uid | default('65532') }})"
+      loop: '{{ __bootstrap_app_dirs_stats.results }}'

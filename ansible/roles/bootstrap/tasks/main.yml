@@ -57,25 +57,25 @@
   ansible.builtin.file:
     path: '{{ item }}'
     state: directory
-    owner: root
-    group: admins
-    mode: '0775'
+    owner: "{{ 'root' if (bootstrap_become | default(true) | bool) else omit }}"
+    group: "{{ 'admins' if (bootstrap_become | default(true) | bool) else omit }}"
+    mode: "{{ '0775' if (bootstrap_become | default(true) | bool) else '0775' }}"
   loop:
     - '{{ bootstrap_project_path }}'
     - '{{ bootstrap_project_path }}/mariadb'
     - '{{ bootstrap_project_path }}/phpmyadmin'
     - '{{ bootstrap_project_path }}/angie'
-  become: true
+  become: "{{ bootstrap_become | default(true) | bool }}"
   delegate_to: '{{ bootstrap_delegate_host | default(inventory_hostname) }}'
 - name: Create configuration directories
   ansible.builtin.file:
     path: '{{ item }}'
     state: directory
-    owner: "{{ global_apko_uid | default('65532') }}"
-    group: "{{ global_apko_gid | default('65532') }}"
-    mode: '0755'
+    owner: "{{ global_apko_uid | default('65532') if (bootstrap_become | default(true) | bool) else omit }}"
+    group: "{{ global_apko_gid | default('65532') if (bootstrap_become | default(true) | bool) else omit }}"
+    mode: "{{ '0755' if (bootstrap_become | default(true) | bool) else '0755' }}"
   loop:
     - '{{ bootstrap_project_path }}/wordpress'
     - '{{ bootstrap_project_path }}/angie/tmp'
-  become: true
+  become: "{{ bootstrap_become | default(true) | bool }}"
   delegate_to: '{{ bootstrap_delegate_host | default(inventory_hostname) }}'

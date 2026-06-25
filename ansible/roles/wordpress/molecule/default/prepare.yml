@@ -3,7 +3,23 @@
 - name: Prepare instance with bootstrap requirements
   hosts: all
   become: true
+  vars:
+    bootstrap_project_path: /tmp/molecule_shared/wordpress_stack
+    bootstrap_become: false
   tasks:
+    - name: Remove existing molecule_shared directory if present
+      ansible.builtin.file:
+        path: /tmp/molecule_shared
+        state: absent
+      delegate_to: localhost
+      become: false
+    - name: Create symlink molecule_shared -> user-scoped path
+      ansible.builtin.file:
+        src: "/tmp/{{ lookup('env', 'USER') }}_molecule"
+        dest: /tmp/molecule_shared
+        state: link
+      delegate_to: localhost
+      become: false
     - name: Ensure APT cache is up to date
       ansible.builtin.apt:
         update_cache: true
@@ -11,15 +27,25 @@
       ansible.builtin.apt:
         name: docker.io
         state: present
+    - name: DEBUG bootstrap_project_path at prepare time
+      ansible.builtin.debug:
+        msg: "bootstrap_project_path={{ bootstrap_project_path }}"
     - name: Execute bootstrap role to create groups and directories
       ansible.builtin.include_role:
         name: bootstrap
-    - name: Create molecule_shared base directory with open permissions
+    - name: Ensure shared directory exists on localhost
       ansible.builtin.file:
-        path: /tmp/molecule_shared/wordpress_stack
+        path: /tmp/molecule_shared/wordpress_stack/angie/certs
         state: directory
         mode: '0777'
-        recurse: true
+      delegate_to: localhost
+      become: false
+    - name: Install Docker CLI and Compose plugin (required for Ansible community.docker modules)
+      ansible.builtin.apt:
+        name: 
+          - docker.io
+          - docker-compose-v2
+        state: present
     - name: Generate a self-signed test CA certificate
       ansible.builtin.command:
         cmd: >

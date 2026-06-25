@@ -15,7 +15,7 @@ platforms:
     volumes:
       - /sys/fs/cgroup:/sys/fs/cgroup:rw
       - /lib/modules:/lib/modules:ro
-      - /tmp/molecule_shared:/tmp/molecule_shared
+      - /tmp/${USER}_molecule:/tmp/molecule_shared
     tmpfs: [/tmp, /run, /run/lock]
 provisioner:
   name: ansible

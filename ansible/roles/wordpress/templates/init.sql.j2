@@ -1,14 +1,14 @@
 -- roles/wordpress/templates/init.sql.j2
 
 -- root user
-ALTER USER 'root'@'%' IDENTIFIED BY '{{ wordpress_db_root_password }}';
-GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION;
+CREATE USER IF NOT EXISTS 'root'@'10.0.2.%' IDENTIFIED BY '{{ wordpress_db_root_password }}';
+GRANT ALL PRIVILEGES ON *.* TO 'root'@'10.0.2.%' WITH GRANT OPTION;
 
 -- db admin rights for admin users (if they are declared)
 {% if wordpress_admin_users_list is defined and wordpress_admin_users_list | length > 0 %}
 {% for admin in wordpress_admin_users_list %}
-CREATE USER IF NOT EXISTS '{{ admin.db_user }}'@'%' IDENTIFIED BY '{{ wordpress_db_admin_default_password }}';
-GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, INDEX, ALTER ON `{{ wordpress_db_name }}`.* TO '{{ admin.db_user }}'@'%';
+CREATE USER IF NOT EXISTS '{{ admin.db_user }}'@'10.0.2.%' IDENTIFIED BY '{{ wordpress_db_admin_default_password }}';
+GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, INDEX, ALTER ON `{{ wordpress_db_name }}`.* TO '{{ admin.db_user }}'@'10.0.2.%';
 {% endfor %}
 {% endif %}
 

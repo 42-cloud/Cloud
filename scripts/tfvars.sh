@@ -2,16 +2,9 @@
 
 set -euo pipefail
 
-# TODO: add error messages + add color for UX
-
 GREEN='\033[0;32m'
 RED='\033[0;31m'
 NC='\033[0m'
-
-# source if terraform.tfvars is created
-if [ -f ../terraform/terraform.tfvars ]; then
-  source ../terraform/terraform.tfvars
-fi
 
 # ask for region type ans path ssh
 read -p "AWS region [${aws_region:-eu-north-1}]: " input

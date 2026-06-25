@@ -14,3 +14,4 @@ bootstrap_duckdns_api_base: https://www.duckdns.org
 bootstrap_duckdns_domain: "{{ global_duckdns_domain | default('') }}"
 bootstrap_duckdns_token: "{{ global_duckdns_token | default('') }}"
 bootstrap_duckdns_validate_certs: true
+bootstrap_become: true

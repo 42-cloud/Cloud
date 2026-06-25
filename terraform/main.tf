@@ -19,6 +19,7 @@ resource "aws_instance" "cloudone" {
   subnet_id = each.value == var.lb_instance_name ? aws_subnet.cloudone_public.id : aws_subnet.cloudone_backend.id
 
   source_dest_check = each.value == var.lb_instance_name ? false : true
+  associate_public_ip_address = each.value == var.lb_instance_name ? true : false
 
   root_block_device {
     encrypted   = true

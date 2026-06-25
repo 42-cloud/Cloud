@@ -382,10 +382,10 @@ tasks:
 # DEPLOY
 # ──────────────────────────────────────────
 
-
   deploy:
     desc: "Full deploy: Terraform → Ansible"
     cmds:
+      - task: tf:init
       - task: tf:tfvars
       - task: tf:apply
       - cmd: |

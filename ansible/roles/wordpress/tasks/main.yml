@@ -188,8 +188,8 @@
         src: /tmp/step_ca_root.crt
         dest: "{{ wordpress_cert_host_dir }}/step_ca_root.crt"
         mode: '0644'
-        owner: "{{ wordpress_apko_uid | default('65532') }}"
-        group: "{{ wordpress_apko_gid | default('65532') }}"
+        owner: "{{ wordpress_apko_uid | default('65532') if (wordpress_become_compose | default(true) | bool) else omit }}"
+        group: "{{ wordpress_apko_gid | default('65532') if (wordpress_become_compose | default(true) | bool) else omit }}"
   rescue:
     - name: Fail explicitly if angie host configuration fails
       ansible.builtin.fail:
@@ -199,12 +199,29 @@
     src: config.inc.php.j2
     dest: '{{ wordpress_compose_src }}/phpmyadmin/config.inc.php'
     mode: '0644'
-    owner: '65532'
-    group: '65532'
+    owner: "{{ (wordpress_become_compose | default(true) | bool) | ternary('65532', omit) }}"
+    group: "{{ (wordpress_become_compose | default(true) | bool) | ternary('65532', omit) }}"
+  become: true
 
 # ==============================================================================
 # SECRETS AND DOCKER
 # ==============================================================================
+
+- name: DEBUG stat phpmyadmin config before compose
+  ansible.builtin.stat:
+    path: '{{ wordpress_compose_src }}/phpmyadmin/config.inc.php'
+  register: __pma_stat
+  delegate_to: '{{ wordpress_delegate_host | default(inventory_hostname) }}'
+
+- name: DEBUG show phpmyadmin config stat
+  ansible.builtin.debug:
+    msg:
+      exists: "{{ __pma_stat.stat.exists }}"
+      isdir: "{{ __pma_stat.stat.isdir | default('N/A') }}"
+      isreg: "{{ __pma_stat.stat.isreg | default('N/A') }}"
+      owner: "{{ __pma_stat.stat.pw_name | default('N/A') }}"
+      mode: "{{ __pma_stat.stat.mode | default('N/A') }}"
+      size: "{{ __pma_stat.stat.size | default('N/A') }}"
 - name: Secrets and compose up
   delegate_to: '{{ wordpress_delegate_host | default(inventory_hostname) }}'
   become: '{{ wordpress_become_compose | default(true) }}'
@@ -234,7 +251,7 @@
           value: '{{ wordpress_db_root_password }}'
         - filename: wp_admin_password
           value: '{{ wordpress_wp_admin_default_password }}'
-    # no_log: true
+      no_log: true
 
     # delegated to localhost in test
     - name: Launch docker compose
@@ -260,7 +277,7 @@
 - name: WordPress - Post-launch configuration and content seeding
   delegate_to: '{{ wordpress_delegate_host | default(inventory_hostname) }}'
   become: '{{ wordpress_become_compose | default(true) }}'
-  tags: [wordpress_setup]
+  tags: [wp_setup]
   block:
     - name: Seed WP themes/plugins into persistent volume if missing
       ansible.builtin.shell: |
@@ -324,7 +341,7 @@
                 --skip-email
             '
           changed_when: true
-        # no_log: true
+          no_log: true
         - name: Install and activate theme
           ansible.builtin.shell: |
             {{ wordpress_wp_cli_exec }} theme install {{ wordpress_wp_theme }} --activate
@@ -336,7 +353,7 @@
     - name: Dynamic content provisioning tasks
       when: (__wordpress_post_install_check.rc | default(1)) != 0 or (wordpress_force_setup
         | default(false) | bool)
-      tags: [wordpress_content]
+      tags: [wp_content]
       block:
         - name: Idempotent - Force sync siteurl and home variables
           ansible.builtin.shell: |
@@ -347,7 +364,7 @@
               wordpress wp --path={{ global_wp_dir | default('/var/www/html') }} \
               option update home "{{ wordpress_wp_url }}"
           changed_when: true
-          tags: [wordpress_url]
+          tags: [wp_url]
         - name: Purge default posts and pages
           ansible.builtin.shell: |
             {{ wordpress_wp_cli_exec }} post delete \

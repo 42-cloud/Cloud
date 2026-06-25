@@ -61,6 +61,7 @@ wordpress_angie_container_name: angie
 # wordpress_assets_host_path: '{{ wordpress_compose_src }}/wordpress/assets'
 
 # PHP My admin
+wordpress_phpmyadmin_blowfish_secret: '{{ global_phpmyadmin_blowfish_secret }}'
 
 # TLS
 wordpress_cert_host_dir: '{{ wordpress_compose_src }}/angie/certs'

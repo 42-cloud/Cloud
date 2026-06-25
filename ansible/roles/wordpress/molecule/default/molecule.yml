@@ -14,8 +14,8 @@ platforms:
     user: root
     volumes:
       - /lib/modules:/lib/modules:ro
-      - ${XDG_RUNTIME_DIR:-/var}/run/docker.sock:/var/run/docker.sock
-      - /tmp/molecule_shared:/tmp/molecule_shared
+      - "${XDG_RUNTIME_DIR}/docker.sock:/var/run/docker.sock"
+      - /tmp/${USER}_molecule:/tmp/molecule_shared
 provisioner:
   name: ansible
   config_options:
@@ -31,9 +31,10 @@ provisioner:
     - -vvv
     - --extra-vars
     - >
-      wordpress_compose_src=/tmp/molecule_shared/wordpress_stack
       wordpress_expose_http=8080
       wordpress_expose_https=8443
+      wordpress_compose_src=/tmp/molecule_shared/wordpress_stack
+      wordpress_become_compose=false
   env:
     ANSIBLE_ROLES_PATH: ../../../
     ANSIBLE_STDOUT_CALLBACK: default

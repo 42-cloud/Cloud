@@ -9,7 +9,7 @@
     global_duckdns_domain: test-domain
     global_step_ca_password: changeme-test
     global_step_ca_url: https://10.0.2.10:9000
-    global_angie_lb_conf_dir: /tmp/molecule_shared/lb_confs
+    global_angie_lb_conf_dir: /tmp/{{ lookup('env', 'USER') }}_molecule/lb_confs
     angie_lb_backends: [10.0.2.10]
   pre_tasks:
     - name: Create fake backends group for template rendering

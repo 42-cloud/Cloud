@@ -8,3 +8,16 @@
         name: [python3]
         state: present
         update_cache: true
+    - name: Remove existing molecule_shared directory if present
+      ansible.builtin.file:
+        path: /tmp/molecule_shared
+        state: absent
+      delegate_to: localhost
+      become: false
+    - name: Create symlink molecule_shared -> user-scoped path
+      ansible.builtin.file:
+        src: "/tmp/{{ lookup('env', 'USER') }}_molecule"
+        dest: /tmp/molecule_shared
+        state: link
+      delegate_to: localhost
+      become: false

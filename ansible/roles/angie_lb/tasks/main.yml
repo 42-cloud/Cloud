@@ -199,7 +199,6 @@
 # DUCKDNS UPDATE
 # ==========================================
 
-
 - name: Update DuckDNS domain with LB IP
   delegate_to: localhost
   become: false
