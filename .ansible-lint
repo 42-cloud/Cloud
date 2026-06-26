@@ -1,3 +1,6 @@
+
+var_naming_pattern: '^(__)?(molecule_|angie_lb_|bootstrap_|docker_|wordpress_|global_)[a-z0-9_]+$'
+
 exclude_paths:
   - .pre-commit-config.yaml
   - .ansible-lint

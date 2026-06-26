@@ -1,5 +1,7 @@
-global_wp_siteurl: "http://localhost:8080"
-global_duckdns_domain: "nuage-un"
-global_step_ca_url: "https://127.0.0.1:9000"
-global_step_ca_password: changeme-test
-global_angie_lb_conf_dir: /tmp/molecule_shared/lb_confs
+---
+# wordpress/molecule/default/group_vars
+global_wp_siteurl: "http://localhost:8080" # noqa var-naming[no-role-prefix]
+global_duckdns_domain: "nuage-un" # noqa var-naming[no-role-prefix]
+global_step_ca_url: "https://127.0.0.1:9000" # noqa var-naming[no-role-prefix]
+global_step_ca_password: changeme-test # noqa var-naming[no-role-prefix]
+global_angie_lb_conf_dir: /tmp/molecule_shared/lb_confs # noqa var-naming[no-role-prefix]

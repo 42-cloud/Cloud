@@ -3,8 +3,8 @@
   hosts: all
   gather_facts: true
   vars:
-      bootstrap_delegate_host: "{{ inventory_hostname }}"
-      bootstrap_become: false
+    bootstrap_delegate_host: "{{ inventory_hostname }}"
+    bootstrap_become: false
   tasks:
     - name: Include bootstrap role
       ansible.builtin.include_role:

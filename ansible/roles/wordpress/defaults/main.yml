@@ -2,7 +2,8 @@
 # wordpress - defaults/main.yml
 wordpress_project_name: cloudone
 wordpress_subdomain: "{{ global_duckdns_domain | default('nuage-un') }}"
-wordpress_domain_name: "{{ wordpress_subdomain if '.' in wordpress_subdomain else wordpress_subdomain + '.duckdns.org' }}"
+wordpress_domain_name: >-
+  "{{ wordpress_subdomain if '.' in wordpress_subdomain else wordpress_subdomain + '.duckdns.org' }}"
 wordpress_project_path: "{{ global_project_path | default('/opt/cloud-1') }}"
 
 # admins

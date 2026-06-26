@@ -204,11 +204,11 @@
   become: false
   run_once: true
   ansible.builtin.uri:
-    url: "https://www.duckdns.org/update?domains={{ global_duckdns_domain }}&token={{ global_duckdns_token }}&ip={{ hostvars[groups['angie_lb'][0]]['ansible_host'] }}"
+    url: "https://www.duckdns.org/update?domains={{ global_duckdns_domain }}&token={{ global_duckdns_token }}&ip={{ hostvars[groups['angie_lb'][0]]['ansible_host'] }}"  # noqa yaml[line-length]
     method: GET
     return_content: true
-  register: __duckdns_response
-  until: __duckdns_response.content is defined and __duckdns_response.content == "OK"
+  register: __angie_lb_duckdns_response
+  until: __angie_lb_duckdns_response.content is defined and __duckdns_response.content == "OK"
   retries: 5
   delay: 5
   changed_when: false

@@ -127,5 +127,7 @@
           - item.stat.mode == '0755'
           - item.stat.uid == (global_apko_uid | default('65532') | int)
           - item.stat.gid == (global_apko_gid | default('65532') | int)
-        fail_msg: "Application directory {{ item.item }} is misconfigured (Expected mode 0755, owner/group {{ global_apko_uid | default('65532') }})"
+        fail_msg: >-
+          "Application directory {{ item.item }} is misconfigured
+          (Expected mode 0755, owner/group {{ global_apko_uid | default('65532') }})"
       loop: '{{ __bootstrap_app_dirs_stats.results }}'

@@ -1,5 +1,5 @@
 ---
-
+# noqa yaml[line-length]
 # ==============================================================================
 # ROOT CERTIFICATE DIFFUSION
 # ==============================================================================
@@ -17,9 +17,9 @@
   become: false
   ansible.builtin.command:
     cmd: >
-      openssl req -x509 -newkey rsa:2048 -nodes 
-      -keyout /tmp/molecule_shared/wordpress_stack/angie/certs/nuage-un.duckdns.org.key 
-      -out /tmp/molecule_shared/wordpress_stack/angie/certs/nuage-un.duckdns.org.crt 
+      openssl req -x509 -newkey rsa:2048 -nodes
+      -keyout /tmp/molecule_shared/wordpress_stack/angie/certs/nuage-un.duckdns.org.key
+      -out /tmp/molecule_shared/wordpress_stack/angie/certs/nuage-un.duckdns.org.crt
       -days 1 -subj "/CN=nuage-un.duckdns.org"
   changed_when: false
   when: molecule_dns_skip | default(false) | bool
@@ -172,10 +172,10 @@
     - name: Debug step-ca availability
       ansible.builtin.debug:
         msg: >-
-          {{ 
-            'LB Host: ' + groups['angie_lb'][0] 
-            if 'angie_lb' in groups and groups['angie_lb'] | length > 0 
-            else 'No LB group found (Molecule context)' 
+          {{
+            'LB Host: ' + groups['angie_lb'][0]
+            if 'angie_lb' in groups and groups['angie_lb'] | length > 0
+            else 'No LB group found (Molecule context)'
           }}
     - name: Deploy Angie configuration file
       ansible.builtin.template:
@@ -188,8 +188,8 @@
         src: /tmp/step_ca_root.crt
         dest: "{{ wordpress_cert_host_dir }}/step_ca_root.crt"
         mode: '0644'
-        owner: "{{ wordpress_apko_uid | default('65532') if (wordpress_become_compose | default(true) | bool) else omit }}"
-        group: "{{ wordpress_apko_gid | default('65532') if (wordpress_become_compose | default(true) | bool) else omit }}"
+        owner: "{{ wordpress_apko_uid | default('65532') if (wordpress_become_compose | default(true) | bool) else omit }}"  # noqa yaml[line-length]
+        group: "{{ wordpress_apko_gid | default('65532') if (wordpress_become_compose | default(true) | bool) else omit }}"  # noqa yaml[line-length]
   rescue:
     - name: Fail explicitly if angie host configuration fails
       ansible.builtin.fail:
@@ -210,18 +210,18 @@
 - name: DEBUG stat phpmyadmin config before compose
   ansible.builtin.stat:
     path: '{{ wordpress_compose_src }}/phpmyadmin/config.inc.php'
-  register: __pma_stat
+  register: __wordpress_pma_stat
   delegate_to: '{{ wordpress_delegate_host | default(inventory_hostname) }}'
 
 - name: DEBUG show phpmyadmin config stat
   ansible.builtin.debug:
     msg:
-      exists: "{{ __pma_stat.stat.exists }}"
-      isdir: "{{ __pma_stat.stat.isdir | default('N/A') }}"
-      isreg: "{{ __pma_stat.stat.isreg | default('N/A') }}"
-      owner: "{{ __pma_stat.stat.pw_name | default('N/A') }}"
-      mode: "{{ __pma_stat.stat.mode | default('N/A') }}"
-      size: "{{ __pma_stat.stat.size | default('N/A') }}"
+      exists: "{{ __wordpress_pma_stat.stat.exists }}"
+      isdir: "{{ __wordpress_pma_stat.stat.isdir | default('N/A') }}"
+      isreg: "{{ __wordpress_pma_stat.stat.isreg | default('N/A') }}"
+      owner: "{{ __wordpress_pma_stat.stat.pw_name | default('N/A') }}"
+      mode: "{{ __wordpress_pma_stat.stat.mode | default('N/A') }}"
+      size: "{{ __wordpress_pma_stat.stat.size | default('N/A') }}"
 - name: Secrets and compose up
   delegate_to: '{{ wordpress_delegate_host | default(inventory_hostname) }}'
   become: '{{ wordpress_become_compose | default(true) }}'
@@ -297,11 +297,11 @@
         MIGR_FILES=$(docker exec --user 0 {{ wordpress_wp_container_name }} sh -c \
           'find /var/www/html/wp-content -not -path "*/mu-plugins*" \( ! -user 65532 -o ! -group 65532 \) -print')
         if [ -n "$MIGR_FILES" ]; then
-          echo "$MIGR_FILES" | docker exec -i --user 0 {{ wordpress_wp_container_name }} sh -c 'xargs -r chown 65532:65532'
+          echo "$MIGR_FILES" | docker exec -i --user 0 {{ wordpress_wp_container_name }} xargs -r chown 65532:65532
           echo "CHANGED"
         fi
-      register: __wp_perms_res
-      changed_when: "'CHANGED' in __wp_perms_res.stdout"
+      register: __wordpress_perms_res
+      changed_when: "'CHANGED' in __wordpress_perms_res.stdout"
       failed_when: false
     - name: Get wp core installation state
       ansible.builtin.shell: |
@@ -434,11 +434,11 @@
         - name: Import images from container root and set as Featured Image
           ansible.builtin.shell: |
             {{ wordpress_wp_cli_exec }} media import "/tmp/wp-assets/{{ item.filename }}" \
-              --post_id={{ (wp_posts[item.name] | trim) }} \
+              --post_id={{ (wordpress_posts[item.name] | trim) }} \
               --title="{{ item.display_name }} Logo" \
               --featured_image
           vars:
-            wp_posts: "{{ dict(__wordpress_posts_bulk.results | map(attribute='item.id')\
+            wordpress_posts: "{{ dict(__wordpress_posts_bulk.results | map(attribute='item.id')\
               \ | zip(__wordpress_posts_bulk.results | map(attribute='stdout')))\
               \ }}"
           loop:
@@ -469,8 +469,8 @@
           {{ wordpress_wp_cli_exec }} rewrite flush >/dev/null
           echo "PERMALINKS_CHANGED"
         fi
-      register: __wp_permalink_res
-      changed_when: "'PERMALINKS_CHANGED' in __wp_permalink_res.stdout"
+      register: __wordpress_permalink_res
+      changed_when: "'PERMALINKS_CHANGED' in __wordpress_permalink_res.stdout"
       failed_when: false
   rescue:
     - name: Fail explicitly if wordpress initialization fails

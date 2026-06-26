@@ -4,8 +4,7 @@
   hosts: all
   gather_facts: true
   vars:
-    ansible_become: false
-    bootstrap_become: false 
+    bootstrap_become: false
     wordpress_become_compose: false
     # global_angie_lb_conf_dir: /tmp/molecule_shared/lb_confs
     # wordpress_compose_src: /tmp/molecule_shared/wordpress_stack
@@ -26,9 +25,9 @@
     - name: Create a valid dummy root_ca.crt for testing via openssl
       ansible.builtin.command:
         cmd: >
-          openssl req -x509 -newkey rsa:2048 -nodes 
-          -keyout /tmp/dummy.key 
-          -out {{ global_angie_lb_conf_dir }}/step/certs/root_ca.crt 
+          openssl req -x509 -newkey rsa:2048 -nodes
+          -keyout /tmp/dummy.key
+          -out {{ global_angie_lb_conf_dir }}/step/certs/root_ca.crt
           -days 1 -subj "/CN=Molecule-Test-CA"
       delegate_to: localhost
       become: false

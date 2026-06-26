@@ -42,7 +42,7 @@
       become: false
     - name: Install Docker CLI and Compose plugin (required for Ansible community.docker modules)
       ansible.builtin.apt:
-        name: 
+        name:
           - docker.io
           - docker-compose-v2
         state: present

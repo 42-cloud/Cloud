@@ -1,5 +1,5 @@
 ---
-#group_vars/all/all.yml
+# group_vars/all/all.yml
 global_wordpress_version: "7.0.0"
 global_angie_version: "1.11.6"
 global_step_ca_version: "7.0.0"

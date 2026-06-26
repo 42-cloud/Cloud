@@ -28,7 +28,7 @@ provisioner:
       callbacks_enabled: ansible.builtin.default
     ssh_connection:
       pipelining: false
-  ansible_args: 
+  ansible_args:
     - --diff
     - -v
   env:
