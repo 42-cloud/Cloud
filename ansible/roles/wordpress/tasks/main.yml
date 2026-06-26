@@ -188,8 +188,12 @@
         src: /tmp/step_ca_root.crt
         dest: "{{ wordpress_cert_host_dir }}/step_ca_root.crt"
         mode: '0644'
-        owner: "{{ wordpress_apko_uid | default('65532') if (wordpress_become_compose | default(true) | bool) else omit }}"  # noqa yaml[line-length]
-        group: "{{ wordpress_apko_gid | default('65532') if (wordpress_become_compose | default(true) | bool) else omit }}"  # noqa yaml[line-length]
+        owner: "{{ wordpress_ng_target_owner }}"
+        group: "{{ wordpress_ng_target_group }}"
+      vars:
+        wordpress_ng_use_become: "{{ wordpress_become_compose | default(true) | bool }}"
+        wordpress_ng_target_owner: "{{ wordpress_apko_uid | default('65532') if wordpress_ng_use_become else omit }}"
+        wordpress_ng_target_group: "{{ wordpress_apko_gid | default('65532') if wordpress_ng_use_become else omit }}"
   rescue:
     - name: Fail explicitly if angie host configuration fails
       ansible.builtin.fail:

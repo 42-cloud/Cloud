@@ -204,7 +204,9 @@
   become: false
   run_once: true
   ansible.builtin.uri:
-    url: "https://www.duckdns.org/update?domains={{ global_duckdns_domain }}&token={{ global_duckdns_token }}&ip={{ hostvars[groups['angie_lb'][0]]['ansible_host'] }}"  # noqa yaml[line-length]
+    url: >-
+      https://www.duckdns.org/update?domains={{ global_duckdns_domain }}&token={{
+      global_duckdns_token }}&ip={{ hostvars[groups['angie_lb'][0]]['ansible_host'] }}
     method: GET
     return_content: true
   register: __angie_lb_duckdns_response
