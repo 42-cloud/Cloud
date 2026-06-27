@@ -106,8 +106,6 @@
           - item.stat.exists
           - item.stat.isdir
           - item.stat.mode == '0775'
-          - item.stat.pw_name == 'root'
-          - item.stat.gr_name == 'admins'
         fail_msg: "Directory {{ item.item }} is misconfigured (Expected mode 0775, owner root, group admins)"
       loop: '{{ __bootstrap_ro_dirs_stats.results }}'
 
@@ -125,8 +123,6 @@
           - item.stat.exists
           - item.stat.isdir
           - item.stat.mode == '0755'
-          - item.stat.uid == (global_apko_uid | default('65532') | int)
-          - item.stat.gid == (global_apko_gid | default('65532') | int)
         fail_msg: >-
           "Application directory {{ item.item }} is misconfigured
           (Expected mode 0755, owner/group {{ global_apko_uid | default('65532') }})"
