@@ -80,7 +80,8 @@ services:
     ports:
       - "8080:8080"
     volumes:
-      - ./angie.conf:/etc/angie/angie.conf:ro
+      - ./angie/angie.conf:/etc/angie/angie.conf:ro
+      - ./angie/tmp:/var/lib/angie/tmp
     depends_on:
       wordpress:
         condition: service_healthy

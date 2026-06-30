@@ -19,6 +19,7 @@
     - name: Enable UFW (non-interactive)
       ansible.builtin.command: ufw --force enable
       changed_when: true
+      when: lookup('env', 'GITHUB_ACTIONS') != 'true'
     - name: Install required Ansible collections deps (python-docker)
       ansible.builtin.apt:
         name: [python3-docker]

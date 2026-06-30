@@ -7,15 +7,15 @@ dependency:
 driver:
   name: docker
 platforms:
-  - name: docker-ubuntu-test
+  - name: wordpress-ubuntu-test
     image: geerlingguy/docker-ubuntu2204-ansible:latest
     privileged: true
     pre_build_image: true
     user: root
     volumes:
       - /lib/modules:/lib/modules:ro
-      - "${XDG_RUNTIME_DIR}/docker.sock:/var/run/docker.sock"
-      - /tmp/${USER}_molecule:/tmp/molecule_shared
+      - ${XDG_RUNTIME_DIR:-/var/run}/docker.sock:/var/run/docker.sock
+      - /tmp/molecule_shared:/tmp/molecule_shared
 provisioner:
   name: ansible
   config_options:

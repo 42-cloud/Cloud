@@ -2,22 +2,18 @@
 - name: Prepare instances
   hosts: all
   become: true
+  pre_tasks:
+  - name: Hard purge of the entire shared stack directory via host Docker
+    ansible.builtin.command: >
+      docker run --rm 
+      -v /tmp/molecule_shared:/data 
+      alpine sh -c "rm -rf /data/"
+    delegate_to: localhost
+    become: false
   tasks:
     - name: Ensure python 3 and pip are present
       ansible.builtin.apt:
         name: [python3]
         state: present
         update_cache: true
-    - name: Remove existing molecule_shared directory if present
-      ansible.builtin.file:
-        path: /tmp/molecule_shared
-        state: absent
-      delegate_to: localhost
-      become: false
-    - name: Create symlink molecule_shared -> user-scoped path
-      ansible.builtin.file:
-        src: "/tmp/{{ lookup('env', 'USER') }}_molecule"
-        dest: /tmp/molecule_shared
-        state: link
-      delegate_to: localhost
-      become: false
+

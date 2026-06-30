@@ -13,7 +13,7 @@ platforms:
     user: root
     volumes:
       - /lib/modules:/lib/modules:ro
-      - /tmp/${USER}_molecule:/tmp/molecule_shared
+      - /tmp/molecule_shared:/tmp/molecule_shared
 provisioner:
   name: ansible
   config_options:
@@ -24,7 +24,7 @@ provisioner:
       stdout_callback: yaml
     ssh_connection:
       pipelining: false
-  ansible_args: [--diff, -v]
+  ansible_args: [--diff, -vvv]
   env:
     ANSIBLE_ROLES_PATH: ../../../
     ANSIBLE_STDOUT_CALLBACK: default

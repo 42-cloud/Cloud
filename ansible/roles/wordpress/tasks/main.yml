@@ -74,7 +74,7 @@
     state: directory
     owner: "{{ 'root' if (wordpress_become_compose | default(true) | bool) else omit }}"
     group: "{{ 'admins' if (wordpress_become_compose | default(true) | bool) else omit }}"
-    mode: "{{ '0775' if (wordpress_become_compose | default(true) | bool) else omit }}"
+    mode: "{{ '0775' if (wordpress_become_compose | default(true) | bool) else '0777' }}"
   loop: [mariadb, angie, phpmyadmin]
   delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
   become: "{{ wordpress_become_compose | default(true) }}"
@@ -85,7 +85,7 @@
     state: directory
     owner: "{{ wordpress_apko_uid | default('65532') if (wordpress_become_compose | default(true) | bool) else omit }}"
     group: "{{ wordpress_apko_gid | default('65532') if (wordpress_become_compose | default(true) | bool) else omit }}"
-    mode: "{{ '0755' if (wordpress_become_compose | default(true) | bool) else omit }}"
+    mode: "{{ '0755' if (wordpress_become_compose | default(true) | bool) else '0777' }}"
   loop: [angie/tmp, wordpress]
   delegate_to: "{{ wordpress_delegate_host | default(inventory_hostname) }}"
   become: "{{ wordpress_become_compose | default(true) }}"
@@ -186,14 +186,10 @@
     - name: Copy step-ca root certificate to instance host directory
       ansible.builtin.copy:
         src: /tmp/step_ca_root.crt
-        dest: "{{ wordpress_cert_host_dir }}/step_ca_root.crt"
+        dest: "{{ wordpress_compose_src }}/angie/certs/step_ca_root.crt"
         mode: '0644'
-        owner: "{{ wordpress_ng_target_owner }}"
-        group: "{{ wordpress_ng_target_group }}"
-      vars:
-        wordpress_ng_use_become: "{{ wordpress_become_compose | default(true) | bool }}"
-        wordpress_ng_target_owner: "{{ wordpress_apko_uid | default('65532') if wordpress_ng_use_become else omit }}"
-        wordpress_ng_target_group: "{{ wordpress_apko_gid | default('65532') if wordpress_ng_use_become else omit }}"
+        owner: "{{ wordpress_apko_uid | default('65532') }}"
+        group: "{{ wordpress_apko_gid | default('65532') }}"
   rescue:
     - name: Fail explicitly if angie host configuration fails
       ansible.builtin.fail:
@@ -256,6 +252,12 @@
         - filename: wp_admin_password
           value: '{{ wordpress_wp_admin_default_password }}'
       no_log: true
+
+    - name: Quick Debug UID and Socket permissions
+      ansible.builtin.shell: id && ls -la /var/run/docker.sock
+      register: dbg
+    
+    - ansible.builtin.debug: var=dbg.stdout_lines
 
     # delegated to localhost in test
     - name: Launch docker compose

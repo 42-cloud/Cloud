@@ -45,9 +45,6 @@
           - docker_repo_config.stat.exists
 
     # --- VERIFICATION DOCKER INSTALLATION ---
-    - name: Gather package stats after docker repo addition
-      ansible.builtin.package_facts:
-        strategy: all
     - name: Check presence of docker and docker compose
       ansible.builtin.assert:
         that: [item in ansible_facts.packages]

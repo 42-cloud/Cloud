@@ -12,6 +12,7 @@
         file: ../../vars/main.yml
 
     # --- VERIFICATION ON HOST ---
+    # verifications are done on host for bind-mounted files
     - name: Stat configuration files
       ansible.builtin.stat:
         path: '{{ item.path }}'
