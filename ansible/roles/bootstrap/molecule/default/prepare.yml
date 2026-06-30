@@ -3,17 +3,17 @@
   hosts: all
   become: true
   pre_tasks:
-  - name: Hard purge of the entire shared stack directory via host Docker
-    ansible.builtin.command: >
-      docker run --rm 
-      -v /tmp/molecule_shared:/data 
-      alpine sh -c "rm -rf /data/"
-    delegate_to: localhost
-    become: false
+    - name: Hard purge of the entire shared stack directory via host Docker
+      ansible.builtin.command: >
+        docker run --rm
+        -v /tmp/molecule_shared:/data
+        alpine sh -c "rm -rf /data/*"
+      delegate_to: localhost
+      become: false
+      changed_when: true
   tasks:
     - name: Ensure python 3 and pip are present
       ansible.builtin.apt:
         name: [python3]
         state: present
         update_cache: true
-
