@@ -210,7 +210,7 @@
     method: GET
     return_content: true
   register: __angie_lb_duckdns_response
-  until: __angie_lb_duckdns_response.content is defined and __duckdns_response.content == "OK"
+  until: __angie_lb_duckdns_response.content is defined and __angie_lb_duckdns_response.content == "OK"
   retries: 5
   delay: 5
   changed_when: false

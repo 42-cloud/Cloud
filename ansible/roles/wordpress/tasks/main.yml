@@ -253,12 +253,6 @@
           value: '{{ wordpress_wp_admin_default_password }}'
       no_log: true
 
-    - name: Quick Debug UID and Socket permissions
-      ansible.builtin.shell: id && ls -la /var/run/docker.sock
-      register: dbg
-    
-    - ansible.builtin.debug: var=dbg.stdout_lines
-
     # delegated to localhost in test
     - name: Launch docker compose
       community.docker.docker_compose_v2:
